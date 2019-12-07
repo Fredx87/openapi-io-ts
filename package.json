@@ -16,9 +16,24 @@
     "io-ts-types": "^0.5.3",
     "json-schema-to-typescript": "^8.0.0",
     "monocle-ts": "^2.0.0",
+    "newtype-ts": "^0.3.2",
     "typescript": "^3.7.3"
   },
   "devDependencies": {
+    "husky": "^3.1.0",
+    "lint-staged": "^9.5.0",
+    "prettier": "^1.19.1",
     "ts-node": "^8.5.4"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,css,json,md}": [
+      "prettier --write",
+      "git add"
+    ]
   }
 }
