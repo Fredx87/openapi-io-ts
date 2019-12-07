@@ -1,4 +1,5 @@
 import * as gen from 'io-ts-codegen';
+import orderSchema from './orderSchema.json';
 
 export type StringSchema = { type: 'string', enum?: string[] }
 
@@ -58,42 +59,8 @@ export function to(schema: JSONSchema): gen.TypeReference {
     }
 }
 
-const schema: JSONSchema = {
-    "type": "object",
-    "properties": {
-        "id": {
-            "type": "integer"
-        },
-        "petId": {
-            "type": "integer"
-        },
-        "quantity": {
-            "type": "integer"
-        },
-        "shipDate": {
-            "type": "string"
-        },
-        "status": {
-            "type": "string",
-            "enum": [
-                "placed",
-                "approved",
-                "delivered"
-            ]
-        },
-        "complete": {
-            "type": "boolean"
-        }
-    },
-    "required": [
-        "id"
-    ]
-}
+const RuntimeType = gen.printRuntime(to(orderSchema as JSONSchema));
+const StaticType = gen.printStatic(to(orderSchema as JSONSchema));
 
-const RuntimeType = gen.printRuntime(to(schema));
-const StaticType = gen.printStatic(to(schema));
-
-console.log({
-    RuntimeType,
-    StaticType,
-});
+console.log(RuntimeType);
+console.log(StaticType);
