@@ -1,7 +1,7 @@
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import orderSchema from "./orderSchema.json";
-import { parseOpen } from "./parser";
+import { getSchemas } from "./parser";
 import { parseSchema } from "./src/schema-parser";
 
 const RuntimeType = gen.printRuntime(
@@ -14,4 +14,6 @@ const StaticType = gen.printStatic(
 console.log(RuntimeType);
 console.log(StaticType);
 
-parseOpen();
+getSchemas("./openapi.json").then(schemas => {
+  console.log(schemas);
+});
