@@ -2,7 +2,9 @@ import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { parseSchema } from "./schema-parser";
 
-function toRuntime(schema: OpenAPIV3.SchemaObject): string {
+function toRuntime(
+  schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
+): string {
   return gen.printRuntime(parseSchema(schema));
 }
 
@@ -123,10 +125,17 @@ describe("Schema object parser", () => {
     `);
   });
 
-  test("free objecy parser", () => {
+  test("free object parser", () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "object"
     };
     expect(toRuntime(schema)).toMatchInlineSnapshot(`"t.UnknownRecord"`);
+  });
+
+  test("reference parser", () => {
+    const schema: OpenAPIV3.ReferenceObject = {
+      $ref: "#/components/schemas/Foo"
+    };
+    expect(toRuntime(schema)).toEqual("Foo");
   });
 });

@@ -1,3 +1,6 @@
+import * as A from "fp-ts/lib/Array";
+import * as O from "fp-ts/lib/Option";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 
@@ -12,7 +15,7 @@ function parseSchemaString(s: OpenAPIV3.SchemaObject): gen.TypeReference {
 }
 
 function parseSchemaArray(s: OpenAPIV3.ArraySchemaObject): gen.TypeReference {
-  return gen.arrayCombinator(parseSchema(s.items as OpenAPIV3.SchemaObject));
+  return gen.arrayCombinator(parseSchema(s.items));
 }
 
 function parseSchemaObject(
@@ -23,7 +26,7 @@ function parseSchemaObject(
       Object.keys(s.properties).map(p =>
         gen.property(
           p,
-          parseSchema(s.properties![p] as OpenAPIV3.SchemaObject),
+          parseSchema(s.properties![p]),
           s.required && !s.required.includes(p)
         )
       )
@@ -32,7 +35,19 @@ function parseSchemaObject(
   return gen.unknownRecordType;
 }
 
-export function parseSchema(s: OpenAPIV3.SchemaObject): gen.TypeReference {
+export function parseSchema(
+  s: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
+): gen.TypeReference {
+  if ("$ref" in s) {
+    const split = s.$ref.split("/");
+    return pipe(
+      A.last(split),
+      O.fold<string, gen.TypeReference>(
+        () => gen.unknownType,
+        t => gen.identifier(t)
+      )
+    );
+  }
   switch (s.type) {
     case "string":
       return parseSchemaString(s);
