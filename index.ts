@@ -1,5 +1,6 @@
 import * as gen from "io-ts-codegen";
 import orderSchema from "./orderSchema.json";
+import { parseOpen } from './parser';
 
 export type StringSchema = { type: "string"; enum?: string[]; format?: string };
 
@@ -75,3 +76,5 @@ const StaticType = gen.printStatic(to(orderSchema as JSONSchema));
 
 console.log(RuntimeType);
 console.log(StaticType);
+
+parseOpen();
