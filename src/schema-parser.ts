@@ -35,18 +35,24 @@ function parseSchemaObject(
   return gen.unknownRecordType;
 }
 
+export function getReferenceName(
+  ref: OpenAPIV3.ReferenceObject
+): gen.TypeReference {
+  const split = ref.$ref.split("/");
+  return pipe(
+    A.last(split),
+    O.fold<string, gen.TypeReference>(
+      () => gen.unknownType,
+      t => gen.identifier(t)
+    )
+  );
+}
+
 export function parseSchema(
   s: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
 ): gen.TypeReference {
   if ("$ref" in s) {
-    const split = s.$ref.split("/");
-    return pipe(
-      A.last(split),
-      O.fold<string, gen.TypeReference>(
-        () => gen.unknownType,
-        t => gen.identifier(t)
-      )
-    );
+    return getReferenceName(s);
   }
   switch (s.type) {
     case "string":
