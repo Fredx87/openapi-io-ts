@@ -1,6 +1,6 @@
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { parseSchema } from "./schema-parser";
+import { parseSchema, shouldGenerateModel } from "./schema-parser";
 
 function toRuntime(
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
@@ -9,6 +9,104 @@ function toRuntime(
 }
 
 describe("Schema object parser", () => {
+  describe("shouldGenerateModel", () => {
+    test("models for base types should not be generated", () => {
+      expect(shouldGenerateModel(gen.booleanType)).toBe(false);
+      expect(shouldGenerateModel(gen.stringType)).toBe(false);
+      expect(shouldGenerateModel(gen.numberType)).toBe(false);
+      expect(shouldGenerateModel(gen.integerType)).toBe(false);
+      expect(shouldGenerateModel(gen.intType)).toBe(false);
+      expect(shouldGenerateModel(gen.nullType)).toBe(false);
+      expect(shouldGenerateModel(gen.undefinedType)).toBe(false);
+      expect(shouldGenerateModel(gen.unknownArrayType)).toBe(false);
+      expect(shouldGenerateModel(gen.unknownRecordType)).toBe(false);
+      expect(shouldGenerateModel(gen.unknownType)).toBe(false);
+      expect(shouldGenerateModel(gen.literalCombinator("foo"))).toBe(false);
+      expect(shouldGenerateModel(gen.identifier("foo"))).toBe(false);
+    });
+
+    test("model for iterface should be generated", () => {
+      expect(
+        shouldGenerateModel(
+          gen.interfaceCombinator([gen.property("foo", gen.stringType)])
+        )
+      ).toBe(true);
+    });
+
+    test("model for array with basic types should not be generated", () => {
+      expect(shouldGenerateModel(gen.arrayCombinator(gen.stringType))).toBe(
+        false
+      );
+      expect(
+        shouldGenerateModel(
+          gen.arrayCombinator(gen.arrayCombinator(gen.booleanType))
+        )
+      ).toBe(false);
+    });
+
+    test("model for array with complex type should be generated", () => {
+      expect(
+        shouldGenerateModel(
+          gen.arrayCombinator(
+            gen.interfaceCombinator([gen.property("foo", gen.stringType)])
+          )
+        )
+      ).toBe(true);
+    });
+
+    test("model for instersection with basic types should not be generated", () => {
+      expect(
+        shouldGenerateModel(
+          gen.intersectionCombinator([gen.stringType, gen.intType])
+        )
+      ).toBe(false);
+    });
+
+    test("model for instersection with complex types should not be generated", () => {
+      expect(
+        shouldGenerateModel(
+          gen.intersectionCombinator([
+            gen.interfaceCombinator([gen.property("foo", gen.stringType)]),
+            gen.intType
+          ])
+        )
+      ).toBe(true);
+      expect(
+        shouldGenerateModel(
+          gen.intersectionCombinator([
+            gen.interfaceCombinator([gen.property("foo", gen.stringType)]),
+            gen.interfaceCombinator([gen.property("bar", gen.booleanType)])
+          ])
+        )
+      ).toBe(true);
+    });
+
+    test("model for union with basic types should not be generated", () => {
+      expect(
+        shouldGenerateModel(gen.unionCombinator([gen.stringType, gen.intType]))
+      ).toBe(false);
+    });
+
+    test("model for union with complex types should not be generated", () => {
+      expect(
+        shouldGenerateModel(
+          gen.unionCombinator([
+            gen.interfaceCombinator([gen.property("foo", gen.stringType)]),
+            gen.intType
+          ])
+        )
+      ).toBe(true);
+      expect(
+        shouldGenerateModel(
+          gen.unionCombinator([
+            gen.interfaceCombinator([gen.property("foo", gen.stringType)]),
+            gen.interfaceCombinator([gen.property("bar", gen.booleanType)])
+          ])
+        )
+      ).toBe(true);
+    });
+  });
+
   test("base string parser", () => {
     const schema: OpenAPIV3.SchemaObject = { type: "string" };
     expect(toRuntime(schema)).toMatchInlineSnapshot(`"t.string"`);

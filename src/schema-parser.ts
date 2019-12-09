@@ -5,6 +5,20 @@ import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { isReference } from "./utils";
 
+// @todo: extends with allOf, oneOf and other missing types
+export function shouldGenerateModel(typeRef: gen.TypeReference): boolean {
+  switch (typeRef.kind) {
+    case "InterfaceCombinator":
+      return true;
+    case "ArrayCombinator":
+      return shouldGenerateModel(typeRef.type);
+    case "IntersectionCombinator":
+    case "UnionCombinator":
+      return typeRef.types.some(shouldGenerateModel);
+    default:
+      return false;
+  }
+}
 function parseSchemaString(s: OpenAPIV3.SchemaObject): gen.TypeReference {
   if (s.enum) {
     return gen.unionCombinator(s.enum.map(e => gen.literalCombinator(e)));
