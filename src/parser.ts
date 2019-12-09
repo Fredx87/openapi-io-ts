@@ -1,13 +1,12 @@
+import { writeFileSync } from "fs";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-
-import SwaggerParser from "swagger-parser";
-import { parseSchema, getReferenceName } from "./schema-parser";
-import { writeFile, writeFileSync, appendFileSync } from "fs";
-import { pascalCase } from "./utils";
 import * as prettier from "prettier";
-import { parseApi } from "./path-parser";
+import SwaggerParser from "swagger-parser";
 import { inspect } from "util";
+import { parseApi } from "./path-parser";
+import { parseSchema } from "./schema-parser";
+import { isReference } from "./utils";
 
 export function printSchema(name: string, type: gen.TypeReference): string {
   return `export const ${name} = ${gen.printRuntime(type)};
@@ -42,7 +41,7 @@ function generateComponentsTypesDeclaration(
 
   if (parameters) {
     for (const [name, value] of Object.entries(parameters)) {
-      if ("$ref" in value) {
+      if (isReference(value)) {
         continue;
       }
       if (value.schema) {
@@ -56,7 +55,7 @@ function generateComponentsTypesDeclaration(
 
   if (requestBodies) {
     for (const [name, value] of Object.entries(requestBodies)) {
-      if ("$ref" in value) {
+      if (isReference(value)) {
         continue;
       }
       if (value.content["application/json"].schema) {

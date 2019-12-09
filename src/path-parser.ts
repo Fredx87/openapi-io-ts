@@ -1,10 +1,10 @@
+import { appendFileSync } from "fs";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { pascalCase, getObjectByRef } from "./utils";
 import * as prettier from "prettier";
-import { printSchema, getComponentParameterName } from "./parser";
-import { appendFileSync } from "fs";
-import { getReferenceName, parseSchema } from "./schema-parser";
+import { getComponentParameterName, printSchema } from "./parser";
+import { parseSchema } from "./schema-parser";
+import { getObjectByRef, isReference, pascalCase } from "./utils";
 
 export interface ApiParameter {
   name: string;
@@ -73,12 +73,12 @@ function createApiParameter(
   param: OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject,
   doc: OpenAPIV3.Document
 ): ApiParameter {
-  const resolvedParam =
-    "$ref" in param ? getObjectByRef(doc, param.$ref) : param;
-  const type =
-    "$ref" in param
-      ? gen.identifier(getComponentParameterName(resolvedParam.name))
-      : extractParameterType(operationId, param);
+  const resolvedParam = isReference(param)
+    ? getObjectByRef(doc, param.$ref)
+    : param;
+  const type = isReference(param)
+    ? gen.identifier(getComponentParameterName(resolvedParam.name))
+    : extractParameterType(operationId, param);
 
   return {
     name: resolvedParam.name,

@@ -3,6 +3,7 @@ import * as O from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
+import { isReference } from "./utils";
 
 function parseSchemaString(s: OpenAPIV3.SchemaObject): gen.TypeReference {
   if (s.enum) {
@@ -51,7 +52,7 @@ export function getReferenceName(
 export function parseSchema(
   s: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
 ): gen.TypeReference {
-  if ("$ref" in s) {
+  if (isReference(s)) {
     return getReferenceName(s);
   }
   switch (s.type) {
