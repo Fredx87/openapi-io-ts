@@ -8,8 +8,11 @@ export function pascalCase(input: string): string {
   return copy.join("");
 }
 
-export function getObjectByRef(document: OpenAPIV3.Document, ref: string) {
-  const chunks = ref.split("/");
+export function getObjectByRef(
+  document: OpenAPIV3.Document,
+  ref: OpenAPIV3.ReferenceObject
+) {
+  const chunks = ref.$ref.split("/");
   const path = chunks.splice(1, chunks.length).join(".");
   return get(document, path);
 }

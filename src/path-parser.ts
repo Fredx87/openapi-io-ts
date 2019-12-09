@@ -73,9 +73,7 @@ function createApiParameter(
   param: OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject,
   doc: OpenAPIV3.Document
 ): ApiParameter {
-  const resolvedParam = isReference(param)
-    ? getObjectByRef(doc, param.$ref)
-    : param;
+  const resolvedParam = isReference(param) ? getObjectByRef(doc, param) : param;
   const type = isReference(param)
     ? gen.identifier(getComponentParameterName(resolvedParam.name))
     : extractParameterType(operationId, param);
