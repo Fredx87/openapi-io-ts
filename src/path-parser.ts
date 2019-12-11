@@ -4,10 +4,12 @@ import { ParserContext } from "./parser";
 import { createModel, parseSchema, shouldGenerateModel } from "./schema-parser";
 import { getObjectByRef, isReference } from "./utils";
 
+export type ApiParameterIn = "query" | "header" | "path" | "cookie";
+
 export interface ApiParameter {
   name: string;
   type: gen.TypeReference;
-  in: "query" | "type";
+  in: ApiParameterIn;
   required: boolean;
   defaultValue?: any;
 }
@@ -33,9 +35,11 @@ function createApiParameter(
   context: ParserContext
 ): ApiParameter {
   const resolvedParam = isReference(param)
-    ? getObjectByRef(param, context.document)
+    ? (getObjectByRef(param, context.document) as OpenAPIV3.ParameterObject)
     : param;
-  const schema = parseSchema(resolvedParam.schema, context);
+  const schema = resolvedParam.schema
+    ? parseSchema(resolvedParam.schema, context)
+    : gen.unknownType;
   const type = shouldGenerateModel(schema)
     ? createModel(resolvedParam.name, schema, context)
     : schema;
@@ -43,8 +47,8 @@ function createApiParameter(
   return {
     name: resolvedParam.name,
     type,
-    in: resolvedParam.in,
-    required: resolvedParam.required
+    in: resolvedParam.in as ApiParameterIn, // wrong type in openapi-types
+    required: resolvedParam.required || false
   };
 }
 
@@ -57,7 +61,7 @@ export function parseApi(
   const { operationId, parameters, requestBody, responses } = operation;
 
   let params: ApiParameter[] = [];
-  if (parameters && operationId) {
+  if (parameters) {
     params = parameters.map(p => createApiParameter(p, context));
   }
 
