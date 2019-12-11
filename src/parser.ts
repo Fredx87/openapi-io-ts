@@ -1,22 +1,13 @@
 import { OpenAPIV3 } from "openapi-types";
 import SwaggerParser from "swagger-parser";
-import { inspect } from "util";
+import { writeModels } from "./file-writer";
 import { parseApi } from "./path-parser";
 import { GeneratedModels, parseAllSchemas } from "./schema-parser";
 
 export interface ParserContext {
   document: OpenAPIV3.Document;
   generatedModels: GeneratedModels;
-}
-
-function getModelFileName(name: string) {
-  return `./out/models/${name}.ts`;
-}
-
-function writeModels(models: GeneratedModels): void {
-  for (const [name, typeRef] of Object.entries(models.namesMap)) {
-    // todo: check depende
-  }
+  outputDir: string;
 }
 
 export function parse(jsonFile: string): void {
@@ -27,7 +18,8 @@ export function parse(jsonFile: string): void {
       generatedModels: {
         namesMap: {},
         refNameMap: {}
-      }
+      },
+      outputDir: "./out"
     };
 
     parseAllSchemas(parserContext);
@@ -43,9 +35,8 @@ export function parse(jsonFile: string): void {
         },
         new Map()
       );
-      console.log(inspect(gets, false, 10, true));
     }
 
-    console.log(inspect(parserContext.generatedModels, false, 10, true));
+    writeModels(parserContext);
   });
 }
