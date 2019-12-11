@@ -9,8 +9,8 @@ export function pascalCase(input: string): string {
 }
 
 export function getObjectByRef(
-  document: OpenAPIV3.Document,
-  ref: OpenAPIV3.ReferenceObject
+  ref: OpenAPIV3.ReferenceObject,
+  document: OpenAPIV3.Document
 ) {
   const chunks = ref.$ref.split("/");
   const path = chunks.splice(1, chunks.length).join(".");

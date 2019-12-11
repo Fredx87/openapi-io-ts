@@ -1,99 +1,51 @@
-import { writeFileSync } from "fs";
-import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import * as prettier from "prettier";
 import SwaggerParser from "swagger-parser";
 import { inspect } from "util";
 import { parseApi } from "./path-parser";
-import { parseSchema } from "./schema-parser";
-import { isReference } from "./utils";
+import { GeneratedModels, parseAllSchemas } from "./schema-parser";
 
-export function printSchema(name: string, type: gen.TypeReference): string {
-  return `export const ${name} = ${gen.printRuntime(type)};
-  
-  export type ${name} = t.TypeOf<typeof ${name}>;
-
-  `;
+export interface ParserContext {
+  document: OpenAPIV3.Document;
+  generatedModels: GeneratedModels;
 }
 
-export function getComponentParameterName(name: string): string {
-  return `${name}Parameter`;
+function getModelFileName(name: string) {
+  return `./out/models/${name}.ts`;
 }
 
-export function getComponentRequestBodyName(name: string): string {
-  return `${name}RequestBody`;
-}
-
-function generateComponentsTypesDeclaration(
-  components: OpenAPIV3.ComponentsObject
-) {
-  const { schemas, parameters, requestBodies } = components;
-  let res = `import * as t from 'io-ts';
-  import { DateFromISOString } from 'io-ts-types/lib/DateFromISOString';
-  
-  `;
-
-  if (schemas) {
-    for (const [name, value] of Object.entries(schemas)) {
-      res += printSchema(name, parseSchema(value));
-    }
+function writeModels(models: GeneratedModels): void {
+  for (const [name, typeRef] of Object.entries(models.namesMap)) {
+    // todo: check depende
   }
-
-  if (parameters) {
-    for (const [name, value] of Object.entries(parameters)) {
-      if (isReference(value)) {
-        continue;
-      }
-      if (value.schema) {
-        res += printSchema(
-          getComponentParameterName(name),
-          parseSchema(value.schema)
-        );
-      }
-    }
-  }
-
-  if (requestBodies) {
-    for (const [name, value] of Object.entries(requestBodies)) {
-      if (isReference(value)) {
-        continue;
-      }
-      if (value.content["application/json"].schema) {
-        res += printSchema(
-          getComponentRequestBodyName(name),
-          parseSchema(value.content["application/json"].schema)
-        );
-      }
-    }
-  }
-
-  const content = prettier.format(res, {
-    parser: "typescript"
-  });
-  writeFileSync("./out/models.ts", content);
 }
 
 export function parse(jsonFile: string): void {
   SwaggerParser.bundle(jsonFile).then(res => {
-    const doc = res as OpenAPIV3.Document;
+    const document = res as OpenAPIV3.Document;
+    const parserContext: ParserContext = {
+      document,
+      generatedModels: {
+        namesMap: {},
+        refNameMap: {}
+      }
+    };
 
-    if (doc.components) {
-      generateComponentsTypesDeclaration(doc.components);
-    }
+    parseAllSchemas(parserContext);
 
-    if (doc.paths) {
-      const gets = Object.entries(doc.paths).reduce(
+    if (document.paths) {
+      const gets = Object.entries(document.paths).reduce(
         (pathsMap, [path, pathObject]) => {
           if (pathObject.get) {
-            const api = parseApi(path, "get", pathObject.get, doc);
+            const api = parseApi(path, "get", pathObject.get, parserContext);
             pathsMap.set(api.name, api);
           }
-
           return pathsMap;
         },
         new Map()
       );
       console.log(inspect(gets, false, 10, true));
     }
+
+    console.log(inspect(parserContext.generatedModels, false, 10, true));
   });
 }

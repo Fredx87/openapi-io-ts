@@ -1,11 +1,19 @@
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
+import { ParserContext } from "./parser";
 import { parseSchema, shouldGenerateModel } from "./schema-parser";
 
 function toRuntime(
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
 ): string {
-  return gen.printRuntime(parseSchema(schema));
+  const context: ParserContext = {
+    document: { info: { title: "", version: "" }, openapi: "3", paths: {} },
+    generatedModels: {
+      namesMap: {},
+      refNameMap: {}
+    }
+  };
+  return gen.printRuntime(parseSchema(schema, context));
 }
 
 describe("Schema object parser", () => {
@@ -228,12 +236,5 @@ describe("Schema object parser", () => {
       type: "object"
     };
     expect(toRuntime(schema)).toMatchInlineSnapshot(`"t.UnknownRecord"`);
-  });
-
-  test("reference parser", () => {
-    const schema: OpenAPIV3.ReferenceObject = {
-      $ref: "#/components/schemas/Foo"
-    };
-    expect(toRuntime(schema)).toEqual("Foo");
   });
 });

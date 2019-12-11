@@ -1,10 +1,8 @@
-import { appendFileSync } from "fs";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import * as prettier from "prettier";
-import { getComponentParameterName, printSchema } from "./parser";
-import { parseSchema } from "./schema-parser";
-import { getObjectByRef, isReference, pascalCase } from "./utils";
+import { ParserContext } from "./parser";
+import { createModel, parseSchema, shouldGenerateModel } from "./schema-parser";
+import { getObjectByRef, isReference } from "./utils";
 
 export interface ApiParameter {
   name: string;
@@ -30,53 +28,17 @@ export interface Api {
   returnType?: gen.TypeReference;
 }
 
-function extractTypeFromComplexType(
-  operationId: string,
-  paramName: string,
-  type: gen.TypeReference
-): gen.TypeReference {
-  switch (type.kind) {
-    case "InterfaceCombinator":
-    case "UnionCombinator": {
-      const name = `${pascalCase(operationId)}${pascalCase(paramName)}`;
-      const content = prettier.format(printSchema(name, type), {
-        parser: "typescript"
-      });
-      appendFileSync("./out/models.ts", content);
-      return gen.identifier(name);
-    }
-    case "ArrayCombinator": {
-      return gen.arrayCombinator(
-        extractTypeFromComplexType(operationId, paramName, type.type)
-      );
-    }
-    default:
-      return type;
-  }
-}
-
-function extractParameterType(
-  operationId: string,
-  param: OpenAPIV3.ParameterObject
-): gen.TypeReference {
-  const { schema } = param;
-  if (schema) {
-    const type = parseSchema(schema);
-    return extractTypeFromComplexType(operationId, param.name, type);
-  }
-  // fix me
-  return gen.unknownType;
-}
-
 function createApiParameter(
-  operationId: string,
   param: OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject,
-  doc: OpenAPIV3.Document
+  context: ParserContext
 ): ApiParameter {
-  const resolvedParam = isReference(param) ? getObjectByRef(doc, param) : param;
-  const type = isReference(param)
-    ? gen.identifier(getComponentParameterName(resolvedParam.name))
-    : extractParameterType(operationId, param);
+  const resolvedParam = isReference(param)
+    ? getObjectByRef(param, context.document)
+    : param;
+  const schema = parseSchema(resolvedParam.schema, context);
+  const type = shouldGenerateModel(schema)
+    ? createModel(resolvedParam.name, schema, context)
+    : schema;
 
   return {
     name: resolvedParam.name,
@@ -90,13 +52,13 @@ export function parseApi(
   path: string,
   method: ApiMethod,
   operation: OpenAPIV3.OperationObject,
-  doc: OpenAPIV3.Document
+  context: ParserContext
 ): Api {
   const { operationId, parameters, requestBody, responses } = operation;
 
   let params: ApiParameter[] = [];
   if (parameters && operationId) {
-    params = parameters.map(p => createApiParameter(operationId, p, doc));
+    params = parameters.map(p => createApiParameter(p, context));
   }
 
   return {

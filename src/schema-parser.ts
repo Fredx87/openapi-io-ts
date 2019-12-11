@@ -1,9 +1,12 @@
-import * as A from "fp-ts/lib/Array";
-import * as O from "fp-ts/lib/Option";
-import { pipe } from "fp-ts/lib/pipeable";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { isReference } from "./utils";
+import { ParserContext } from "./parser";
+import { getObjectByRef, isReference, pascalCase } from "./utils";
+
+export interface GeneratedModels {
+  namesMap: Record<string, gen.TypeDeclaration>;
+  refNameMap: Record<string, string>;
+}
 
 // @todo: extends with allOf, oneOf and other missing types
 export function shouldGenerateModel(typeRef: gen.TypeReference): boolean {
@@ -19,30 +22,35 @@ export function shouldGenerateModel(typeRef: gen.TypeReference): boolean {
       return false;
   }
 }
-function parseSchemaString(s: OpenAPIV3.SchemaObject): gen.TypeReference {
-  if (s.enum) {
-    return gen.unionCombinator(s.enum.map(e => gen.literalCombinator(e)));
+
+function parseSchemaString(schema: OpenAPIV3.SchemaObject): gen.TypeReference {
+  if (schema.enum) {
+    return gen.unionCombinator(schema.enum.map(e => gen.literalCombinator(e)));
   }
-  if (s.format === "date" || s.format === "date-time") {
+  if (schema.format === "date" || schema.format === "date-time") {
     return gen.identifier("DateFromISOString");
   }
   return gen.stringType;
 }
 
-function parseSchemaArray(s: OpenAPIV3.ArraySchemaObject): gen.TypeReference {
-  return gen.arrayCombinator(parseSchema(s.items));
+function parseSchemaArray(
+  schema: OpenAPIV3.ArraySchemaObject,
+  context: ParserContext
+): gen.TypeReference {
+  return gen.arrayCombinator(parseSchema(schema.items, context));
 }
 
 function parseSchemaObject(
-  s: OpenAPIV3.NonArraySchemaObject
+  schema: OpenAPIV3.NonArraySchemaObject,
+  context: ParserContext
 ): gen.TypeReference {
-  if (s.properties) {
+  if (schema.properties) {
     return gen.interfaceCombinator(
-      Object.keys(s.properties).map(p =>
+      Object.keys(schema.properties).map(p =>
         gen.property(
           p,
-          parseSchema(s.properties![p]),
-          s.required && !s.required.includes(p)
+          parseSchema(schema.properties![p], context),
+          schema.required && !schema.required.includes(p)
         )
       )
     );
@@ -50,28 +58,59 @@ function parseSchemaObject(
   return gen.unknownRecordType;
 }
 
-export function getReferenceName(
-  ref: OpenAPIV3.ReferenceObject
+// @todo: better handling of duplicated names
+function getNameForNewModel(name: string, context: ParserContext): string {
+  const res = name in context.generatedModels.namesMap ? `${name}_1` : name;
+  return pascalCase(res);
+}
+
+export function createModel(
+  name: string,
+  typeRef: gen.TypeReference,
+  context: ParserContext
 ): gen.TypeReference {
-  const split = ref.$ref.split("/");
-  return pipe(
-    A.last(split),
-    O.fold<string, gen.TypeReference>(
-      () => gen.unknownType,
-      t => gen.identifier(t)
-    )
+  const modelName = getNameForNewModel(name, context);
+  context.generatedModels.namesMap[modelName] = gen.typeDeclaration(
+    modelName,
+    typeRef,
+    true
   );
+  return gen.identifier(modelName);
+}
+
+function getModelNameFromReference(ref: OpenAPIV3.ReferenceObject): string {
+  const chunks = ref.$ref.split("/");
+  return chunks[chunks.length - 1];
+}
+
+function createModelFromReference(
+  ref: OpenAPIV3.ReferenceObject,
+  context: ParserContext
+): gen.TypeReference {
+  const schema = getObjectByRef(
+    ref,
+    context.document
+  ) as OpenAPIV3.SchemaObject;
+  const name = getModelNameFromReference(ref);
+  const modelName = getNameForNewModel(name, context);
+  const parsedSchema = parseSchema(schema, context);
+  context.generatedModels.refNameMap[ref.$ref] = modelName;
+  return createModel(modelName, parsedSchema, context);
 }
 
 export function parseSchema(
-  s: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
+  schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject,
+  context: ParserContext
 ): gen.TypeReference {
-  if (isReference(s)) {
-    return getReferenceName(s);
+  if (isReference(schema)) {
+    const modelName = context.generatedModels.refNameMap[schema.$ref];
+    return modelName
+      ? gen.identifier(modelName)
+      : createModelFromReference(schema, context);
   }
-  switch (s.type) {
+  switch (schema.type) {
     case "string":
-      return parseSchemaString(s);
+      return parseSchemaString(schema);
     case "integer":
       return gen.integerType;
     case "number":
@@ -79,9 +118,28 @@ export function parseSchema(
     case "boolean":
       return gen.booleanType;
     case "array":
-      return parseSchemaArray(s);
+      return parseSchemaArray(schema, context);
     case "object":
-      return parseSchemaObject(s);
+      return parseSchemaObject(schema, context);
   }
   return gen.unknownType;
+}
+
+export function parseAllSchemas(context: ParserContext): void {
+  const { components } = context.document;
+
+  if (!components) {
+    return;
+  }
+
+  const { schemas } = components;
+
+  if (schemas) {
+    for (const name of Object.keys(schemas)) {
+      const ref: OpenAPIV3.ReferenceObject = {
+        $ref: `#/components/schemas/${name}`
+      };
+      createModelFromReference(ref, context);
+    }
+  }
 }
