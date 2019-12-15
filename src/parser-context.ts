@@ -44,9 +44,9 @@ const emptyDocument: OpenAPIV3.Document = {
   paths: {}
 };
 
-export function parserContext(document = emptyDocument): ParserContext {
+export function parserContext(): ParserContext {
   return {
-    document,
+    document: emptyDocument,
     generatedModels: {
       namesMap: {},
       refNameMap: {}

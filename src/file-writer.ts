@@ -8,6 +8,7 @@ import * as gen from "io-ts-codegen";
 import * as prettier from "prettier";
 import { ParserConfiguration } from "./parser-configuration";
 import { ParserContext } from "./parser-context";
+import { ParserRTE, ParserSRTE } from "./utils";
 
 function getModelFileName(name: string): string {
   return `models/${name}.ts`;
@@ -36,10 +37,7 @@ function getModelImports(deps: string[], modelsPath: string): string {
     ${otherImports}`;
 }
 
-function writeFile(
-  name: string,
-  content: string
-): RTE.ReaderTaskEither<ParserConfiguration, string, void> {
+function writeFile(name: string, content: string): ParserRTE {
   return pipe(
     RTE.asks((config: ParserConfiguration) => config.outputDir),
     RTE.chain(outDir =>
@@ -56,10 +54,7 @@ function writeFile(
   );
 }
 
-function writeModel(
-  name: string,
-  model: gen.TypeDeclaration
-): RTE.ReaderTaskEither<ParserConfiguration, string, void> {
+function writeModel(name: string, model: gen.TypeDeclaration): ParserRTE {
   const fileName = getModelFileName(name);
   const content = `${getModelImports(gen.getNodeDependencies(model), ".")}
 
@@ -71,12 +66,7 @@ function writeModel(
   return writeFile(fileName, formatted);
 }
 
-export function writeModels(): SRTE.StateReaderTaskEither<
-  ParserContext,
-  ParserConfiguration,
-  string,
-  void
-> {
+export function writeModels(): ParserSRTE {
   return pipe(
     SRTE.gets((context: ParserContext) => context.generatedModels.namesMap),
     SRTE.chain(models =>
