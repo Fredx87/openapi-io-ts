@@ -1,7 +1,8 @@
+import * as S from "fp-ts/lib/State";
 import { writeFileSync } from "fs";
 import * as gen from "io-ts-codegen";
 import * as prettier from "prettier";
-import { ParserContext } from "./parser";
+import { ParserContext } from "./parser-context";
 
 function getModelFileName(name: string, context: ParserContext): string {
   return `${context.outputDir}/models/${name}.ts`;
@@ -30,19 +31,21 @@ function getModelImports(deps: string[], modelsPath: string): string {
     ${otherImports}`;
 }
 
-export function writeModels(context: ParserContext): void {
-  for (const [name, model] of Object.entries(
-    context.generatedModels.namesMap
-  )) {
-    const fileName = getModelFileName(name, context);
-    const content = `${getModelImports(gen.getNodeDependencies(model), ".")}
-  
-      ${gen.printRuntime(model)}
-      
-      export type ${name} = t.TypeOf<typeof ${name}>;`;
+export function writeModels(): S.State<ParserContext, void> {
+  return S.gets(context => {
+    for (const [name, model] of Object.entries(
+      context.generatedModels.namesMap
+    )) {
+      const fileName = getModelFileName(name, context);
+      const content = `${getModelImports(gen.getNodeDependencies(model), ".")}
+    
+        ${gen.printRuntime(model)}
+        
+        export type ${name} = t.TypeOf<typeof ${name}>;`;
 
-    const formatted = prettier.format(content, { parser: "typescript" });
+      const formatted = prettier.format(content, { parser: "typescript" });
 
-    writeFileSync(fileName, formatted);
-  }
+      writeFileSync(fileName, formatted);
+    }
+  });
 }

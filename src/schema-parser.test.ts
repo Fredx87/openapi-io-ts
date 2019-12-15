@@ -1,19 +1,13 @@
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { ParserContext } from "./parser";
+import { parserContext } from "./parser-context";
 import { parseSchema, shouldGenerateModel } from "./schema-parser";
 
 function toRuntime(
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
 ): string {
-  const context: ParserContext = {
-    document: { info: { title: "", version: "" }, openapi: "3", paths: {} },
-    generatedModels: {
-      namesMap: {},
-      refNameMap: {}
-    }
-  };
-  return gen.printRuntime(parseSchema(schema, context));
+  const context = parserContext("");
+  return gen.printRuntime(parseSchema(schema)(context)[0]);
 }
 
 describe("Schema object parser", () => {
