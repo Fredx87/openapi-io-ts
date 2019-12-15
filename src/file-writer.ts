@@ -1,11 +1,16 @@
-import * as S from "fp-ts/lib/State";
-import { writeFileSync } from "fs";
+import { pipe } from "fp-ts/lib/pipeable";
+import * as RTE from "fp-ts/lib/ReaderTaskEither";
+import * as R from "fp-ts/lib/Record";
+import * as SRTE from "fp-ts/lib/StateReaderTaskEither";
+import * as TE from "fp-ts/lib/TaskEither";
+import * as fs from "fs";
 import * as gen from "io-ts-codegen";
 import * as prettier from "prettier";
+import { ParserConfiguration } from "./parser-configuration";
 import { ParserContext } from "./parser-context";
 
-function getModelFileName(name: string, context: ParserContext): string {
-  return `${context.outputDir}/models/${name}.ts`;
+function getModelFileName(name: string): string {
+  return `models/${name}.ts`;
 }
 
 function getIoTsTypesImportString(name: string): string {
@@ -31,21 +36,57 @@ function getModelImports(deps: string[], modelsPath: string): string {
     ${otherImports}`;
 }
 
-export function writeModels(): S.State<ParserContext, void> {
-  return S.gets(context => {
-    for (const [name, model] of Object.entries(
-      context.generatedModels.namesMap
-    )) {
-      const fileName = getModelFileName(name, context);
-      const content = `${getModelImports(gen.getNodeDependencies(model), ".")}
+function writeFile(
+  name: string,
+  content: string
+): RTE.ReaderTaskEither<ParserConfiguration, string, void> {
+  return pipe(
+    RTE.asks((config: ParserConfiguration) => config.outputDir),
+    RTE.chain(outDir =>
+      RTE.fromTaskEither(
+        pipe(
+          TE.taskify(fs.writeFile)(`${outDir}/${name}`, content),
+          TE.fold(
+            () => TE.left(`Cannot save file ${outDir}/${name}`),
+            () => TE.right(void 0)
+          )
+        )
+      )
+    )
+  );
+}
+
+function writeModel(
+  name: string,
+  model: gen.TypeDeclaration
+): RTE.ReaderTaskEither<ParserConfiguration, string, void> {
+  const fileName = getModelFileName(name);
+  const content = `${getModelImports(gen.getNodeDependencies(model), ".")}
+
+    ${gen.printRuntime(model)}
     
-        ${gen.printRuntime(model)}
-        
-        export type ${name} = t.TypeOf<typeof ${name}>;`;
+    export type ${name} = t.TypeOf<typeof ${name}>;`;
 
-      const formatted = prettier.format(content, { parser: "typescript" });
+  const formatted = prettier.format(content, { parser: "typescript" });
+  return writeFile(fileName, formatted);
+}
 
-      writeFileSync(fileName, formatted);
-    }
-  });
+export function writeModels(): SRTE.StateReaderTaskEither<
+  ParserContext,
+  ParserConfiguration,
+  string,
+  void
+> {
+  return pipe(
+    SRTE.gets((context: ParserContext) => context.generatedModels.namesMap),
+    SRTE.chain(models =>
+      SRTE.fromReaderTaskEither(
+        R.record.traverseWithIndex(RTE.readerTaskEither)(
+          models,
+          (name, model) => writeModel(name, model)
+        )
+      )
+    ),
+    SRTE.map(() => void 0)
+  );
 }

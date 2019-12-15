@@ -6,7 +6,7 @@ import { parseSchema, shouldGenerateModel } from "./schema-parser";
 function toRuntime(
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
 ): string {
-  const context = parserContext("");
+  const context = parserContext();
   return gen.printRuntime(parseSchema(schema)(context)[0]);
 }
 
