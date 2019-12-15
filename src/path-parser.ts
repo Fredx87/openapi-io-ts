@@ -1,3 +1,4 @@
+import { sequenceS } from "fp-ts/lib/Apply";
 import * as A from "fp-ts/lib/Array";
 import * as O from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
@@ -8,6 +9,7 @@ import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import {
   Api,
+  ApiBody,
   ApiMethod,
   ApiParameter,
   ApiParameterIn,
@@ -16,23 +18,84 @@ import {
 import { createModel, parseSchema, shouldGenerateModel } from "./schema-parser";
 import { getObjectByRef, isReference } from "./utils";
 
+type ObjectWithSchemas = OpenAPIV3.ParameterObject | OpenAPIV3.MediaTypeObject;
+
+function getObjectFromDocument<T>(
+  obj: OpenAPIV3.ReferenceObject | T
+): S.State<ParserContext, T> {
+  return pipe(
+    S.gets((context: ParserContext) => context.document),
+    S.chain(doc =>
+      isReference(obj) ? S.of(getObjectByRef(obj, doc) as T) : S.of(obj)
+    )
+  );
+}
+
+function getOrCreateModel(
+  name: string,
+  schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject | undefined
+): S.State<ParserContext, gen.TypeReference> {
+  return pipe(
+    schema ? parseSchema(schema) : S.of(gen.unknownType),
+    S.chain(s => (shouldGenerateModel(s) ? createModel(name, s) : S.of(s)))
+  );
+}
+
+function getJsonSchemaFromContent(
+  content: Record<string, OpenAPIV3.MediaTypeObject>
+): O.Option<OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject> {
+  return pipe(
+    R.lookup("application/json", content),
+    O.chain(media => O.fromNullable(media.schema))
+  );
+}
+
+// todo: understand how to handle not JSON bodies
+function parseApiRequestBody(
+  operation: OpenAPIV3.OperationObject
+): S.State<ParserContext, O.Option<ApiBody>> {
+  return pipe(
+    O.fromNullable(operation.requestBody),
+    O.fold(
+      () => S.of(O.none),
+      rb =>
+        pipe(
+          getObjectFromDocument(rb),
+          S.chain(body =>
+            pipe(
+              getJsonSchemaFromContent(body.content),
+              O.fold(
+                () => S.of(O.none),
+                schema =>
+                  pipe(
+                    getOrCreateModel(
+                      `${operation.operationId!}RequestBody`,
+                      schema
+                    ),
+                    S.chain(type => {
+                      const res: ApiBody = {
+                        type,
+                        required: body.required ?? false
+                      };
+                      return S.of(O.some(res));
+                    })
+                  )
+              )
+            )
+          )
+        )
+    )
+  );
+}
+
 function createApiParameter(
   param: OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject
 ): S.State<ParserContext, ApiParameter> {
   return pipe(
-    S.gets((context: ParserContext) =>
-      isReference(param)
-        ? (getObjectByRef(param, context.document) as OpenAPIV3.ParameterObject)
-        : param
-    ),
+    getObjectFromDocument(param),
     S.chain(resolvedParam =>
       pipe(
-        resolvedParam.schema
-          ? parseSchema(resolvedParam.schema)
-          : S.of(gen.unknownType),
-        S.chain((s: gen.TypeReference) =>
-          shouldGenerateModel(s) ? createModel(resolvedParam.name, s) : S.of(s)
-        ),
+        getOrCreateModel(resolvedParam.name, resolvedParam.schema),
         S.chain(type => {
           const res: ApiParameter = {
             name: resolvedParam.name,
@@ -68,23 +131,29 @@ function addApi(tag: string, api: Api): S.State<ParserContext, void> {
   );
 }
 
+function createApi(
+  path: string,
+  method: ApiMethod,
+  operation: OpenAPIV3.OperationObject
+): S.State<ParserContext, Api> {
+  return sequenceS(S.state)({
+    path: S.of(path),
+    name: S.of(operation.operationId!),
+    method: S.of(method),
+    params: parseApiParameters(operation),
+    body: parseApiRequestBody(operation)
+  });
+}
+
 export function parseApi(
   path: string,
   method: ApiMethod,
   operation: OpenAPIV3.OperationObject
 ): S.State<ParserContext, void> {
+  const tag = operation.tags ? operation.tags[0] : "";
   return pipe(
-    parseApiParameters(operation),
-    S.chain(params => {
-      const api: Api = {
-        path,
-        name: operation.operationId!,
-        method,
-        params
-      };
-      const tag = operation.tags ? operation.tags[0] : "";
-      return addApi(tag, api);
-    })
+    createApi(path, method, operation),
+    S.chain(api => addApi(tag, api))
   );
 }
 

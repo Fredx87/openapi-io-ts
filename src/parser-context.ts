@@ -1,3 +1,4 @@
+import * as O from "fp-ts/lib/Option";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 
@@ -12,8 +13,8 @@ export interface ApiParameter {
 }
 
 export interface ApiBody {
-  name: string;
   type: gen.TypeReference;
+  required: boolean;
 }
 
 export type ApiMethod = "get" | "post" | "put" | "delete";
@@ -23,7 +24,7 @@ export interface Api {
   name: string;
   method: ApiMethod;
   params: ApiParameter[];
-  body?: ApiBody;
+  body: O.Option<ApiBody>;
   returnType?: gen.TypeReference;
 }
 
