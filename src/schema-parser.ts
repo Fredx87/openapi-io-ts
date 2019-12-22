@@ -104,9 +104,15 @@ export function createModel(
 ): ParserSTE<gen.TypeReference> {
   return pipe(
     getNameForNewModel(name),
-    STE.map(modelName => gen.typeDeclaration(modelName, typeRef, true)),
-    STE.chain(t => addModel(name, t)),
-    STE.map(() => gen.identifier(name))
+    STE.chain(modelName =>
+      pipe(
+        STE.right(gen.typeDeclaration(modelName, typeRef, true)),
+        STE.chain<ParserContext, string, gen.TypeDeclaration, void>(t =>
+          addModel(modelName, t)
+        ),
+        STE.map(() => gen.identifier(modelName))
+      )
+    )
   );
 }
 
