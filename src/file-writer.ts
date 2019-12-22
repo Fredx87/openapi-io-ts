@@ -86,7 +86,7 @@ export function writeModels(): ParserSTE {
     STE.chain<ParserContext, string, void, Record<string, gen.TypeDeclaration>>(
       () => STE.gets(context => context.generatedModels.namesMap)
     ),
-    STE.map(models =>
+    STE.chain(models =>
       R.record.traverseWithIndex(STE.stateTaskEither)(models, (name, model) =>
         writeModel(name, model)
       )
