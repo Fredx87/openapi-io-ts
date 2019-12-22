@@ -13,6 +13,7 @@ import {
   ApiMethod,
   ApiParameter,
   ApiParameterIn,
+  ApiResponse,
   ParserContext
 } from "./parser-context";
 import { createModel, parseSchema, shouldGenerateModel } from "./schema-parser";
@@ -49,6 +50,81 @@ function getJsonSchemaFromContent(
   return pipe(
     R.lookup("application/json", content),
     O.chain(media => O.fromNullable(media.schema))
+  );
+}
+
+function getMediaTypesWithSchema(
+  response: OpenAPIV3.ResponseObject
+): Record<string, OpenAPIV3.MediaTypeObject> {
+  if (response.content == null) {
+    return {};
+  }
+  return R.record.filterWithIndex(
+    response.content,
+    (mediaType, object) =>
+      mediaType === "application/json" && object.schema != null
+  );
+}
+
+function getResponsensWithContent(
+  responses: OpenAPIV3.ResponsesObject
+): ParserSTE<Record<string, Record<string, OpenAPIV3.MediaTypeObject>>> {
+  return pipe(
+    R.record.traverse(STE.stateTaskEither)(responses, resp =>
+      getObjectFromDocument(resp)
+    ),
+    STE.map(res => R.record.map(res, getMediaTypesWithSchema)),
+    STE.map(res => R.record.filter(res, mediaObj => !R.isEmpty(mediaObj)))
+  );
+}
+
+function parseMediaRecord(
+  code: string,
+  mediaRecord: Record<string, OpenAPIV3.MediaTypeObject>,
+  operation: OpenAPIV3.OperationObject
+): ParserSTE<ApiResponse[]> {
+  const modelName = `${operation.operationId!}Response${code}`;
+  return pipe(
+    R.record.traverseWithIndex(STE.stateTaskEither)(
+      mediaRecord,
+      (mediaType, mediaObj) =>
+        pipe(
+          getOrCreateModel(modelName, mediaObj.schema),
+          STE.map(type => {
+            const res: ApiResponse = {
+              code,
+              mediaType,
+              type
+            };
+            return res;
+          })
+        )
+    ),
+    STE.map(res => Object.values(res))
+  );
+}
+
+export function parseApiResponses(
+  operation: OpenAPIV3.OperationObject
+): ParserSTE<ApiResponse[]> {
+  return pipe(
+    O.fromNullable(operation.responses),
+    O.fold(
+      () => STE.right([]),
+      responses =>
+        pipe(
+          getResponsensWithContent(responses),
+          STE.chain(res =>
+            R.record.traverseWithIndex(STE.stateTaskEither)(
+              res,
+              (code, mediaRecord) =>
+                parseMediaRecord(code, mediaRecord, operation)
+            )
+          ),
+          STE.map(res => Object.values(res)),
+          STE.map(res => A.flatten(res))
+        )
+    )
   );
 }
 
@@ -143,7 +219,8 @@ function createApi(
     name: STE.right(operation.operationId!),
     method: STE.right(method),
     params: parseApiParameters(operation),
-    body: parseApiRequestBody(operation)
+    body: parseApiRequestBody(operation),
+    responses: parseApiResponses(operation)
   });
 }
 

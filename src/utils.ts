@@ -1,4 +1,6 @@
+import assert from "assert";
 import * as STE from "fp-ts-contrib/lib/StateTaskEither";
+import * as E from "fp-ts/lib/Either";
 import { get } from "lodash";
 import { OpenAPIV3 } from "openapi-types";
 import { ParserContext } from "./parser-context";
@@ -23,4 +25,10 @@ export function getObjectByRef(
 
 export function isReference(obj: any): obj is OpenAPIV3.ReferenceObject {
   return "$ref" in obj;
+}
+
+export function assertIsRight<E, A>(
+  input: E.Either<E, A>
+): asserts input is E.Right<A> {
+  assert(E.isRight(input));
 }

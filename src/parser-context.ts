@@ -19,13 +19,19 @@ export interface ApiBody {
 
 export type ApiMethod = "get" | "post" | "put" | "delete";
 
+export interface ApiResponse {
+  code: string;
+  mediaType: string;
+  type: gen.TypeReference;
+}
+
 export interface Api {
   path: string;
   name: string;
   method: ApiMethod;
   params: ApiParameter[];
   body: O.Option<ApiBody>;
-  returnType?: gen.TypeReference;
+  responses: ApiResponse[];
 }
 
 export interface GeneratedModels {
