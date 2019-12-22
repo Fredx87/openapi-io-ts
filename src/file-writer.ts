@@ -1,15 +1,13 @@
+import * as STE from "fp-ts-contrib/lib/StateTaskEither";
 import { pipe } from "fp-ts/lib/pipeable";
-import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as R from "fp-ts/lib/Record";
-import * as SRTE from "fp-ts/lib/StateReaderTaskEither";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as fs from "fs";
 import * as gen from "io-ts-codegen";
 import * as prettier from "prettier";
 import * as util from "util";
-import { ParserConfiguration } from "./parser-configuration";
 import { ParserContext } from "./parser-context";
-import { ParserRTE, ParserSRTE } from "./utils";
+import { ParserSTE } from "./utils";
 
 function getModelFileName(name: string): string {
   return `models/${name}.ts`;
@@ -38,16 +36,16 @@ function getModelImports(deps: string[], modelsPath: string): string {
     ${otherImports}`;
 }
 
-function writeFile(name: string, content: string): ParserRTE {
+function writeFile(name: string, content: string): ParserSTE {
   return pipe(
-    RTE.asks((config: ParserConfiguration) => config.outputDir),
-    RTE.chain(outDir =>
-      RTE.fromTaskEither(
+    STE.gets<ParserContext, string>(context => context.outputDir),
+    STE.chain(outDir =>
+      STE.fromTaskEither(
         pipe(
           TE.taskify(fs.writeFile)(`${outDir}/${name}`, content),
           TE.fold(
             () => TE.left(`Cannot save file ${outDir}/${name}`),
-            () => TE.right(void 0)
+            () => TE.right(undefined)
           )
         )
       )
@@ -55,7 +53,7 @@ function writeFile(name: string, content: string): ParserRTE {
   );
 }
 
-function writeModel(name: string, model: gen.TypeDeclaration): ParserRTE {
+function writeModel(name: string, model: gen.TypeDeclaration): ParserSTE {
   const fileName = getModelFileName(name);
   const content = `${getModelImports(gen.getNodeDependencies(model), ".")}
 
@@ -67,11 +65,11 @@ function writeModel(name: string, model: gen.TypeDeclaration): ParserRTE {
   return writeFile(fileName, formatted);
 }
 
-function createModelsDir(): ParserRTE {
+function createModelsDir(): ParserSTE {
   return pipe(
-    RTE.asks((config: ParserConfiguration) => config.outputDir),
-    RTE.chain(outDir =>
-      RTE.fromTaskEither(
+    STE.gets<ParserContext, string>(context => context.outputDir),
+    STE.chain(outDir =>
+      STE.fromTaskEither(
         TE.tryCatch(
           () =>
             util.promisify(fs.mkdir)(`${outDir}/models`, { recursive: true }),
@@ -82,22 +80,17 @@ function createModelsDir(): ParserRTE {
   );
 }
 
-export function writeModels(): ParserSRTE {
+export function writeModels(): ParserSTE {
   return pipe(
-    SRTE.fromReaderTaskEither<ParserContext, ParserConfiguration, string, void>(
-      createModelsDir()
+    createModelsDir(),
+    STE.chain<ParserContext, string, void, Record<string, gen.TypeDeclaration>>(
+      () => STE.gets(context => context.generatedModels.namesMap)
     ),
-    SRTE.chain(() =>
-      SRTE.gets((context: ParserContext) => context.generatedModels.namesMap)
-    ),
-    SRTE.chain(models =>
-      SRTE.fromReaderTaskEither(
-        R.record.traverseWithIndex(RTE.readerTaskEither)(
-          models,
-          (name, model) => writeModel(name, model)
-        )
+    STE.map(models =>
+      R.record.traverseWithIndex(STE.stateTaskEither)(models, (name, model) =>
+        writeModel(name, model)
       )
     ),
-    SRTE.map(() => void 0)
+    STE.map(() => undefined)
   );
 }

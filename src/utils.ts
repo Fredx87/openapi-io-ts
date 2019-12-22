@@ -1,18 +1,9 @@
-import * as RTE from "fp-ts/lib/ReaderTaskEither";
-import * as SRTE from "fp-ts/lib/StateReaderTaskEither";
+import * as STE from "fp-ts-contrib/lib/StateTaskEither";
 import { get } from "lodash";
 import { OpenAPIV3 } from "openapi-types";
-import { ParserConfiguration } from "./parser-configuration";
 import { ParserContext } from "./parser-context";
 
-export type ParserSRTE = SRTE.StateReaderTaskEither<
-  ParserContext,
-  ParserConfiguration,
-  string,
-  void
->;
-
-export type ParserRTE = RTE.ReaderTaskEither<ParserConfiguration, string, void>;
+export type ParserSTE<A = void> = STE.StateTaskEither<ParserContext, string, A>;
 
 export function pascalCase(input: string): string {
   const charArray = input.split("");

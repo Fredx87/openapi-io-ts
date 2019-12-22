@@ -37,6 +37,8 @@ export interface ParserContext {
   document: OpenAPIV3.Document;
   generatedModels: GeneratedModels;
   apis: Record<string, Api[]>;
+  inputFile: string;
+  outputDir: string;
 }
 
 const emptyDocument: OpenAPIV3.Document = {
@@ -45,13 +47,18 @@ const emptyDocument: OpenAPIV3.Document = {
   paths: {}
 };
 
-export function parserContext(): ParserContext {
+export function parserContext(
+  inputFile: string,
+  outputDir: string
+): ParserContext {
   return {
     document: emptyDocument,
     generatedModels: {
       namesMap: {},
       refNameMap: {}
     },
-    apis: {}
+    apis: {},
+    inputFile,
+    outputDir
   };
 }

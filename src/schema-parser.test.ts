@@ -1,13 +1,19 @@
+import * as E from "fp-ts/lib/Either";
+import { pipe } from "fp-ts/lib/pipeable";
+import * as TE from "fp-ts/lib/TaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { parserContext } from "./parser-context";
 import { parseSchema, shouldGenerateModel } from "./schema-parser";
 
-function toRuntime(
+async function toRuntime(
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
-): string {
-  const context = parserContext();
-  return gen.printRuntime(parseSchema(schema)(context)[0]);
+): Promise<E.Either<string, string>> {
+  const context = parserContext("", "");
+  return pipe(
+    parseSchema(schema)(context),
+    TE.map(res => gen.printRuntime(res[0]))
+  )();
 }
 
 describe("Schema object parser", () => {
@@ -109,76 +115,128 @@ describe("Schema object parser", () => {
     });
   });
 
-  test("base string parser", () => {
+  test("base string parser", async () => {
     const schema: OpenAPIV3.SchemaObject = { type: "string" };
-    expect(toRuntime(schema)).toMatchInlineSnapshot(`"t.string"`);
+    const result = await toRuntime(schema);
+    expect(result).toMatchInlineSnapshot(`
+      Object {
+        "_tag": "Right",
+        "right": "t.string",
+      }
+    `);
   });
 
-  test("enum string parser", () => {
+  test("enum string parser", async () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "string",
       enum: ["foo", "bar", "baz"]
     };
-    expect(toRuntime(schema)).toMatchInlineSnapshot(`
-      "t.union([
+    const result = await toRuntime(schema);
+    expect(result).toMatchInlineSnapshot(`
+      Object {
+        "_tag": "Right",
+        "right": "t.union([
         t.literal('foo'),
         t.literal('bar'),
         t.literal('baz')
-      ])"
+      ])",
+      }
     `);
   });
 
-  test("date string parser", () => {
+  test("date string parser", async () => {
     const schema: OpenAPIV3.SchemaObject = { type: "string", format: "date" };
-    expect(toRuntime(schema)).toMatchInlineSnapshot(`"DateFromISOString"`);
+    const result = await toRuntime(schema);
+    expect(result).toMatchInlineSnapshot(`
+      Object {
+        "_tag": "Right",
+        "right": "DateFromISOString",
+      }
+    `);
   });
 
-  test("date-time string parser", () => {
+  test("date-time string parser", async () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "string",
       format: "date-time"
     };
-    expect(toRuntime(schema)).toMatchInlineSnapshot(`"DateFromISOString"`);
+    const result = await toRuntime(schema);
+    expect(result).toMatchInlineSnapshot(`
+      Object {
+        "_tag": "Right",
+        "right": "DateFromISOString",
+      }
+    `);
   });
 
-  test("integer parser", () => {
+  test("integer parser", async () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "integer"
     };
-    expect(toRuntime(schema)).toMatchInlineSnapshot(`"t.Integer"`);
+    const result = await toRuntime(schema);
+    expect(result).toMatchInlineSnapshot(`
+      Object {
+        "_tag": "Right",
+        "right": "t.Integer",
+      }
+    `);
   });
 
-  test("number parser", () => {
+  test("number parser", async () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "number"
     };
-    expect(toRuntime(schema)).toMatchInlineSnapshot(`"t.number"`);
+    const result = await toRuntime(schema);
+    expect(result).toMatchInlineSnapshot(`
+      Object {
+        "_tag": "Right",
+        "right": "t.number",
+      }
+    `);
   });
 
-  test("boolean parser", () => {
+  test("boolean parser", async () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "boolean"
     };
-    expect(toRuntime(schema)).toMatchInlineSnapshot(`"t.boolean"`);
+    const result = await toRuntime(schema);
+    expect(result).toMatchInlineSnapshot(`
+      Object {
+        "_tag": "Right",
+        "right": "t.boolean",
+      }
+    `);
   });
 
-  test("string array parser", () => {
+  test("string array parser", async () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "array",
       items: { type: "string" }
     };
-    expect(toRuntime(schema)).toMatchInlineSnapshot(`"t.array(t.string)"`);
+    const result = await toRuntime(schema);
+    expect(result).toMatchInlineSnapshot(`
+      Object {
+        "_tag": "Right",
+        "right": "t.array(t.string)",
+      }
+    `);
   });
 
-  test("number array parser", () => {
+  test("number array parser", async () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "array",
       items: { type: "number" }
     };
-    expect(toRuntime(schema)).toMatchInlineSnapshot(`"t.array(t.number)"`);
+    const result = await toRuntime(schema);
+    expect(result).toMatchInlineSnapshot(`
+      Object {
+        "_tag": "Right",
+        "right": "t.array(t.number)",
+      }
+    `);
   });
 
-  test("object parser", () => {
+  test("object parser", async () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "object",
       properties: {
@@ -205,8 +263,11 @@ describe("Schema object parser", () => {
       },
       required: ["id"]
     };
-    expect(toRuntime(schema)).toMatchInlineSnapshot(`
-      "t.intersection([
+    const result = await toRuntime(schema);
+    expect(result).toMatchInlineSnapshot(`
+      Object {
+        "_tag": "Right",
+        "right": "t.intersection([
         t.type({
           id: t.Integer
         }),
@@ -221,14 +282,21 @@ describe("Schema object parser", () => {
           ]),
           complete: t.boolean
         })
-      ])"
+      ])",
+      }
     `);
   });
 
-  test("free object parser", () => {
+  test("free object parser", async () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "object"
     };
-    expect(toRuntime(schema)).toMatchInlineSnapshot(`"t.UnknownRecord"`);
+    const result = await toRuntime(schema);
+    expect(result).toMatchInlineSnapshot(`
+      Object {
+        "_tag": "Right",
+        "right": "t.UnknownRecord",
+      }
+    `);
   });
 });
