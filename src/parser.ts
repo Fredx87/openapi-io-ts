@@ -1,99 +1,31 @@
-import { writeFileSync } from "fs";
-import * as gen from "io-ts-codegen";
-import { OpenAPIV3 } from "openapi-types";
-import * as prettier from "prettier";
-import SwaggerParser from "swagger-parser";
-import { inspect } from "util";
-import { parseApi } from "./path-parser";
-import { parseSchema } from "./schema-parser";
-import { isReference } from "./utils";
+import * as STE from "fp-ts-contrib/lib/StateTaskEither";
+import { error, log } from "fp-ts/lib/Console";
+import { pipe } from "fp-ts/lib/pipeable";
+import * as T from "fp-ts/lib/Task";
+import * as TE from "fp-ts/lib/TaskEither";
+import { writeModels } from "./file-writer";
+import { openApiParser } from "./openapi-parser";
+import { parserContext } from "./parser-context";
+import { parseAllApis } from "./path-parser";
+import { parseAllSchemas } from "./schema-parser";
 
-export function printSchema(name: string, type: gen.TypeReference): string {
-  return `export const ${name} = ${gen.printRuntime(type)};
-  
-  export type ${name} = t.TypeOf<typeof ${name}>;
-
-  `;
+function onLeft(e: string): T.Task<void> {
+  return T.fromIO(error(`Error: ${e}`));
 }
 
-export function getComponentParameterName(name: string): string {
-  return `${name}Parameter`;
+function onRight(): T.Task<void> {
+  return T.fromIO(log("Files generated succeessfully!"));
 }
 
-export function getComponentRequestBodyName(name: string): string {
-  return `${name}RequestBody`;
-}
+export function parse(inputFile: string, outputDir: string): void {
+  const initialContext = parserContext(inputFile, outputDir);
 
-function generateComponentsTypesDeclaration(
-  components: OpenAPIV3.ComponentsObject
-) {
-  const { schemas, parameters, requestBodies } = components;
-  let res = `import * as t from 'io-ts';
-  import { DateFromISOString } from 'io-ts-types/lib/DateFromISOString';
-  
-  `;
+  const result = pipe(
+    openApiParser(),
+    STE.chain(() => parseAllSchemas()),
+    STE.chain(() => parseAllApis()),
+    STE.chain(() => writeModels())
+  )(initialContext);
 
-  if (schemas) {
-    for (const [name, value] of Object.entries(schemas)) {
-      res += printSchema(name, parseSchema(value));
-    }
-  }
-
-  if (parameters) {
-    for (const [name, value] of Object.entries(parameters)) {
-      if (isReference(value)) {
-        continue;
-      }
-      if (value.schema) {
-        res += printSchema(
-          getComponentParameterName(name),
-          parseSchema(value.schema)
-        );
-      }
-    }
-  }
-
-  if (requestBodies) {
-    for (const [name, value] of Object.entries(requestBodies)) {
-      if (isReference(value)) {
-        continue;
-      }
-      if (value.content["application/json"].schema) {
-        res += printSchema(
-          getComponentRequestBodyName(name),
-          parseSchema(value.content["application/json"].schema)
-        );
-      }
-    }
-  }
-
-  const content = prettier.format(res, {
-    parser: "typescript"
-  });
-  writeFileSync("./out/models.ts", content);
-}
-
-export function parse(jsonFile: string): void {
-  SwaggerParser.bundle(jsonFile).then(res => {
-    const doc = res as OpenAPIV3.Document;
-
-    if (doc.components) {
-      generateComponentsTypesDeclaration(doc.components);
-    }
-
-    if (doc.paths) {
-      const gets = Object.entries(doc.paths).reduce(
-        (pathsMap, [path, pathObject]) => {
-          if (pathObject.get) {
-            const api = parseApi(path, "get", pathObject.get, doc);
-            pathsMap.set(api.name, api);
-          }
-
-          return pathsMap;
-        },
-        new Map()
-      );
-      console.log(inspect(gets, false, 10, true));
-    }
-  });
+  pipe(result, TE.fold(onLeft, onRight))();
 }
