@@ -17,10 +17,8 @@
   "dependencies": {
     "@types/lodash": "^4.14.149",
     "@types/yargs": "^13.0.3",
-    "axios": "^0.19.2",
     "fp-ts": "^2.2.0",
     "fp-ts-contrib": "^0.1.8",
-    "handlebars": "^4.7.2",
     "immer": "^5.0.1",
     "io-ts": "^2.0.1",
     "io-ts-codegen": "^0.4.2",

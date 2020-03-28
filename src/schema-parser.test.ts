@@ -62,12 +62,12 @@ describe("Schema object parser", () => {
       ).toBe(true);
     });
 
-    test("model for instersection with basic types should not be generated", () => {
+    test("model for instersection with basic types should be generated", () => {
       expect(
         shouldGenerateModel(
           gen.intersectionCombinator([gen.stringType, gen.intType])
         )
-      ).toBe(false);
+      ).toBe(true);
     });
 
     test("model for instersection with complex types should not be generated", () => {
@@ -89,10 +89,10 @@ describe("Schema object parser", () => {
       ).toBe(true);
     });
 
-    test("model for union with basic types should not be generated", () => {
+    test("model for union with basic types should be generated", () => {
       expect(
         shouldGenerateModel(gen.unionCombinator([gen.stringType, gen.intType]))
-      ).toBe(false);
+      ).toBe(true);
     });
 
     test("model for union with complex types should not be generated", () => {

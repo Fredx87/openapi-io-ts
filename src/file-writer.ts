@@ -86,7 +86,7 @@ function createModelsDir(): ParserSTE {
 
 function writeModelIndex(models: string[]): ParserSTE {
   let content =
-    'export { DateFromISOString } from "io-ts-types/lib/DateFromISOString"';
+    'export { DateFromISOString } from "io-ts-types/lib/DateFromISOString"; ';
   content += models.map(m => `export * from './${m}';`).join("\n");
   return writeFormatted("models/index.ts", content);
 }
