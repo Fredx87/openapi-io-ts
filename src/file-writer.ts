@@ -53,6 +53,11 @@ function writeFile(name: string, content: string): ParserSTE {
   );
 }
 
+function writeFormatted(name: string, content: string): ParserSTE {
+  const formatted = prettier.format(content, { parser: "typescript" });
+  return writeFile(name, formatted);
+}
+
 function writeModel(name: string, model: gen.TypeDeclaration): ParserSTE {
   const fileName = getModelFileName(name);
   const content = `${getModelImports(gen.getNodeDependencies(model), ".")}
@@ -61,8 +66,7 @@ function writeModel(name: string, model: gen.TypeDeclaration): ParserSTE {
     
     export type ${name} = t.TypeOf<typeof ${name}>;`;
 
-  const formatted = prettier.format(content, { parser: "typescript" });
-  return writeFile(fileName, formatted);
+  return writeFormatted(fileName, content);
 }
 
 function createModelsDir(): ParserSTE {
@@ -80,6 +84,13 @@ function createModelsDir(): ParserSTE {
   );
 }
 
+function writeModelIndex(models: string[]): ParserSTE {
+  let content =
+    'export { DateFromISOString } from "io-ts-types/lib/DateFromISOString"';
+  content += models.map(m => `export * from './${m}';`).join("\n");
+  return writeFormatted("models/index.ts", content);
+}
+
 export function writeModels(): ParserSTE {
   return pipe(
     createModelsDir(),
@@ -87,8 +98,11 @@ export function writeModels(): ParserSTE {
       () => STE.gets(context => context.generatedModels.namesMap)
     ),
     STE.chain(models =>
-      R.record.traverseWithIndex(STE.stateTaskEither)(models, (name, model) =>
-        writeModel(name, model)
+      pipe(
+        R.record.traverseWithIndex(STE.stateTaskEither)(models, (name, model) =>
+          writeModel(name, model)
+        ),
+        STE.chain(() => writeModelIndex(Object.keys(models)))
       )
     ),
     STE.map(() => undefined)
