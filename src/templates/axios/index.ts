@@ -27,6 +27,8 @@ function createApiTemplate(api: Api): string {
   const fnArgs = generateFunctionArgs(params, body);
   const respType = getResponsesType(responses);
 
+  // TODO: do not decode if api has not return type, use runtime type for decoding
+
   return `
         export function ${name}(${fnArgs}): TE.TaskEither<ApiError, ${respType}> {
             return pipe(

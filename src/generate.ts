@@ -6,6 +6,7 @@ import * as T from "fp-ts/lib/Task";
 import * as TE from "fp-ts/lib/TaskEither";
 import SwaggerParser from "swagger-parser";
 import { Environment } from "./environment";
+import { writeApis } from "./file-writer/apis";
 import { writeModels } from "./file-writer/models";
 import { parse } from "./parser";
 import { parserState } from "./parser/parserState";
@@ -35,7 +36,8 @@ export function generate(inputFile: string, outputDir: string): void {
 
   const result = pipe(
     parse(),
-    RTE.chain(() => writeModels())
+    RTE.chain(() => writeModels()),
+    RTE.chain(() => writeApis())
   )(env);
 
   pipe(result, TE.fold(onLeft, onRight))();
