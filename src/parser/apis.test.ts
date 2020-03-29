@@ -1,40 +1,37 @@
 import assert from "assert";
-import * as E from "fp-ts/lib/Either";
 import { newIORef } from "fp-ts/lib/IORef";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { environment, Environment } from "../environment";
+import { Environment } from "../environment";
 import { assertIsRight } from "../utils";
 import { parseApiResponses } from "./apis";
 import { ApiResponse, parserState } from "./parserState";
-
-async function parseApiResponsesResult(
-  input: OpenAPIV3.OperationObject,
-  env: Environment
-): Promise<E.Either<string, ApiResponse[]>> {
-  const state = parserState();
-  state.generatedModels.namesMap["User"] = gen.typeDeclaration(
-    "User",
-    gen.unknownRecordType
-  );
-  state.generatedModels.refNameMap["#/components/schemas/User"] = "User";
-  env.parserState = newIORef(state)();
-  return parseApiResponses(input)(env)();
-}
 
 describe("path-parser", () => {
   describe("responses parser", () => {
     let env: Environment;
 
     beforeEach(() => {
-      env = environment("", "")();
+      const state = parserState();
+      state.generatedModels.namesMap["User"] = gen.typeDeclaration(
+        "User",
+        gen.unknownRecordType
+      );
+      state.generatedModels.refNameMap["#/components/schemas/User"] = "User";
+
+      env = {
+        inputFile: "",
+        outputDir: "",
+        parseDocument: jest.fn(),
+        parserState: newIORef(state)()
+      };
     });
 
     test("should return empty array on operation without responses", async () => {
       const input: OpenAPIV3.OperationObject = {
         responses: undefined
       };
-      const result = await parseApiResponsesResult(input, env);
+      const result = await parseApiResponses(input)(env)();
       const expected: ApiResponse[] = [];
       assertIsRight(result);
       assert.deepStrictEqual(result.right, expected);
@@ -51,7 +48,7 @@ describe("path-parser", () => {
           }
         }
       };
-      const result = await parseApiResponsesResult(input, env);
+      const result = await parseApiResponses(input)(env)();
       const expected: ApiResponse[] = [];
       assertIsRight(result);
       assert.deepStrictEqual(result.right, expected);
@@ -80,7 +77,7 @@ describe("path-parser", () => {
           }
         }
       };
-      const result = await parseApiResponsesResult(input, env);
+      const result = await parseApiResponses(input)(env)();
       const expected: ApiResponse[] = [
         { code: "200", mediaType: "application/json", type: gen.stringType }
       ];
@@ -114,7 +111,7 @@ describe("path-parser", () => {
           }
         }
       };
-      const result = await parseApiResponsesResult(input, env);
+      const result = await parseApiResponses(input)(env)();
       const expected: ApiResponse[] = [
         {
           code: "200",
@@ -161,7 +158,7 @@ describe("path-parser", () => {
           }
         }
       };
-      const result = await parseApiResponsesResult(input, env);
+      const result = await parseApiResponses(input)(env)();
       const expected: ApiResponse[] = [
         {
           code: "200",

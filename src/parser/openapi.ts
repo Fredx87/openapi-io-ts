@@ -1,7 +1,6 @@
 import { pipe } from "fp-ts/lib/pipeable";
 import * as TE from "fp-ts/lib/TaskEither";
 import { OpenAPI, OpenAPIV3 } from "openapi-types";
-import SwaggerParser from "swagger-parser";
 import { GenRTE } from "../environment";
 
 function isOpenApiV3Document(doc: OpenAPI.Document): doc is OpenAPIV3.Document {
@@ -11,10 +10,7 @@ function isOpenApiV3Document(doc: OpenAPI.Document): doc is OpenAPIV3.Document {
 export function openApiParser(): GenRTE<void> {
   return env =>
     pipe(
-      TE.tryCatch(
-        () => SwaggerParser.bundle(env.inputFile),
-        e => `Error in OpenApi file: ${String(e)}`
-      ),
+      env.parseDocument(env.inputFile),
       TE.chain(doc =>
         isOpenApiV3Document(doc)
           ? TE.right(doc)
