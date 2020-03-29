@@ -2,10 +2,10 @@ import assert from "assert";
 import { newIORef } from "fp-ts/lib/IORef";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { Environment } from "../environment";
-import { assertIsRight } from "../utils";
-import { parseApiResponses } from "./apis";
-import { ApiResponse, parserState } from "./parserState";
+import { Environment } from "../../environment";
+import { assertIsRight } from "../../utils";
+import { parseApiResponses } from "../apis";
+import { ApiResponse, parserState } from "../parserState";
 
 describe("path-parser", () => {
   describe("responses parser", () => {

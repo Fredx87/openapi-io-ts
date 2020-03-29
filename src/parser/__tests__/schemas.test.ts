@@ -4,9 +4,9 @@ import { pipe } from "fp-ts/lib/pipeable";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { Environment } from "../environment";
-import { parserState } from "./parserState";
-import { parseSchema, shouldGenerateModel } from "./schemas";
+import { Environment } from "../../environment";
+import { parserState } from "../parserState";
+import { parseSchema, shouldGenerateModel } from "../schemas";
 
 async function toRuntime(
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject,
