@@ -3,13 +3,12 @@ import { error, log } from "fp-ts/lib/Console";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as T from "fp-ts/lib/Task";
 import * as TE from "fp-ts/lib/TaskEither";
-import { writeModels } from "./file-writer";
+import { writeModels } from "./file-writer/models";
 import { openApiParser } from "./openapi-parser";
 import { parserContext, ParserContext } from "./parser-context";
 import { parseAllApis } from "./path-parser";
 import { parseAllSchemas } from "./schema-parser";
 import { ParserSTE } from "./utils";
-import { inspect } from "util";
 
 function onLeft(e: string): T.Task<void> {
   return T.fromIO(error(`Error: ${e}`));
