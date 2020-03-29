@@ -1,24 +1,9 @@
-import * as gen from "io-ts-codegen";
-import { ApiParameter, ApiResponse, ApiBody } from "../parser-context";
 import * as O from "fp-ts/lib/Option";
+import * as gen from "io-ts-codegen";
+import { ApiBody, ApiParameter, ApiResponse } from "../parser/parserState";
 
 export function getTypeName(type: gen.TypeReference): string {
-  switch (type.kind) {
-    case "StringType":
-    case "NumberType":
-    case "BooleanType":
-    case "NullType":
-    case "UndefinedType":
-    case "IntegerType":
-    case "IntType":
-    case "AnyDictionaryType":
-    case "FunctionType":
-    case "UnknownType":
-    case "ArrayCombinator":
-      return gen.printStatic(type);
-    default:
-      return gen.printRuntime(type);
-  }
+  return gen.printStatic(type);
 }
 
 export function generateFunctionArgs(

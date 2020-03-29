@@ -1,6 +1,6 @@
-import { Api, ApiMethod, ApiBody } from "../../parser-context";
 import * as O from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
+import { Api, ApiBody, ApiMethod } from "../../parser/parserState";
 import {
   createUrlTemplate,
   generateFunctionArgs,
@@ -15,7 +15,7 @@ function createAxiosRequest(
   return pipe(
     body,
     O.fold(
-      () => `axios.${method}(${createUrlTemplate(path)})`,
+      () => `axios.${method}(\`${createUrlTemplate(path)}\`)`,
       (_: ApiBody) => `axios.${method}(\`${createUrlTemplate(path)}\`, body)`
     )
   );
@@ -26,6 +26,8 @@ function createApiTemplate(api: Api): string {
   const request = createAxiosRequest(method, path, body);
   const fnArgs = generateFunctionArgs(params, body);
   const respType = getResponsesType(responses);
+
+  // TODO: do not decode if api has not return type, use runtime type for decoding
 
   return `
         export function ${name}(${fnArgs}): TE.TaskEither<ApiError, ${respType}> {

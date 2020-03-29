@@ -1,22 +1,20 @@
-import * as STE from "fp-ts-contrib/lib/StateTaskEither";
 import { pipe } from "fp-ts/lib/pipeable";
+import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as R from "fp-ts/lib/Record";
-import { ParserContext, Api } from "../parser-context";
-import { ParserSTE } from "../utils";
-import { writeFormatted, createDir } from "./common";
+import { GenRTE, readParserState } from "../environment";
 import { generateAxiosApiTemplate } from "../templates/axios";
+import { createDir, writeFormatted } from "./common";
 
-export function writeApis(): ParserSTE {
+export function writeApis(): GenRTE<void> {
   return pipe(
     createDir("apis"),
-    STE.chain<ParserContext, string, void, Record<string, Api[]>>(() =>
-      STE.gets(context => context.apis)
-    ),
-    STE.chain(apis =>
-      R.record.traverseWithIndex(STE.stateTaskEither)(apis, (tag, apiGroup) =>
-        writeFormatted(tag, generateAxiosApiTemplate(apiGroup))
+    RTE.chain(() => readParserState()),
+    RTE.map(state => state.apis),
+    RTE.chain(apis =>
+      R.record.traverseWithIndex(RTE.readerTaskEither)(apis, (tag, apiGroup) =>
+        writeFormatted(`apis/${tag}.ts`, generateAxiosApiTemplate(apiGroup))
       )
     ),
-    STE.map(() => undefined)
+    RTE.map(() => undefined)
   );
 }
