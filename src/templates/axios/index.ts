@@ -15,7 +15,7 @@ function createAxiosRequest(
   return pipe(
     body,
     O.fold(
-      () => `axios.${method}(${createUrlTemplate(path)})`,
+      () => `axios.${method}(\`${createUrlTemplate(path)}\`)`,
       (_: ApiBody) => `axios.${method}(\`${createUrlTemplate(path)}\`, body)`
     )
   );
