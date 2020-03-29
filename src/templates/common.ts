@@ -1,13 +1,6 @@
 import * as gen from "io-ts-codegen";
-import {
-  Api,
-  ApiParameter,
-  ApiResponse,
-  ApiMethod,
-  ApiBody
-} from "../parser-context";
+import { ApiParameter, ApiResponse, ApiBody } from "../parser-context";
 import * as O from "fp-ts/lib/Option";
-import { pipe } from "fp-ts/lib/pipeable";
 
 export function getTypeName(type: gen.TypeReference): string {
   switch (type.kind) {
@@ -18,10 +11,10 @@ export function getTypeName(type: gen.TypeReference): string {
     case "UndefinedType":
     case "IntegerType":
     case "IntType":
-    case "AnyArrayType":
     case "AnyDictionaryType":
     case "FunctionType":
     case "UnknownType":
+    case "ArrayCombinator":
       return gen.printStatic(type);
     default:
       return gen.printRuntime(type);

@@ -9,6 +9,7 @@ import { parserContext, ParserContext } from "./parser-context";
 import { parseAllApis } from "./path-parser";
 import { parseAllSchemas } from "./schema-parser";
 import { ParserSTE } from "./utils";
+import { writeApis } from "./file-writer/apis";
 
 function onLeft(e: string): T.Task<void> {
   return T.fromIO(error(`Error: ${e}`));
@@ -35,7 +36,8 @@ export function parse(inputFile: string, outputDir: string): void {
     STE.chain(() => parseAllSchemas()),
     STE.chain(() => parseAllApis()),
     STE.chain(printModels),
-    STE.chain(() => writeModels())
+    STE.chain(() => writeModels()),
+    STE.chain(() => writeApis())
   )(initialContext);
 
   pipe(result, TE.fold(onLeft, onRight))();

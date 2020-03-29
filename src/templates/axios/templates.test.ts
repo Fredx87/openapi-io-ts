@@ -1,5 +1,5 @@
 import { ParserContext } from "../../parser-context";
-import createApiTemplate from ".";
+import { generateAxiosApiTemplate } from ".";
 import mock from "./mock.json";
 
 describe("templates", () => {
@@ -7,7 +7,7 @@ describe("templates", () => {
     const parserContext: ParserContext = (mock as unknown) as ParserContext;
     const apis = Object.values(parserContext.apis).flat();
 
-    expect(createApiTemplate(apis)).toMatchInlineSnapshot(`
+    expect(generateAxiosApiTemplate(apis)).toMatchInlineSnapshot(`
       "
               import axios from 'axios';
               import * as TE from 'fp-ts/lib/TaskEither';
@@ -39,11 +39,12 @@ describe("templates", () => {
                       ))
                   )
               }
-              export function findPetsByStatus(status: t.array(t.union([
-        t.literal('available'),
-        t.literal('pending'),
-        t.literal('sold')
-      ]))): TE.TaskEither<ApiError, t.array(Pet)> {
+              export function findPetsByStatus(status: Array<
+        (
+        | 'available'
+        | 'pending'
+        | 'sold'
+        )>): TE.TaskEither<ApiError, Array<t.TypeOf<typeof Pet>>> {
                   return pipe(
                       TE.tryCatch(
                           () => axios.get(/pet/findByStatus),
@@ -55,7 +56,7 @@ describe("templates", () => {
                       ))
                   )
               }
-              export function findPetsByTags(tags: t.array(t.string)): TE.TaskEither<ApiError, t.array(Pet)> {
+              export function findPetsByTags(tags: Array<string>): TE.TaskEither<ApiError, Array<t.TypeOf<typeof Pet>>> {
                   return pipe(
                       TE.tryCatch(
                           () => axios.get(/pet/findByTags),
@@ -175,7 +176,7 @@ describe("templates", () => {
                       ))
                   )
               }
-              export function createUsersWithArrayInput(body: t.array(User)): TE.TaskEither<ApiError, unknown> {
+              export function createUsersWithArrayInput(body: Array<t.TypeOf<typeof User>>): TE.TaskEither<ApiError, unknown> {
                   return pipe(
                       TE.tryCatch(
                           () => axios.post(\`/user/createWithArray\`, body),
@@ -187,7 +188,7 @@ describe("templates", () => {
                       ))
                   )
               }
-              export function createUsersWithListInput(body: t.array(User)): TE.TaskEither<ApiError, unknown> {
+              export function createUsersWithListInput(body: Array<t.TypeOf<typeof User>>): TE.TaskEither<ApiError, unknown> {
                   return pipe(
                       TE.tryCatch(
                           () => axios.post(\`/user/createWithList\`, body),

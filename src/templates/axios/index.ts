@@ -42,7 +42,7 @@ function createApiTemplate(api: Api): string {
         }`;
 }
 
-export default function(apis: Api[]): string {
+export function generateAxiosApiTemplate(apis: Api[]): string {
   let template = `
         import axios from 'axios';
         import * as TE from 'fp-ts/lib/TaskEither';
