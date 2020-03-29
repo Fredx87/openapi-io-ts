@@ -6,7 +6,7 @@ import * as R from "fp-ts/lib/Record";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { Environment, GenRTE } from "../environment";
+import { Environment, GenRTE, readParserState } from "../environment";
 import { getObjectByRef, isReference, pascalCase } from "../utils";
 
 // @todo: extends with allOf, oneOf and other missing types
@@ -77,14 +77,13 @@ function parseSchemaObject(
 
 // @todo: better handling of duplicated names
 function getNameForNewModel(name: string): GenRTE<string> {
-  return env =>
-    pipe(
-      TE.rightIO(env.parserState.read),
-      TE.map(state => {
-        const res = name in state.generatedModels.namesMap ? `${name}_1` : name;
-        return pascalCase(res);
-      })
-    );
+  return pipe(
+    readParserState(),
+    RTE.map(state => {
+      const res = name in state.generatedModels.namesMap ? `${name}_1` : name;
+      return pascalCase(res);
+    })
+  );
 }
 
 function addModel(name: string, model: gen.TypeDeclaration): GenRTE<void> {
@@ -133,13 +132,12 @@ function getModelNameFromReference(ref: OpenAPIV3.ReferenceObject): string {
 function getObjectFromContext(
   ref: OpenAPIV3.ReferenceObject
 ): GenRTE<OpenAPIV3.SchemaObject> {
-  return env =>
-    pipe(
-      TE.rightIO(env.parserState.read),
-      TE.map(
-        state => getObjectByRef(ref, state.document) as OpenAPIV3.SchemaObject
-      )
-    );
+  return pipe(
+    readParserState(),
+    RTE.map(
+      state => getObjectByRef(ref, state.document) as OpenAPIV3.SchemaObject
+    )
+  );
 }
 
 function createModelFromReference(
@@ -200,16 +198,6 @@ export function parseSchema(
   return RTE.right(gen.unknownType);
 }
 
-function getSchemas(): GenRTE<
-  O.Option<Record<string, OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>>
-> {
-  return env =>
-    pipe(
-      TE.rightIO(env.parserState.read),
-      TE.map(state => O.fromNullable(state.document.components?.schemas))
-    );
-}
-
 function parseSchemas(
   schemas: Record<string, OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>
 ): GenRTE<void> {
@@ -221,6 +209,15 @@ function parseSchemas(
       return createModelFromReference(ref);
     }),
     RTE.map(() => undefined)
+  );
+}
+
+function getSchemas(): GenRTE<
+  O.Option<Record<string, OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>>
+> {
+  return pipe(
+    readParserState(),
+    RTE.map(state => O.fromNullable(state.document.components?.schemas))
   );
 }
 

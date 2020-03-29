@@ -13,7 +13,7 @@ export function openApiParser(): GenRTE<void> {
     pipe(
       TE.tryCatch(
         () => SwaggerParser.bundle(env.inputFile),
-        (e: any) => `Error in OpenApi file: ${String(e)}`
+        e => `Error in OpenApi file: ${String(e)}`
       ),
       TE.chain(doc =>
         isOpenApiV3Document(doc)
