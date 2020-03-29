@@ -1,10 +1,10 @@
-import { ParserContext } from "../../parser-context";
 import { generateAxiosApiTemplate } from ".";
+import { ParserState } from "../../parser/parserState";
 import mock from "./mock.json";
 
 describe("templates", () => {
-  it("generate all template", () => {
-    const parserContext: ParserContext = (mock as unknown) as ParserContext;
+  it("generate getOrderById template", () => {
+    const parserContext: ParserState = (mock as unknown) as ParserState;
     const apis = Object.values(parserContext.apis).flat();
 
     expect(generateAxiosApiTemplate(apis)).toMatchInlineSnapshot(`

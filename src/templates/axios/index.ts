@@ -1,6 +1,6 @@
-import { Api, ApiMethod, ApiBody } from "../../parser-context";
 import * as O from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
+import { Api, ApiBody, ApiMethod } from "../../parser/parserState";
 import {
   createUrlTemplate,
   generateFunctionArgs,

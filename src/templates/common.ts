@@ -1,6 +1,6 @@
-import * as gen from "io-ts-codegen";
-import { ApiParameter, ApiResponse, ApiBody } from "../parser-context";
 import * as O from "fp-ts/lib/Option";
+import * as gen from "io-ts-codegen";
+import { ApiBody, ApiParameter, ApiResponse } from "../parser/parserState";
 
 export function getTypeName(type: gen.TypeReference): string {
   switch (type.kind) {

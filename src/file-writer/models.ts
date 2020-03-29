@@ -1,10 +1,9 @@
-import * as STE from "fp-ts-contrib/lib/StateTaskEither";
 import { pipe } from "fp-ts/lib/pipeable";
+import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as R from "fp-ts/lib/Record";
 import * as gen from "io-ts-codegen";
-import { ParserContext } from "../parser-context";
-import { ParserSTE } from "../utils";
-import { getIoTsTypesImportString, writeFormatted, createDir } from "./common";
+import { GenRTE, readParserState } from "../environment";
+import { createDir, getIoTsTypesImportString, writeFormatted } from "./common";
 
 function getModelFileName(name: string): string {
   return `models/${name}.ts`;
@@ -29,7 +28,7 @@ function getModelImports(deps: string[], modelsPath: string): string {
     ${otherImports}`;
 }
 
-function writeModel(name: string, model: gen.TypeDeclaration): ParserSTE {
+function writeModel(name: string, model: gen.TypeDeclaration): GenRTE<void> {
   const fileName = getModelFileName(name);
   const content = `${getModelImports(gen.getNodeDependencies(model), ".")}
 
@@ -40,27 +39,27 @@ function writeModel(name: string, model: gen.TypeDeclaration): ParserSTE {
   return writeFormatted(fileName, content);
 }
 
-function writeModelIndex(models: string[]): ParserSTE {
+function writeModelIndex(models: string[]): GenRTE<void> {
   let content =
     'export { DateFromISOString } from "io-ts-types/lib/DateFromISOString"; ';
   content += models.map(m => `export * from './${m}';`).join("\n");
   return writeFormatted("models/index.ts", content);
 }
 
-export function writeModels(): ParserSTE {
+export function writeModels(): GenRTE<void> {
   return pipe(
     createDir("models"),
-    STE.chain<ParserContext, string, void, Record<string, gen.TypeDeclaration>>(
-      () => STE.gets(context => context.generatedModels.namesMap)
-    ),
-    STE.chain(models =>
+    RTE.chain(() => readParserState()),
+    RTE.map(state => state.generatedModels.namesMap),
+    RTE.chain(models =>
       pipe(
-        R.record.traverseWithIndex(STE.stateTaskEither)(models, (name, model) =>
-          writeModel(name, model)
+        R.record.traverseWithIndex(RTE.readerTaskEither)(
+          models,
+          (name, model) => writeModel(name, model)
         ),
-        STE.chain(() => writeModelIndex(Object.keys(models)))
+        RTE.chain(() => writeModelIndex(Object.keys(models)))
       )
     ),
-    STE.map(() => undefined)
+    RTE.map(() => undefined)
   );
 }

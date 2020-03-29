@@ -3,16 +3,16 @@ import { pipe } from "fp-ts/lib/pipeable";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { parserContext } from "./parser-context";
-import { parseSchema, shouldGenerateModel } from "./schema-parser";
+import { environment } from "../environment";
+import { parseSchema, shouldGenerateModel } from "./schemas";
 
 async function toRuntime(
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
 ): Promise<E.Either<string, string>> {
-  const context = parserContext("", "");
+  const env = environment("", "");
   return pipe(
-    parseSchema(schema)(context),
-    TE.map(res => gen.printRuntime(res[0]))
+    parseSchema(schema)(env()),
+    TE.map(res => gen.printRuntime(res))
   )();
 }
 

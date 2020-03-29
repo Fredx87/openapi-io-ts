@@ -1,11 +1,7 @@
 import assert from "assert";
-import * as STE from "fp-ts-contrib/lib/StateTaskEither";
 import * as E from "fp-ts/lib/Either";
 import { get } from "lodash";
 import { OpenAPIV3 } from "openapi-types";
-import { ParserContext } from "./parser-context";
-
-export type ParserSTE<A = void> = STE.StateTaskEither<ParserContext, string, A>;
 
 export function pascalCase(input: string): string {
   const charArray = input.split("");
