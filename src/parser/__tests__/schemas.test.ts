@@ -9,11 +9,12 @@ import { parserState } from "../parserState";
 import { parseSchema, shouldGenerateModel } from "../schemas";
 
 async function toRuntime(
+  name: string,
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject,
   env: Environment
 ): Promise<E.Either<string, string>> {
   return pipe(
-    parseSchema(schema)(env),
+    parseSchema(name, schema)(env),
     TE.map(res => gen.printRuntime(res))
   )();
 }
@@ -130,7 +131,7 @@ describe("Schema object parser", () => {
 
   test("base string parser", async () => {
     const schema: OpenAPIV3.SchemaObject = { type: "string" };
-    const result = await toRuntime(schema, env);
+    const result = await toRuntime("string", schema, env);
     expect(result).toMatchInlineSnapshot(`
       Object {
         "_tag": "Right",
@@ -144,26 +145,22 @@ describe("Schema object parser", () => {
       type: "string",
       enum: ["foo", "bar", "baz"]
     };
-    const result = await toRuntime(schema, env);
+    const result = await toRuntime("foos", schema, env);
     expect(result).toMatchInlineSnapshot(`
       Object {
         "_tag": "Right",
-        "right": "t.union([
-        t.literal('foo'),
-        t.literal('bar'),
-        t.literal('baz')
-      ])",
+        "right": "models.FoosEnum",
       }
     `);
   });
 
   test("date string parser", async () => {
     const schema: OpenAPIV3.SchemaObject = { type: "string", format: "date" };
-    const result = await toRuntime(schema, env);
+    const result = await toRuntime("date", schema, env);
     expect(result).toMatchInlineSnapshot(`
       Object {
         "_tag": "Right",
-        "right": "DateFromISOString",
+        "right": "models.DateFromISOString",
       }
     `);
   });
@@ -173,11 +170,11 @@ describe("Schema object parser", () => {
       type: "string",
       format: "date-time"
     };
-    const result = await toRuntime(schema, env);
+    const result = await toRuntime("dateTime", schema, env);
     expect(result).toMatchInlineSnapshot(`
       Object {
         "_tag": "Right",
-        "right": "DateFromISOString",
+        "right": "models.DateFromISOString",
       }
     `);
   });
@@ -186,7 +183,7 @@ describe("Schema object parser", () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "integer"
     };
-    const result = await toRuntime(schema, env);
+    const result = await toRuntime("int", schema, env);
     expect(result).toMatchInlineSnapshot(`
       Object {
         "_tag": "Right",
@@ -199,7 +196,7 @@ describe("Schema object parser", () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "number"
     };
-    const result = await toRuntime(schema, env);
+    const result = await toRuntime("number", schema, env);
     expect(result).toMatchInlineSnapshot(`
       Object {
         "_tag": "Right",
@@ -212,7 +209,7 @@ describe("Schema object parser", () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "boolean"
     };
-    const result = await toRuntime(schema, env);
+    const result = await toRuntime("boolean", schema, env);
     expect(result).toMatchInlineSnapshot(`
       Object {
         "_tag": "Right",
@@ -226,7 +223,7 @@ describe("Schema object parser", () => {
       type: "array",
       items: { type: "string" }
     };
-    const result = await toRuntime(schema, env);
+    const result = await toRuntime("strings", schema, env);
     expect(result).toMatchInlineSnapshot(`
       Object {
         "_tag": "Right",
@@ -240,7 +237,7 @@ describe("Schema object parser", () => {
       type: "array",
       items: { type: "number" }
     };
-    const result = await toRuntime(schema, env);
+    const result = await toRuntime("numbers", schema, env);
     expect(result).toMatchInlineSnapshot(`
       Object {
         "_tag": "Right",
@@ -276,7 +273,7 @@ describe("Schema object parser", () => {
       },
       required: ["id"]
     };
-    const result = await toRuntime(schema, env);
+    const result = await toRuntime("Pet", schema, env);
     expect(result).toMatchInlineSnapshot(`
       Object {
         "_tag": "Right",
@@ -287,12 +284,8 @@ describe("Schema object parser", () => {
         t.partial({
           petId: t.Integer,
           quantity: t.Integer,
-          shipDate: DateFromISOString,
-          status: t.union([
-            t.literal('placed'),
-            t.literal('approved'),
-            t.literal('delivered')
-          ]),
+          shipDate: models.DateFromISOString,
+          status: models.PetStatusEnum,
           complete: t.boolean
         })
       ])",
@@ -304,7 +297,7 @@ describe("Schema object parser", () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "object"
     };
-    const result = await toRuntime(schema, env);
+    const result = await toRuntime("unknown", schema, env);
     expect(result).toMatchInlineSnapshot(`
       Object {
         "_tag": "Right",

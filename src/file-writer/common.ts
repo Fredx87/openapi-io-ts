@@ -5,10 +5,6 @@ import * as prettier from "prettier";
 import * as util from "util";
 import { GenRTE } from "../environment";
 
-export function getIoTsTypesImportString(name: string): string {
-  return `import { ${name} } from "io-ts-types/lib/${name}";`;
-}
-
 function writeFile(name: string, content: string): GenRTE<void> {
   return env =>
     pipe(

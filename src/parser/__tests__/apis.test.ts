@@ -116,7 +116,7 @@ describe("path-parser", () => {
         {
           code: "200",
           mediaType: "application/json",
-          type: gen.identifier("User")
+          type: gen.customCombinator("models.User", "models.User")
         }
       ];
       assertIsRight(result);
@@ -163,7 +163,10 @@ describe("path-parser", () => {
         {
           code: "200",
           mediaType: "application/json",
-          type: gen.identifier("FooResponse200")
+          type: gen.customCombinator(
+            "models.FooResponse200",
+            "models.FooResponse200"
+          )
         }
       ];
       assertIsRight(result);

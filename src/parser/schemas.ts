@@ -6,8 +6,8 @@ import * as R from "fp-ts/lib/Record";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { Environment, GenRTE, readParserState } from "../environment";
-import { getObjectByRef, isReference, pascalCase } from "../utils";
+import { GenRTE, readParserState } from "../environment";
+import { getObjectByRef, jsonSchemaRef, pascalCase } from "../utils";
 
 // @todo: extends with allOf, oneOf and other missing types
 export function shouldGenerateModel(typeRef: gen.TypeReference): boolean {
@@ -24,32 +24,52 @@ export function shouldGenerateModel(typeRef: gen.TypeReference): boolean {
   }
 }
 
-function parseSchemaString(schema: OpenAPIV3.SchemaObject): gen.TypeReference {
+function createCustomCombinator(name: string): gen.CustomCombinator {
+  const repr = `models.${name}`;
+  return gen.customCombinator(repr, repr);
+}
+
+function parseEnum(
+  name: string,
+  schema: OpenAPIV3.SchemaObject
+): GenRTE<gen.TypeReference> {
+  return createModel(
+    `${name}Enum`,
+    gen.unionCombinator(schema.enum!.map(e => gen.literalCombinator(e)))
+  );
+}
+
+function parseSchemaString(
+  name: string,
+  schema: OpenAPIV3.SchemaObject
+): GenRTE<gen.TypeReference> {
   if (schema.enum) {
-    return gen.unionCombinator(schema.enum.map(e => gen.literalCombinator(e)));
+    return parseEnum(name, schema);
   }
   if (schema.format === "date" || schema.format === "date-time") {
-    return gen.identifier("DateFromISOString");
+    return RTE.right(createCustomCombinator("DateFromISOString"));
   }
-  return gen.stringType;
+  return RTE.right(gen.stringType);
 }
 
 function parseSchemaArray(
+  name: string,
   schema: OpenAPIV3.ArraySchemaObject
 ): GenRTE<gen.TypeReference> {
   return pipe(
-    parseSchema(schema.items),
+    parseSchema(`${name}Items`, schema.items),
     RTE.map(c => gen.arrayCombinator(c))
   );
 }
 
 function parseProperty(
+  name: string,
   propName: string,
   propSchema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject,
   containerSchema: OpenAPIV3.NonArraySchemaObject
 ): GenRTE<gen.Property> {
   return pipe(
-    parseSchema(propSchema),
+    parseSchema(`${name}${pascalCase(propName)}`, propSchema),
     RTE.map(t =>
       gen.property(
         propName,
@@ -61,13 +81,14 @@ function parseProperty(
 }
 
 function parseSchemaObject(
+  name: string,
   schema: OpenAPIV3.NonArraySchemaObject
 ): GenRTE<gen.TypeReference> {
   if (schema.properties) {
     return pipe(
       R.record.traverseWithIndex(RTE.readerTaskEither)(
         schema.properties,
-        (name, prop) => parseProperty(name, prop, schema)
+        (propName, prop) => parseProperty(name, propName, prop, schema)
       ),
       RTE.map(props => gen.interfaceCombinator(Object.values(props)))
     );
@@ -118,7 +139,7 @@ export function createModel(
       pipe(
         RTE.right(gen.typeDeclaration(modelName, typeRef, true)),
         RTE.chain(t => addModel(modelName, t)),
-        RTE.map(() => gen.identifier(modelName))
+        RTE.map(() => createCustomCombinator(modelName))
       )
     )
   );
@@ -129,9 +150,7 @@ function getModelNameFromReference(ref: OpenAPIV3.ReferenceObject): string {
   return chunks[chunks.length - 1];
 }
 
-function getObjectFromContext(
-  ref: OpenAPIV3.ReferenceObject
-): GenRTE<OpenAPIV3.SchemaObject> {
+function getObjectFromState(ref: string): GenRTE<OpenAPIV3.SchemaObject> {
   return pipe(
     readParserState(),
     RTE.map(
@@ -141,16 +160,16 @@ function getObjectFromContext(
 }
 
 function createModelFromReference(
-  ref: OpenAPIV3.ReferenceObject
+  name: string,
+  ref: string
 ): GenRTE<gen.TypeReference> {
-  const name = getModelNameFromReference(ref);
   return pipe(
     getNameForNewModel(name),
     RTE.chain(modelName =>
       pipe(
-        addModelReference(ref.$ref, modelName),
-        RTE.chain(() => getObjectFromContext(ref)),
-        RTE.chain(schema => parseSchema(schema)),
+        addModelReference(ref, modelName),
+        RTE.chain(() => getObjectFromState(ref)),
+        RTE.chain(schema => parseSchema(name, schema)),
         RTE.chain(typeRef => createModel(name, typeRef))
       )
     )
@@ -158,32 +177,31 @@ function createModelFromReference(
 }
 
 function getOrCreateReference(
-  ref: OpenAPIV3.ReferenceObject
+  name: string,
+  ref: string
 ): GenRTE<gen.TypeReference> {
   return pipe(
-    RTE.ask<Environment>(),
-    RTE.chain(env => RTE.rightIO(env.parserState.read)),
-    RTE.map(state =>
-      O.fromNullable(state.generatedModels.refNameMap[ref.$ref])
-    ),
+    readParserState(),
+    RTE.map(state => O.fromNullable(state.generatedModels.refNameMap[ref])),
     RTE.chain(
       O.fold(
-        () => createModelFromReference(ref),
-        name => RTE.right(gen.identifier(name))
+        () => createModelFromReference(name, ref),
+        name => RTE.right(createCustomCombinator(name))
       )
     )
   );
 }
 
 export function parseSchema(
+  name: string,
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
 ): GenRTE<gen.TypeReference> {
-  if (isReference(schema)) {
-    return getOrCreateReference(schema);
+  if (jsonSchemaRef.is(schema)) {
+    return getOrCreateReference(name, schema.$ref);
   }
   switch (schema.type) {
     case "string":
-      return RTE.right(parseSchemaString(schema));
+      return parseSchemaString(name, schema);
     case "integer":
       return RTE.right(gen.integerType);
     case "number":
@@ -191,9 +209,9 @@ export function parseSchema(
     case "boolean":
       return RTE.right(gen.booleanType);
     case "array":
-      return parseSchemaArray(schema);
+      return parseSchemaArray(name, schema);
     case "object":
-      return parseSchemaObject(schema);
+      return parseSchemaObject(name, schema);
   }
   return RTE.right(gen.unknownType);
 }
@@ -203,10 +221,8 @@ function parseSchemas(
 ): GenRTE<void> {
   return pipe(
     A.array.traverse(RTE.readerTaskEither)(Object.keys(schemas), name => {
-      const ref: OpenAPIV3.ReferenceObject = {
-        $ref: `#/components/schemas/${name}`
-      };
-      return createModelFromReference(ref);
+      const ref = `#/components/schemas/${name}`;
+      return createModelFromReference(name, ref);
     }),
     RTE.map(() => undefined)
   );

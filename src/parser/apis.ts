@@ -8,8 +8,8 @@ import * as TE from "fp-ts/lib/TaskEither";
 import produce from "immer";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { GenRTE } from "../environment";
-import { getObjectByRef, isReference } from "../utils";
+import { GenRTE, readParserState } from "../environment";
+import { getOrResolveRef } from "../utils";
 import {
   Api,
   ApiBody,
@@ -23,13 +23,10 @@ import { createModel, parseSchema, shouldGenerateModel } from "./schemas";
 function getObjectFromDocument<T>(
   obj: OpenAPIV3.ReferenceObject | T
 ): GenRTE<T> {
-  return env =>
-    pipe(
-      TE.rightIO(env.parserState.read),
-      TE.map(state =>
-        isReference(obj) ? getObjectByRef(obj, state.document) : obj
-      )
-    );
+  return pipe(
+    readParserState(),
+    RTE.map(state => getOrResolveRef(obj, state.document))
+  );
 }
 
 function getOrCreateModel(
@@ -37,7 +34,7 @@ function getOrCreateModel(
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject | undefined
 ): GenRTE<gen.TypeReference> {
   return pipe(
-    schema ? parseSchema(schema) : RTE.right(gen.unknownType),
+    schema ? parseSchema(name, schema) : RTE.right(gen.unknownType),
     RTE.chain(s =>
       shouldGenerateModel(s) ? createModel(name, s) : RTE.right(s)
     )
