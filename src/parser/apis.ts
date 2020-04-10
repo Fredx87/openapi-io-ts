@@ -1,45 +1,42 @@
-import * as STE from "fp-ts-contrib/lib/StateTaskEither";
 import { sequenceS } from "fp-ts/lib/Apply";
 import * as A from "fp-ts/lib/Array";
 import * as O from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
+import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as R from "fp-ts/lib/Record";
+import * as TE from "fp-ts/lib/TaskEither";
 import produce from "immer";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
+import { GenRTE, readParserState } from "../environment";
+import { getOrResolveRef } from "../utils";
 import {
   Api,
   ApiBody,
   ApiMethod,
   ApiParameter,
   ApiParameterIn,
-  ApiResponse,
-  ParserContext
-} from "./parser-context";
-import { createModel, parseSchema, shouldGenerateModel } from "./schema-parser";
-import { getObjectByRef, isReference, ParserSTE } from "./utils";
+  ApiResponse
+} from "./parserState";
+import { createModel, parseSchema, shouldGenerateModel } from "./schemas";
 
 function getObjectFromDocument<T>(
   obj: OpenAPIV3.ReferenceObject | T
-): ParserSTE<T> {
+): GenRTE<T> {
   return pipe(
-    STE.gets((context: ParserContext) => context.document),
-    STE.chain(doc =>
-      isReference(obj)
-        ? STE.right(getObjectByRef(obj, doc) as T)
-        : STE.right(obj)
-    )
+    readParserState(),
+    RTE.map(state => getOrResolveRef(obj, state.document))
   );
 }
 
 function getOrCreateModel(
   name: string,
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject | undefined
-): ParserSTE<gen.TypeReference> {
+): GenRTE<gen.TypeReference> {
   return pipe(
-    schema ? parseSchema(schema) : STE.right(gen.unknownType),
-    STE.chain(s =>
-      shouldGenerateModel(s) ? createModel(name, s) : STE.right(s)
+    schema ? parseSchema(name, schema) : RTE.right(gen.unknownType),
+    RTE.chain(s =>
+      shouldGenerateModel(s) ? createModel(name, s) : RTE.right(s)
     )
   );
 }
@@ -68,13 +65,13 @@ function getMediaTypesWithSchema(
 
 function getResponsensWithContent(
   responses: OpenAPIV3.ResponsesObject
-): ParserSTE<Record<string, Record<string, OpenAPIV3.MediaTypeObject>>> {
+): GenRTE<Record<string, Record<string, OpenAPIV3.MediaTypeObject>>> {
   return pipe(
-    R.record.traverse(STE.stateTaskEither)(responses, resp =>
+    R.record.traverse(RTE.readerTaskEither)(responses, resp =>
       getObjectFromDocument(resp)
     ),
-    STE.map(res => R.record.map(res, getMediaTypesWithSchema)),
-    STE.map(res => R.record.filter(res, mediaObj => !R.isEmpty(mediaObj)))
+    RTE.map(res => R.record.map(res, getMediaTypesWithSchema)),
+    RTE.map(res => R.record.filter(res, mediaObj => !R.isEmpty(mediaObj)))
   );
 }
 
@@ -82,15 +79,15 @@ function parseMediaRecord(
   code: string,
   mediaRecord: Record<string, OpenAPIV3.MediaTypeObject>,
   operation: OpenAPIV3.OperationObject
-): ParserSTE<ApiResponse[]> {
+): GenRTE<ApiResponse[]> {
   const modelName = `${operation.operationId!}Response${code}`;
   return pipe(
-    R.record.traverseWithIndex(STE.stateTaskEither)(
+    R.record.traverseWithIndex(RTE.readerTaskEither)(
       mediaRecord,
       (mediaType, mediaObj) =>
         pipe(
           getOrCreateModel(modelName, mediaObj.schema),
-          STE.map(type => {
+          RTE.map(type => {
             const res: ApiResponse = {
               code,
               mediaType,
@@ -100,29 +97,29 @@ function parseMediaRecord(
           })
         )
     ),
-    STE.map(res => Object.values(res))
+    RTE.map(res => Object.values(res))
   );
 }
 
 export function parseApiResponses(
   operation: OpenAPIV3.OperationObject
-): ParserSTE<ApiResponse[]> {
+): GenRTE<ApiResponse[]> {
   return pipe(
     O.fromNullable(operation.responses),
     O.fold(
-      () => STE.right([]),
+      () => RTE.right([]),
       responses =>
         pipe(
           getResponsensWithContent(responses),
-          STE.chain(res =>
-            R.record.traverseWithIndex(STE.stateTaskEither)(
+          RTE.chain(res =>
+            R.record.traverseWithIndex(RTE.readerTaskEither)(
               res,
               (code, mediaRecord) =>
                 parseMediaRecord(code, mediaRecord, operation)
             )
           ),
-          STE.map(res => Object.values(res)),
-          STE.map(res => A.flatten(res))
+          RTE.map(res => Object.values(res)),
+          RTE.map(res => A.flatten(res))
         )
     )
   );
@@ -131,26 +128,26 @@ export function parseApiResponses(
 // todo: understand how to handle not JSON bodies
 function parseApiRequestBody(
   operation: OpenAPIV3.OperationObject
-): ParserSTE<O.Option<ApiBody>> {
+): GenRTE<O.Option<ApiBody>> {
   return pipe(
     O.fromNullable(operation.requestBody),
     O.fold(
-      () => STE.right(O.none),
+      () => RTE.right(O.none),
       rb =>
         pipe(
           getObjectFromDocument(rb),
-          STE.chain(body =>
+          RTE.chain(body =>
             pipe(
               getJsonSchemaFromContent(body.content),
               O.fold(
-                () => STE.right(O.none),
+                () => RTE.right(O.none),
                 schema =>
                   pipe(
                     getOrCreateModel(
                       `${operation.operationId!}RequestBody`,
                       schema
                     ),
-                    STE.map(type => {
+                    RTE.map(type => {
                       const res: ApiBody = {
                         type,
                         required: body.required ?? false
@@ -168,13 +165,13 @@ function parseApiRequestBody(
 
 function createApiParameter(
   param: OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject
-): ParserSTE<ApiParameter> {
+): GenRTE<ApiParameter> {
   return pipe(
     getObjectFromDocument(param),
-    STE.chain(resolvedParam =>
+    RTE.chain(resolvedParam =>
       pipe(
         getOrCreateModel(resolvedParam.name, resolvedParam.schema),
-        STE.map(type => {
+        RTE.map(type => {
           const res: ApiParameter = {
             name: resolvedParam.name,
             type,
@@ -190,34 +187,39 @@ function createApiParameter(
 
 function parseApiParameters(
   operation: OpenAPIV3.OperationObject
-): ParserSTE<ApiParameter[]> {
+): GenRTE<ApiParameter[]> {
   const parameters = O.fromNullable(operation.parameters);
   return pipe(
     parameters,
     O.fold(
-      () => STE.right([]),
-      p => A.array.traverse(STE.stateTaskEither)(p, createApiParameter)
+      () => RTE.right([]),
+      p => A.array.traverse(RTE.readerTaskEither)(p, createApiParameter)
     )
   );
 }
 
-function addApi(tag: string, api: Api): ParserSTE {
-  return STE.modify(context =>
-    produce(context, draft => {
-      draft.apis[tag] ? draft.apis[tag].push(api) : (draft.apis[tag] = [api]);
-    })
-  );
+function addApi(tag: string, api: Api): GenRTE<void> {
+  return env =>
+    TE.rightIO(
+      env.parserState.modify(context =>
+        produce(context, draft => {
+          draft.apis[tag]
+            ? draft.apis[tag].push(api)
+            : (draft.apis[tag] = [api]);
+        })
+      )
+    );
 }
 
 function createApi(
   path: string,
   method: ApiMethod,
   operation: OpenAPIV3.OperationObject
-): ParserSTE<Api> {
-  return sequenceS(STE.stateTaskEither)({
-    path: STE.right(path),
-    name: STE.right(operation.operationId!),
-    method: STE.right(method),
+): GenRTE<Api> {
+  return sequenceS(RTE.readerTaskEither)({
+    path: RTE.right(path),
+    name: RTE.right(operation.operationId!),
+    method: RTE.right(method),
     params: parseApiParameters(operation),
     body: parseApiRequestBody(operation),
     responses: parseApiResponses(operation)
@@ -228,11 +230,11 @@ export function parseApi(
   path: string,
   method: ApiMethod,
   operation: OpenAPIV3.OperationObject
-): ParserSTE {
+): GenRTE<void> {
   const tag = operation.tags ? operation.tags[0] : "";
   return pipe(
     createApi(path, method, operation),
-    STE.chain(api => addApi(tag, api))
+    RTE.chain(api => addApi(tag, api))
   );
 }
 
@@ -240,17 +242,20 @@ function parseOperation(
   path: string,
   method: ApiMethod,
   operation: O.Option<OpenAPIV3.OperationObject>
-): ParserSTE {
+): GenRTE<void> {
   return pipe(
     operation,
     O.fold(
-      () => STE.right(undefined),
+      () => RTE.right(undefined),
       o => parseApi(path, method, o)
     )
   );
 }
 
-function parsePath(path: string, pathObj: OpenAPIV3.PathItemObject): ParserSTE {
+function parsePath(
+  path: string,
+  pathObj: OpenAPIV3.PathItemObject
+): GenRTE<void> {
   const operations: Record<ApiMethod, O.Option<OpenAPIV3.OperationObject>> = {
     get: O.fromNullable(pathObj.get),
     post: O.fromNullable(pathObj.post),
@@ -258,25 +263,29 @@ function parsePath(path: string, pathObj: OpenAPIV3.PathItemObject): ParserSTE {
     delete: O.fromNullable(pathObj.delete)
   };
   return pipe(
-    R.record.traverseWithIndex(STE.stateTaskEither)(
+    R.record.traverseWithIndex(RTE.readerTaskEither)(
       operations,
       (method, operation) =>
         parseOperation(path, method as ApiMethod, operation)
     ),
-    STE.map(() => undefined)
+    RTE.map(() => undefined)
   );
 }
 
-function getPaths(): ParserSTE<OpenAPIV3.PathsObject> {
-  return STE.gets(context => context.document.paths);
+function getPaths(): GenRTE<OpenAPIV3.PathsObject> {
+  return env =>
+    pipe(
+      TE.rightIO(env.parserState.read),
+      TE.map(state => state.document.paths)
+    );
 }
 
-export function parseAllApis(): ParserSTE {
+export function parseAllApis(): GenRTE<void> {
   return pipe(
     getPaths(),
-    STE.chain(paths =>
-      R.record.traverseWithIndex(STE.stateTaskEither)(paths, parsePath)
+    RTE.chain(paths =>
+      R.record.traverseWithIndex(RTE.readerTaskEither)(paths, parsePath)
     ),
-    STE.map(() => undefined)
+    RTE.map(() => undefined)
   );
 }

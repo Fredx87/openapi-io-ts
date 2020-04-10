@@ -38,13 +38,10 @@ export interface GeneratedModels {
   namesMap: Record<string, gen.TypeDeclaration>;
   refNameMap: Record<string, string>;
 }
-
-export interface ParserContext {
+export interface ParserState {
   document: OpenAPIV3.Document;
   generatedModels: GeneratedModels;
   apis: Record<string, Api[]>;
-  inputFile: string;
-  outputDir: string;
 }
 
 const emptyDocument: OpenAPIV3.Document = {
@@ -53,18 +50,13 @@ const emptyDocument: OpenAPIV3.Document = {
   paths: {}
 };
 
-export function parserContext(
-  inputFile: string,
-  outputDir: string
-): ParserContext {
+export function parserState(): ParserState {
   return {
     document: emptyDocument,
     generatedModels: {
       namesMap: {},
       refNameMap: {}
     },
-    apis: {},
-    inputFile,
-    outputDir
+    apis: {}
   };
 }

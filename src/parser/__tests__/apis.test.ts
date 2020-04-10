@@ -1,33 +1,40 @@
 import assert from "assert";
-import * as E from "fp-ts/lib/Either";
+import { newIORef } from "fp-ts/lib/IORef";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { ApiResponse, parserContext, ParserContext } from "./parser-context";
-import { parseApiResponses } from "./path-parser";
-import { assertIsRight } from "./utils";
-
-async function parseApiResponsesResult(
-  input: OpenAPIV3.OperationObject
-): Promise<E.Either<string, [ApiResponse[], ParserContext]>> {
-  const context = parserContext("", "");
-  context.generatedModels.namesMap["User"] = gen.typeDeclaration(
-    "User",
-    gen.unknownRecordType
-  );
-  context.generatedModels.refNameMap["#/components/schemas/User"] = "User";
-  return parseApiResponses(input)(context)();
-}
+import { Environment } from "../../environment";
+import { assertIsRight } from "../../utils";
+import { parseApiResponses } from "../apis";
+import { ApiResponse, parserState } from "../parserState";
 
 describe("path-parser", () => {
   describe("responses parser", () => {
+    let env: Environment;
+
+    beforeEach(() => {
+      const state = parserState();
+      state.generatedModels.namesMap["User"] = gen.typeDeclaration(
+        "User",
+        gen.unknownRecordType
+      );
+      state.generatedModels.refNameMap["#/components/schemas/User"] = "User";
+
+      env = {
+        inputFile: "",
+        outputDir: "",
+        parseDocument: jest.fn(),
+        parserState: newIORef(state)()
+      };
+    });
+
     test("should return empty array on operation without responses", async () => {
       const input: OpenAPIV3.OperationObject = {
         responses: undefined
       };
-      const result = await parseApiResponsesResult(input);
+      const result = await parseApiResponses(input)(env)();
       const expected: ApiResponse[] = [];
       assertIsRight(result);
-      assert.deepStrictEqual(result.right[0], expected);
+      assert.deepStrictEqual(result.right, expected);
     });
 
     test("should return empty array on responses without content", async () => {
@@ -41,10 +48,10 @@ describe("path-parser", () => {
           }
         }
       };
-      const result = await parseApiResponsesResult(input);
+      const result = await parseApiResponses(input)(env)();
       const expected: ApiResponse[] = [];
       assertIsRight(result);
-      assert.deepStrictEqual(result.right[0], expected);
+      assert.deepStrictEqual(result.right, expected);
     });
 
     test("should return only the response with schema and mediaType application/json", async () => {
@@ -70,12 +77,12 @@ describe("path-parser", () => {
           }
         }
       };
-      const result = await parseApiResponsesResult(input);
+      const result = await parseApiResponses(input)(env)();
       const expected: ApiResponse[] = [
         { code: "200", mediaType: "application/json", type: gen.stringType }
       ];
       assertIsRight(result);
-      assert.deepStrictEqual(result.right[0], expected);
+      assert.deepStrictEqual(result.right, expected);
     });
 
     test("should return only the response with referenced schema and mediaType application/json", async () => {
@@ -104,16 +111,16 @@ describe("path-parser", () => {
           }
         }
       };
-      const result = await parseApiResponsesResult(input);
+      const result = await parseApiResponses(input)(env)();
       const expected: ApiResponse[] = [
         {
           code: "200",
           mediaType: "application/json",
-          type: gen.identifier("User")
+          type: gen.customCombinator("models.User", "models.User")
         }
       ];
       assertIsRight(result);
-      assert.deepStrictEqual(result.right[0], expected);
+      assert.deepStrictEqual(result.right, expected);
     });
 
     test("should return only the response with complex schema and should generate model", async () => {
@@ -151,19 +158,22 @@ describe("path-parser", () => {
           }
         }
       };
-      const result = await parseApiResponsesResult(input);
+      const result = await parseApiResponses(input)(env)();
       const expected: ApiResponse[] = [
         {
           code: "200",
           mediaType: "application/json",
-          type: gen.identifier("FooResponse200")
+          type: gen.customCombinator(
+            "models.FooResponse200",
+            "models.FooResponse200"
+          )
         }
       ];
       assertIsRight(result);
-      assert.deepStrictEqual(result.right[0], expected);
-      assert("FooResponse200" in result.right[1].generatedModels.namesMap);
-      expect(result.right[1].generatedModels.namesMap["FooResponse200"])
-        .toMatchInlineSnapshot(`
+      assert.deepStrictEqual(result.right, expected);
+      const generatedModels = env.parserState.read().generatedModels;
+      assert("FooResponse200" in generatedModels.namesMap);
+      expect(generatedModels.namesMap["FooResponse200"]).toMatchInlineSnapshot(`
         Object {
           "description": undefined,
           "isExported": true,

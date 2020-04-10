@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "bin": {
-    "io-ts-generator": "./dist/index.js"
+    "openapi-io-ts": "./dist/index.js"
   },
   "preferGlobal": true,
   "scripts": {
