@@ -1,5 +1,5 @@
 {
-  "name": "oas3-io-ts-codegen",
+  "name": "openapi-io-ts",
   "version": "1.0.0-alpha.1",
   "description": "",
   "main": "index.js",
