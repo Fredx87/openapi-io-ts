@@ -1,16 +1,17 @@
 {
-  "name": "jsonschema-to-iots",
+  "name": "oas3-io-ts-codegen",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "bin": {
-    "io-ts-generator": "./index.ts"
+    "io-ts-generator": "./dist/index.js"
   },
   "preferGlobal": true,
   "scripts": {
     "start": "ts-node index.ts -i ./openapi.json",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "build": "rm -rf ./dist && tsc"
   },
   "author": "",
   "license": "ISC",
