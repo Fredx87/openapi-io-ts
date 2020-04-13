@@ -5,7 +5,7 @@ import * as TE from "fp-ts/lib/TaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { Environment } from "../../environment";
-import { parseSchema } from "../models";
+import { parseSchema, simplifyModelName } from "../models";
 import { parserState } from "../parserState";
 
 async function toRuntime(
@@ -195,5 +195,29 @@ describe("Schema object parser", () => {
         "right": "t.UnknownRecord",
       }
     `);
+  });
+
+  test("simplify model name for a schema", () => {
+    const result = simplifyModelName(
+      "#/components/schemas/Model",
+      "LongGeneratedName"
+    );
+    expect(result).toBe("Model");
+  });
+
+  test("not simplify model name for a schema property", () => {
+    const result = simplifyModelName(
+      "#/components/schemas/Model/status",
+      "LongGeneratedName"
+    );
+    expect(result).toBe("LongGeneratedName");
+  });
+
+  test("not simplify model name for a generic item", () => {
+    const result = simplifyModelName(
+      "#/paths/~1pot/get/parameters/status",
+      "LongGeneratedName"
+    );
+    expect(result).toBe("LongGeneratedName");
   });
 });

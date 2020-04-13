@@ -45,13 +45,25 @@ function setModel(pointer: string, model: gen.TypeDeclaration): GenRTE<void> {
     );
 }
 
+/**
+ * If a model is generated from the "#/components/schemas" section, replace it's eventually long generated name
+ * with its original name
+ *
+ * @param pointer JSONPointer
+ * @param name Generated name
+ */
+export function simplifyModelName(pointer: string, name: string): string {
+  const matches = pointer.match(/^#\/components\/schemas\/([^\/]*)$/);
+  return matches ? matches[1] : name;
+}
+
 function createNewModel(
   pointer: string,
   name: string,
   typeRef: gen.TypeReference
 ): GenRTE<gen.TypeReference> {
   return pipe(
-    getNameForNewModel(name),
+    getNameForNewModel(simplifyModelName(pointer, name)),
     RTE.chain(modelName =>
       pipe(
         RTE.right(gen.typeDeclaration(modelName, typeRef, true)),
