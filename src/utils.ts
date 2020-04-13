@@ -1,11 +1,9 @@
-import assert from "assert";
 import * as A from "fp-ts/lib/Array";
 import * as E from "fp-ts/lib/Either";
-import * as O from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
-import * as t from "io-ts";
 import { get } from "lodash";
 import { OpenAPIV3 } from "openapi-types";
+import { JSONPointerToken, JSONReference } from "./common/JSONReference";
 
 export function pascalCase(input: string): string {
   const charArray = input.split("");
@@ -14,12 +12,19 @@ export function pascalCase(input: string): string {
   return copy.join("");
 }
 
-export function convertRefToPath(ref: string): O.Option<string> {
+export function pointerToPath(pointer: string): E.Either<string, string[]> {
+  const tokens = pointer.split("/");
+
   return pipe(
-    ref.split("/"),
-    A.map(el => el.replace(/~1/g, "/").replace(/~0/g, "~")),
-    A.tail,
-    O.map(chunks => chunks.join("."))
+    E.fromOption(() => `Not enought tokens in pointer`)(A.tail(tokens)),
+    E.chain(tail =>
+      A.array.traverse(E.either)(tail, t =>
+        pipe(
+          JSONPointerToken.decode(t),
+          E.mapLeft(() => `Cannot decode pointer token`)
+        )
+      )
+    )
   );
 }
 
@@ -28,25 +33,17 @@ export function getObjectByRef(
   document: OpenAPIV3.Document
 ): unknown | undefined {
   return pipe(
-    convertRefToPath(ref),
-    O.map(path => get(document, path)),
-    O.getOrElse(() => undefined)
+    pointerToPath(ref),
+    E.map(path => get(document, path)),
+    E.getOrElse(() => undefined)
   );
 }
-
-export const jsonSchemaRef = t.exact(t.type({ $ref: t.string }));
 
 export function getOrResolveRef<T>(
   obj: OpenAPIV3.ReferenceObject | T,
   document: OpenAPIV3.Document
 ): T {
-  return jsonSchemaRef.is(obj)
+  return JSONReference.is(obj)
     ? (getObjectByRef(obj.$ref, document) as T)
     : obj;
-}
-
-export function assertIsRight<E, A>(
-  input: E.Either<E, A>
-): asserts input is E.Right<A> {
-  assert(E.isRight(input));
 }
