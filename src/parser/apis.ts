@@ -6,10 +6,11 @@ import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as R from "fp-ts/lib/Record";
 import * as TE from "fp-ts/lib/TaskEither";
 import produce from "immer";
-import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
+import { JSONPointerToken, JSONReference } from "../common/JSONReference";
 import { GenRTE, readParserState } from "../environment";
 import { getOrResolveRef } from "../utils";
+import { getOrCreateModel } from "./models";
 import {
   Api,
   ApiBody,
@@ -18,7 +19,8 @@ import {
   ApiParameterIn,
   ApiResponse
 } from "./parserState";
-import { createModel, parseSchema, shouldGenerateModel } from "./schemas";
+
+const JSON_MEDIA_TYPE = "application/json";
 
 function getObjectFromDocument<T>(
   obj: OpenAPIV3.ReferenceObject | T
@@ -29,148 +31,129 @@ function getObjectFromDocument<T>(
   );
 }
 
-function getOrCreateModel(
-  name: string,
-  schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject | undefined
-): GenRTE<gen.TypeReference> {
-  return pipe(
-    schema ? parseSchema(name, schema) : RTE.right(gen.unknownType),
-    RTE.chain(s =>
-      shouldGenerateModel(s) ? createModel(name, s) : RTE.right(s)
-    )
-  );
-}
-
-function getJsonSchemaFromContent(
-  content: Record<string, OpenAPIV3.MediaTypeObject>
-): O.Option<OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject> {
-  return pipe(
-    R.lookup("application/json", content),
-    O.chain(media => O.fromNullable(media.schema))
-  );
-}
-
-function getMediaTypesWithSchema(
-  response: OpenAPIV3.ResponseObject
-): Record<string, OpenAPIV3.MediaTypeObject> {
-  if (response.content == null) {
-    return {};
-  }
-  return R.record.filterWithIndex(
-    response.content,
-    (mediaType, object) =>
-      mediaType === "application/json" && object.schema != null
-  );
-}
-
-function getResponsensWithContent(
-  responses: OpenAPIV3.ResponsesObject
-): GenRTE<Record<string, Record<string, OpenAPIV3.MediaTypeObject>>> {
-  return pipe(
-    R.record.traverse(RTE.readerTaskEither)(responses, resp =>
-      getObjectFromDocument(resp)
-    ),
-    RTE.map(res => R.record.map(res, getMediaTypesWithSchema)),
-    RTE.map(res => R.record.filter(res, mediaObj => !R.isEmpty(mediaObj)))
-  );
-}
-
-function parseMediaRecord(
+export function parseApiResponseObject(
+  apiPointer: string,
+  operation: OpenAPIV3.OperationObject,
   code: string,
-  mediaRecord: Record<string, OpenAPIV3.MediaTypeObject>,
-  operation: OpenAPIV3.OperationObject
-): GenRTE<ApiResponse[]> {
-  const modelName = `${operation.operationId!}Response${code}`;
+  resp: OpenAPIV3.ReferenceObject | OpenAPIV3.ResponseObject
+): GenRTE<O.Option<ApiResponse>> {
+  const basePointer = JSONReference.is(resp)
+    ? resp.$ref
+    : `${apiPointer}/responses/${code}`;
   return pipe(
-    R.record.traverseWithIndex(RTE.readerTaskEither)(
-      mediaRecord,
-      (mediaType, mediaObj) =>
-        pipe(
-          getOrCreateModel(modelName, mediaObj.schema),
-          RTE.map(type => {
-            const res: ApiResponse = {
-              code,
-              mediaType,
-              type
-            };
-            return res;
-          })
-        )
-    ),
-    RTE.map(res => Object.values(res))
+    getObjectFromDocument(resp),
+    RTE.chain(r => {
+      const jsonSchema = r.content?.[JSON_MEDIA_TYPE]?.schema;
+
+      if (jsonSchema == null) {
+        return RTE.right(O.none);
+      }
+
+      const pointer = `${basePointer}/content/${JSONPointerToken.encode(
+        JSON_MEDIA_TYPE
+      )}/schema`;
+
+      const modelName = `${operation.operationId!}Response${code}`;
+
+      return pipe(
+        getOrCreateModel(pointer, modelName),
+        RTE.map(type => {
+          const res: ApiResponse = {
+            code,
+            mediaType: JSON_MEDIA_TYPE,
+            type
+          };
+          return O.some(res);
+        })
+      );
+    })
   );
 }
 
 export function parseApiResponses(
+  apiPointer: string,
   operation: OpenAPIV3.OperationObject
 ): GenRTE<ApiResponse[]> {
+  if (operation.responses == null) {
+    return RTE.right([]);
+  }
+
+  const { responses } = operation;
+
   return pipe(
-    O.fromNullable(operation.responses),
-    O.fold(
-      () => RTE.right([]),
-      responses =>
-        pipe(
-          getResponsensWithContent(responses),
-          RTE.chain(res =>
-            R.record.traverseWithIndex(RTE.readerTaskEither)(
-              res,
-              (code, mediaRecord) =>
-                parseMediaRecord(code, mediaRecord, operation)
-            )
-          ),
-          RTE.map(res => Object.values(res)),
-          RTE.map(res => A.flatten(res))
-        )
+    R.record.traverseWithIndex(RTE.readerTaskEitherSeq)(
+      responses,
+      (code, mediaRecord) =>
+        parseApiResponseObject(apiPointer, operation, code, mediaRecord)
+    ),
+    RTE.map(res =>
+      Object.values(res)
+        .filter(O.isSome)
+        .map(o => o.value)
     )
+  );
+}
+
+function parseRequestBodyContent(
+  apiPointer: string,
+  operation: OpenAPIV3.OperationObject,
+  requestBody: OpenAPIV3.ReferenceObject | OpenAPIV3.RequestBodyObject
+): GenRTE<O.Option<ApiBody>> {
+  const basePointer = JSONReference.is(requestBody)
+    ? requestBody.$ref
+    : `${apiPointer}/requestBody`;
+
+  return pipe(
+    getObjectFromDocument(requestBody),
+    RTE.chain(body => {
+      const jsonSchema = body.content[JSON_MEDIA_TYPE]?.schema;
+
+      if (jsonSchema == null) {
+        return RTE.right(O.none);
+      }
+
+      const pointer = `${basePointer}/content/${JSONPointerToken.encode(
+        JSON_MEDIA_TYPE
+      )}/schema`;
+
+      return pipe(
+        getOrCreateModel(pointer, `${operation.operationId!}RequestBody`),
+        RTE.map(type => {
+          const res: ApiBody = {
+            type,
+            required: body.required ?? false
+          };
+          return O.some(res);
+        })
+      );
+    })
   );
 }
 
 // todo: understand how to handle not JSON bodies
 function parseApiRequestBody(
+  apiPointer: string,
   operation: OpenAPIV3.OperationObject
 ): GenRTE<O.Option<ApiBody>> {
   return pipe(
     O.fromNullable(operation.requestBody),
     O.fold(
       () => RTE.right(O.none),
-      rb =>
-        pipe(
-          getObjectFromDocument(rb),
-          RTE.chain(body =>
-            pipe(
-              getJsonSchemaFromContent(body.content),
-              O.fold(
-                () => RTE.right(O.none),
-                schema =>
-                  pipe(
-                    getOrCreateModel(
-                      `${operation.operationId!}RequestBody`,
-                      schema
-                    ),
-                    RTE.map(type => {
-                      const res: ApiBody = {
-                        type,
-                        required: body.required ?? false
-                      };
-                      return O.some(res);
-                    })
-                  )
-              )
-            )
-          )
-        )
+      rb => parseRequestBodyContent(apiPointer, operation, rb)
     )
   );
 }
 
 function createApiParameter(
+  basePointer: string,
   param: OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject
 ): GenRTE<ApiParameter> {
+  const paramPointer = JSONReference.is(param) ? param.$ref : basePointer;
   return pipe(
     getObjectFromDocument(param),
     RTE.chain(resolvedParam =>
       pipe(
-        getOrCreateModel(resolvedParam.name, resolvedParam.schema),
+        getOrCreateModel(`${paramPointer}/schema`, resolvedParam.name),
         RTE.map(type => {
           const res: ApiParameter = {
             name: resolvedParam.name,
@@ -186,6 +169,7 @@ function createApiParameter(
 }
 
 function parseApiParameters(
+  apiPointer: string,
   operation: OpenAPIV3.OperationObject
 ): GenRTE<ApiParameter[]> {
   const parameters = O.fromNullable(operation.parameters);
@@ -193,7 +177,10 @@ function parseApiParameters(
     parameters,
     O.fold(
       () => RTE.right([]),
-      p => A.array.traverse(RTE.readerTaskEither)(p, createApiParameter)
+      params =>
+        A.array.traverseWithIndex(RTE.readerTaskEitherSeq)(params, (i, param) =>
+          createApiParameter(`${apiPointer}/parameters/${i}`, param)
+        )
     )
   );
 }
@@ -216,13 +203,14 @@ function createApi(
   method: ApiMethod,
   operation: OpenAPIV3.OperationObject
 ): GenRTE<Api> {
+  const apiPointer = `#/paths/${JSONPointerToken.encode(path)}/${method}`;
   return sequenceS(RTE.readerTaskEither)({
     path: RTE.right(path),
     name: RTE.right(operation.operationId!),
     method: RTE.right(method),
-    params: parseApiParameters(operation),
-    body: parseApiRequestBody(operation),
-    responses: parseApiResponses(operation)
+    params: parseApiParameters(apiPointer, operation),
+    body: parseApiRequestBody(apiPointer, operation),
+    responses: parseApiResponses(apiPointer, operation)
   });
 }
 
@@ -255,7 +243,7 @@ function parseOperation(
 function parsePath(
   path: string,
   pathObj: OpenAPIV3.PathItemObject
-): GenRTE<void> {
+): GenRTE<unknown> {
   const operations: Record<ApiMethod, O.Option<OpenAPIV3.OperationObject>> = {
     get: O.fromNullable(pathObj.get),
     post: O.fromNullable(pathObj.post),
@@ -263,29 +251,26 @@ function parsePath(
     delete: O.fromNullable(pathObj.delete)
   };
   return pipe(
-    R.record.traverseWithIndex(RTE.readerTaskEither)(
+    R.record.traverseWithIndex(RTE.readerTaskEitherSeq)(
       operations,
       (method, operation) =>
         parseOperation(path, method as ApiMethod, operation)
-    ),
-    RTE.map(() => undefined)
+    )
   );
 }
 
 function getPaths(): GenRTE<OpenAPIV3.PathsObject> {
-  return env =>
-    pipe(
-      TE.rightIO(env.parserState.read),
-      TE.map(state => state.document.paths)
-    );
+  return pipe(
+    readParserState(),
+    RTE.map(state => state.document.paths)
+  );
 }
 
-export function parseAllApis(): GenRTE<void> {
+export function parseAllApis(): GenRTE<unknown> {
   return pipe(
     getPaths(),
     RTE.chain(paths =>
-      R.record.traverseWithIndex(RTE.readerTaskEither)(paths, parsePath)
-    ),
-    RTE.map(() => undefined)
+      R.record.traverseWithIndex(RTE.readerTaskEitherSeq)(paths, parsePath)
+    )
   );
 }

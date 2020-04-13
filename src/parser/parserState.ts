@@ -34,13 +34,9 @@ export interface Api {
   responses: ApiResponse[];
 }
 
-export interface GeneratedModels {
-  namesMap: Record<string, gen.TypeDeclaration>;
-  refNameMap: Record<string, string>;
-}
 export interface ParserState {
   document: OpenAPIV3.Document;
-  generatedModels: GeneratedModels;
+  models: Record<string, gen.TypeDeclaration>;
   apis: Record<string, Api[]>;
 }
 
@@ -53,10 +49,7 @@ const emptyDocument: OpenAPIV3.Document = {
 export function parserState(): ParserState {
   return {
     document: emptyDocument,
-    generatedModels: {
-      namesMap: {},
-      refNameMap: {}
-    },
+    models: {},
     apis: {}
   };
 }

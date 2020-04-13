@@ -5,7 +5,7 @@ import { parseAllApis } from "./apis";
 import { openApiParser } from "./openapi";
 import { parseAllSchemas } from "./schemas";
 
-export function parse(): GenRTE<void> {
+export function parse(): GenRTE<unknown> {
   return pipe(
     openApiParser(),
     RTE.chain(() => parseAllSchemas()),

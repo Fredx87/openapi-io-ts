@@ -5,14 +5,14 @@ import * as gen from "io-ts-codegen";
 import { GenRTE, readParserState } from "../environment";
 import { createDir, writeFormatted } from "./common";
 
-function writeModel(name: string, model: gen.TypeDeclaration): GenRTE<void> {
-  const fileName = `models/${name}.ts`;
+function writeModel(model: gen.TypeDeclaration): GenRTE<void> {
+  const fileName = `models/${model.name}.ts`;
   const content = `import * as t from "io-ts";
   import * as models from "./";
 
     ${gen.printRuntime(model)}
     
-    export type ${name} = t.TypeOf<typeof ${name}>;`;
+    export type ${model.name} = t.TypeOf<typeof ${model.name}>;`;
 
   return writeFormatted(fileName, content);
 }
@@ -24,20 +24,18 @@ function writeModelIndex(models: string[]): GenRTE<void> {
   return writeFormatted("models/index.ts", content);
 }
 
-export function writeModels(): GenRTE<void> {
+export function writeModels(): GenRTE<unknown> {
   return pipe(
     createDir("models"),
     RTE.chain(() => readParserState()),
-    RTE.map(state => state.generatedModels.namesMap),
+    RTE.map(state => state.models),
     RTE.chain(models =>
       pipe(
-        R.record.traverseWithIndex(RTE.readerTaskEither)(
-          models,
-          (name, model) => writeModel(name, model)
+        R.record.traverse(RTE.readerTaskEither)(models, model =>
+          writeModel(model)
         ),
-        RTE.chain(() => writeModelIndex(Object.keys(models)))
+        RTE.chain(() => writeModelIndex(Object.values(models).map(m => m.name)))
       )
-    ),
-    RTE.map(() => undefined)
+    )
   );
 }
