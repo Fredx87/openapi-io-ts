@@ -133,6 +133,7 @@ function parseSchemaObject(
   name: string,
   schema: OpenAPIV3.NonArraySchemaObject
 ): GenRTE<gen.TypeReference> {
+  // todo: parse additionalProperties
   if (schema.properties) {
     return pipe(
       R.record.traverseWithIndex(RTE.readerTaskEitherSeq)(

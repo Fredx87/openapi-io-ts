@@ -51,7 +51,7 @@ describe("Schema object parser", () => {
     expect(result).toMatchInlineSnapshot(`
       Object {
         "_tag": "Right",
-        "right": "models.FoosEnum",
+        "right": "models.Foos",
       }
     `);
   });

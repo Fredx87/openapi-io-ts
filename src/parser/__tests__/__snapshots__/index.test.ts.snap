@@ -6,26 +6,6 @@ Object {
     "pet": Array [
       Object {
         "body": Object {
-          "_tag": "None",
-        },
-        "method": "post",
-        "name": "updatePetWithForm",
-        "params": Array [
-          Object {
-            "in": "path",
-            "name": "petId",
-            "required": true,
-            "type": Object {
-              "kind": "IntegerType",
-              "name": "Integer",
-            },
-          },
-        ],
-        "path": "/pet/{petId}",
-        "responses": Array [],
-      },
-      Object {
-        "body": Object {
           "_tag": "Some",
           "value": Object {
             "required": true,
@@ -66,66 +46,6 @@ Object {
         "body": Object {
           "_tag": "None",
         },
-        "method": "delete",
-        "name": "deletePet",
-        "params": Array [
-          Object {
-            "in": "header",
-            "name": "api_key",
-            "required": false,
-            "type": Object {
-              "kind": "StringType",
-              "name": "string",
-            },
-          },
-          Object {
-            "in": "path",
-            "name": "petId",
-            "required": true,
-            "type": Object {
-              "kind": "IntegerType",
-              "name": "Integer",
-            },
-          },
-        ],
-        "path": "/pet/{petId}",
-        "responses": Array [],
-      },
-      Object {
-        "body": Object {
-          "_tag": "None",
-        },
-        "method": "post",
-        "name": "uploadFile",
-        "params": Array [
-          Object {
-            "in": "path",
-            "name": "petId",
-            "required": true,
-            "type": Object {
-              "kind": "IntegerType",
-              "name": "Integer",
-            },
-          },
-        ],
-        "path": "/pet/{petId}/uploadImage",
-        "responses": Array [
-          Object {
-            "code": "200",
-            "mediaType": "application/json",
-            "type": Object {
-              "dependencies": Array [],
-              "kind": "CustomCombinator",
-              "runtime": "models.ApiResponse",
-              "static": "models.ApiResponse",
-            },
-          },
-        ],
-      },
-      Object {
-        "body": Object {
-          "_tag": "None",
-        },
         "method": "get",
         "name": "findPetsByStatus",
         "params": Array [
@@ -139,8 +59,8 @@ Object {
               "type": Object {
                 "dependencies": Array [],
                 "kind": "CustomCombinator",
-                "runtime": "models.StatusItemsEnum",
-                "static": "models.StatusItemsEnum",
+                "runtime": "models.StatusItems",
+                "static": "models.StatusItems",
               },
             },
           },
@@ -233,18 +153,16 @@ Object {
           },
         ],
       },
-    ],
-    "store": Array [
       Object {
         "body": Object {
           "_tag": "None",
         },
-        "method": "delete",
-        "name": "deleteOrder",
+        "method": "post",
+        "name": "updatePetWithForm",
         "params": Array [
           Object {
             "in": "path",
-            "name": "orderId",
+            "name": "petId",
             "required": true,
             "type": Object {
               "kind": "IntegerType",
@@ -252,9 +170,71 @@ Object {
             },
           },
         ],
-        "path": "/store/order/{orderId}",
+        "path": "/pet/{petId}",
         "responses": Array [],
       },
+      Object {
+        "body": Object {
+          "_tag": "None",
+        },
+        "method": "delete",
+        "name": "deletePet",
+        "params": Array [
+          Object {
+            "in": "header",
+            "name": "api_key",
+            "required": false,
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+          Object {
+            "in": "path",
+            "name": "petId",
+            "required": true,
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
+            },
+          },
+        ],
+        "path": "/pet/{petId}",
+        "responses": Array [],
+      },
+      Object {
+        "body": Object {
+          "_tag": "None",
+        },
+        "method": "post",
+        "name": "uploadFile",
+        "params": Array [
+          Object {
+            "in": "path",
+            "name": "petId",
+            "required": true,
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
+            },
+          },
+        ],
+        "path": "/pet/{petId}/uploadImage",
+        "responses": Array [
+          Object {
+            "code": "200",
+            "mediaType": "application/json",
+            "type": Object {
+              "dependencies": Array [],
+              "kind": "CustomCombinator",
+              "runtime": "models.ApiResponse",
+              "static": "models.ApiResponse",
+            },
+          },
+        ],
+      },
+    ],
+    "store": Array [
       Object {
         "body": Object {
           "_tag": "None",
@@ -335,38 +315,28 @@ Object {
           },
         ],
       },
-    ],
-    "user": Array [
-      Object {
-        "body": Object {
-          "_tag": "None",
-        },
-        "method": "get",
-        "name": "logoutUser",
-        "params": Array [],
-        "path": "/user/logout",
-        "responses": Array [],
-      },
       Object {
         "body": Object {
           "_tag": "None",
         },
         "method": "delete",
-        "name": "deleteUser",
+        "name": "deleteOrder",
         "params": Array [
           Object {
             "in": "path",
-            "name": "username",
+            "name": "orderId",
             "required": true,
             "type": Object {
-              "kind": "StringType",
-              "name": "string",
+              "kind": "IntegerType",
+              "name": "Integer",
             },
           },
         ],
-        "path": "/user/{username}",
+        "path": "/store/order/{orderId}",
         "responses": Array [],
       },
+    ],
+    "user": Array [
       Object {
         "body": Object {
           "_tag": "Some",
@@ -384,35 +354,6 @@ Object {
         "name": "createUser",
         "params": Array [],
         "path": "/user",
-        "responses": Array [],
-      },
-      Object {
-        "body": Object {
-          "_tag": "Some",
-          "value": Object {
-            "required": true,
-            "type": Object {
-              "dependencies": Array [],
-              "kind": "CustomCombinator",
-              "runtime": "models.User",
-              "static": "models.User",
-            },
-          },
-        },
-        "method": "put",
-        "name": "updateUser",
-        "params": Array [
-          Object {
-            "in": "path",
-            "name": "username",
-            "required": true,
-            "type": Object {
-              "kind": "StringType",
-              "name": "string",
-            },
-          },
-        ],
-        "path": "/user/{username}",
         "responses": Array [],
       },
       Object {
@@ -504,6 +445,16 @@ Object {
           "_tag": "None",
         },
         "method": "get",
+        "name": "logoutUser",
+        "params": Array [],
+        "path": "/user/logout",
+        "responses": Array [],
+      },
+      Object {
+        "body": Object {
+          "_tag": "None",
+        },
+        "method": "get",
         "name": "getUserByName",
         "params": Array [
           Object {
@@ -529,6 +480,55 @@ Object {
             },
           },
         ],
+      },
+      Object {
+        "body": Object {
+          "_tag": "Some",
+          "value": Object {
+            "required": true,
+            "type": Object {
+              "dependencies": Array [],
+              "kind": "CustomCombinator",
+              "runtime": "models.User",
+              "static": "models.User",
+            },
+          },
+        },
+        "method": "put",
+        "name": "updateUser",
+        "params": Array [
+          Object {
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+        ],
+        "path": "/user/{username}",
+        "responses": Array [],
+      },
+      Object {
+        "body": Object {
+          "_tag": "None",
+        },
+        "method": "delete",
+        "name": "deleteUser",
+        "params": Array [
+          Object {
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+        ],
+        "path": "/user/{username}",
+        "responses": Array [],
       },
     ],
   },
@@ -1611,500 +1611,489 @@ out more about Swagger at
       },
     ],
   },
-  "generatedModels": Object {
-    "namesMap": Object {
-      "ApiResponse": Object {
-        "description": undefined,
-        "isExported": true,
-        "isReadonly": false,
-        "kind": "TypeDeclaration",
-        "name": "ApiResponse",
-        "type": Object {
-          "kind": "InterfaceCombinator",
-          "name": undefined,
-          "properties": Array [
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "code",
-              "kind": "Property",
-              "type": Object {
-                "kind": "IntegerType",
-                "name": "Integer",
-              },
+  "models": Object {
+    "#/components/schemas/ApiResponse": Object {
+      "description": undefined,
+      "isExported": true,
+      "isReadonly": false,
+      "kind": "TypeDeclaration",
+      "name": "ApiResponse",
+      "type": Object {
+        "kind": "InterfaceCombinator",
+        "name": undefined,
+        "properties": Array [
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "code",
+            "kind": "Property",
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
             },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "type",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "type",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
             },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "message",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "message",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
             },
-          ],
-        },
-      },
-      "Body": Object {
-        "description": undefined,
-        "isExported": true,
-        "isReadonly": false,
-        "kind": "TypeDeclaration",
-        "name": "Body",
-        "type": Object {
-          "kind": "InterfaceCombinator",
-          "name": undefined,
-          "properties": Array [
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "name",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "status",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
-            },
-          ],
-        },
-      },
-      "Category": Object {
-        "description": undefined,
-        "isExported": true,
-        "isReadonly": false,
-        "kind": "TypeDeclaration",
-        "name": "Category",
-        "type": Object {
-          "kind": "InterfaceCombinator",
-          "name": undefined,
-          "properties": Array [
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "id",
-              "kind": "Property",
-              "type": Object {
-                "kind": "IntegerType",
-                "name": "Integer",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "name",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
-            },
-          ],
-        },
-      },
-      "Order": Object {
-        "description": undefined,
-        "isExported": true,
-        "isReadonly": false,
-        "kind": "TypeDeclaration",
-        "name": "Order",
-        "type": Object {
-          "kind": "InterfaceCombinator",
-          "name": undefined,
-          "properties": Array [
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "id",
-              "kind": "Property",
-              "type": Object {
-                "kind": "IntegerType",
-                "name": "Integer",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "petId",
-              "kind": "Property",
-              "type": Object {
-                "kind": "IntegerType",
-                "name": "Integer",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "quantity",
-              "kind": "Property",
-              "type": Object {
-                "kind": "IntegerType",
-                "name": "Integer",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "shipDate",
-              "kind": "Property",
-              "type": Object {
-                "dependencies": Array [],
-                "kind": "CustomCombinator",
-                "runtime": "models.DateFromISOString",
-                "static": "models.DateFromISOString",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "status",
-              "kind": "Property",
-              "type": Object {
-                "dependencies": Array [],
-                "kind": "CustomCombinator",
-                "runtime": "models.OrderStatusEnum",
-                "static": "models.OrderStatusEnum",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "complete",
-              "kind": "Property",
-              "type": Object {
-                "kind": "BooleanType",
-                "name": "boolean",
-              },
-            },
-          ],
-        },
-      },
-      "OrderStatusEnum": Object {
-        "description": undefined,
-        "isExported": true,
-        "isReadonly": false,
-        "kind": "TypeDeclaration",
-        "name": "OrderStatusEnum",
-        "type": Object {
-          "kind": "UnionCombinator",
-          "name": undefined,
-          "types": Array [
-            Object {
-              "kind": "LiteralCombinator",
-              "name": undefined,
-              "value": "placed",
-            },
-            Object {
-              "kind": "LiteralCombinator",
-              "name": undefined,
-              "value": "approved",
-            },
-            Object {
-              "kind": "LiteralCombinator",
-              "name": undefined,
-              "value": "delivered",
-            },
-          ],
-        },
-      },
-      "Pet": Object {
-        "description": undefined,
-        "isExported": true,
-        "isReadonly": false,
-        "kind": "TypeDeclaration",
-        "name": "Pet",
-        "type": Object {
-          "kind": "InterfaceCombinator",
-          "name": undefined,
-          "properties": Array [
-            Object {
-              "description": undefined,
-              "isOptional": true,
-              "key": "id",
-              "kind": "Property",
-              "type": Object {
-                "kind": "IntegerType",
-                "name": "Integer",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": true,
-              "key": "category",
-              "kind": "Property",
-              "type": Object {
-                "dependencies": Array [],
-                "kind": "CustomCombinator",
-                "runtime": "models.Category",
-                "static": "models.Category",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "name",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "photoUrls",
-              "kind": "Property",
-              "type": Object {
-                "kind": "ArrayCombinator",
-                "name": undefined,
-                "type": Object {
-                  "kind": "StringType",
-                  "name": "string",
-                },
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": true,
-              "key": "tags",
-              "kind": "Property",
-              "type": Object {
-                "kind": "ArrayCombinator",
-                "name": undefined,
-                "type": Object {
-                  "dependencies": Array [],
-                  "kind": "CustomCombinator",
-                  "runtime": "models.Tag",
-                  "static": "models.Tag",
-                },
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": true,
-              "key": "status",
-              "kind": "Property",
-              "type": Object {
-                "dependencies": Array [],
-                "kind": "CustomCombinator",
-                "runtime": "models.PetStatusEnum",
-                "static": "models.PetStatusEnum",
-              },
-            },
-          ],
-        },
-      },
-      "PetStatusEnum": Object {
-        "description": undefined,
-        "isExported": true,
-        "isReadonly": false,
-        "kind": "TypeDeclaration",
-        "name": "PetStatusEnum",
-        "type": Object {
-          "kind": "UnionCombinator",
-          "name": undefined,
-          "types": Array [
-            Object {
-              "kind": "LiteralCombinator",
-              "name": undefined,
-              "value": "available",
-            },
-            Object {
-              "kind": "LiteralCombinator",
-              "name": undefined,
-              "value": "pending",
-            },
-            Object {
-              "kind": "LiteralCombinator",
-              "name": undefined,
-              "value": "sold",
-            },
-          ],
-        },
-      },
-      "StatusItemsEnum": Object {
-        "description": undefined,
-        "isExported": true,
-        "isReadonly": false,
-        "kind": "TypeDeclaration",
-        "name": "StatusItemsEnum",
-        "type": Object {
-          "kind": "UnionCombinator",
-          "name": undefined,
-          "types": Array [
-            Object {
-              "kind": "LiteralCombinator",
-              "name": undefined,
-              "value": "available",
-            },
-            Object {
-              "kind": "LiteralCombinator",
-              "name": undefined,
-              "value": "pending",
-            },
-            Object {
-              "kind": "LiteralCombinator",
-              "name": undefined,
-              "value": "sold",
-            },
-          ],
-        },
-      },
-      "Tag": Object {
-        "description": undefined,
-        "isExported": true,
-        "isReadonly": false,
-        "kind": "TypeDeclaration",
-        "name": "Tag",
-        "type": Object {
-          "kind": "InterfaceCombinator",
-          "name": undefined,
-          "properties": Array [
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "id",
-              "kind": "Property",
-              "type": Object {
-                "kind": "IntegerType",
-                "name": "Integer",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "name",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
-            },
-          ],
-        },
-      },
-      "User": Object {
-        "description": undefined,
-        "isExported": true,
-        "isReadonly": false,
-        "kind": "TypeDeclaration",
-        "name": "User",
-        "type": Object {
-          "kind": "InterfaceCombinator",
-          "name": undefined,
-          "properties": Array [
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "id",
-              "kind": "Property",
-              "type": Object {
-                "kind": "IntegerType",
-                "name": "Integer",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "username",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "firstName",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "lastName",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "email",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "password",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "phone",
-              "kind": "Property",
-              "type": Object {
-                "kind": "StringType",
-                "name": "string",
-              },
-            },
-            Object {
-              "description": undefined,
-              "isOptional": false,
-              "key": "userStatus",
-              "kind": "Property",
-              "type": Object {
-                "kind": "IntegerType",
-                "name": "Integer",
-              },
-            },
-          ],
-        },
+          },
+        ],
       },
     },
-    "refNameMap": Object {
-      "#/components/schemas/ApiResponse": "ApiResponse",
-      "#/components/schemas/Category": "Category",
-      "#/components/schemas/Order": "Order",
-      "#/components/schemas/Pet": "Pet",
-      "#/components/schemas/Tag": "Tag",
-      "#/components/schemas/User": "User",
-      "#/components/schemas/body": "Body",
+    "#/components/schemas/Category": Object {
+      "description": undefined,
+      "isExported": true,
+      "isReadonly": false,
+      "kind": "TypeDeclaration",
+      "name": "Category",
+      "type": Object {
+        "kind": "InterfaceCombinator",
+        "name": undefined,
+        "properties": Array [
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "id",
+            "kind": "Property",
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "name",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+        ],
+      },
+    },
+    "#/components/schemas/Order": Object {
+      "description": undefined,
+      "isExported": true,
+      "isReadonly": false,
+      "kind": "TypeDeclaration",
+      "name": "Order",
+      "type": Object {
+        "kind": "InterfaceCombinator",
+        "name": undefined,
+        "properties": Array [
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "id",
+            "kind": "Property",
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "petId",
+            "kind": "Property",
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "quantity",
+            "kind": "Property",
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "shipDate",
+            "kind": "Property",
+            "type": Object {
+              "dependencies": Array [],
+              "kind": "CustomCombinator",
+              "runtime": "models.DateFromISOString",
+              "static": "models.DateFromISOString",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "status",
+            "kind": "Property",
+            "type": Object {
+              "dependencies": Array [],
+              "kind": "CustomCombinator",
+              "runtime": "models.OrderStatus",
+              "static": "models.OrderStatus",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "complete",
+            "kind": "Property",
+            "type": Object {
+              "kind": "BooleanType",
+              "name": "boolean",
+            },
+          },
+        ],
+      },
+    },
+    "#/components/schemas/Order/status": Object {
+      "description": undefined,
+      "isExported": true,
+      "isReadonly": false,
+      "kind": "TypeDeclaration",
+      "name": "OrderStatus",
+      "type": Object {
+        "kind": "UnionCombinator",
+        "name": undefined,
+        "types": Array [
+          Object {
+            "kind": "LiteralCombinator",
+            "name": undefined,
+            "value": "placed",
+          },
+          Object {
+            "kind": "LiteralCombinator",
+            "name": undefined,
+            "value": "approved",
+          },
+          Object {
+            "kind": "LiteralCombinator",
+            "name": undefined,
+            "value": "delivered",
+          },
+        ],
+      },
+    },
+    "#/components/schemas/Pet": Object {
+      "description": undefined,
+      "isExported": true,
+      "isReadonly": false,
+      "kind": "TypeDeclaration",
+      "name": "Pet",
+      "type": Object {
+        "kind": "InterfaceCombinator",
+        "name": undefined,
+        "properties": Array [
+          Object {
+            "description": undefined,
+            "isOptional": true,
+            "key": "id",
+            "kind": "Property",
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": true,
+            "key": "category",
+            "kind": "Property",
+            "type": Object {
+              "dependencies": Array [],
+              "kind": "CustomCombinator",
+              "runtime": "models.Category",
+              "static": "models.Category",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "name",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "photoUrls",
+            "kind": "Property",
+            "type": Object {
+              "kind": "ArrayCombinator",
+              "name": undefined,
+              "type": Object {
+                "kind": "StringType",
+                "name": "string",
+              },
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": true,
+            "key": "tags",
+            "kind": "Property",
+            "type": Object {
+              "kind": "ArrayCombinator",
+              "name": undefined,
+              "type": Object {
+                "dependencies": Array [],
+                "kind": "CustomCombinator",
+                "runtime": "models.Tag",
+                "static": "models.Tag",
+              },
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": true,
+            "key": "status",
+            "kind": "Property",
+            "type": Object {
+              "dependencies": Array [],
+              "kind": "CustomCombinator",
+              "runtime": "models.PetStatus",
+              "static": "models.PetStatus",
+            },
+          },
+        ],
+      },
+    },
+    "#/components/schemas/Pet/status": Object {
+      "description": undefined,
+      "isExported": true,
+      "isReadonly": false,
+      "kind": "TypeDeclaration",
+      "name": "PetStatus",
+      "type": Object {
+        "kind": "UnionCombinator",
+        "name": undefined,
+        "types": Array [
+          Object {
+            "kind": "LiteralCombinator",
+            "name": undefined,
+            "value": "available",
+          },
+          Object {
+            "kind": "LiteralCombinator",
+            "name": undefined,
+            "value": "pending",
+          },
+          Object {
+            "kind": "LiteralCombinator",
+            "name": undefined,
+            "value": "sold",
+          },
+        ],
+      },
+    },
+    "#/components/schemas/Tag": Object {
+      "description": undefined,
+      "isExported": true,
+      "isReadonly": false,
+      "kind": "TypeDeclaration",
+      "name": "Tag",
+      "type": Object {
+        "kind": "InterfaceCombinator",
+        "name": undefined,
+        "properties": Array [
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "id",
+            "kind": "Property",
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "name",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+        ],
+      },
+    },
+    "#/components/schemas/User": Object {
+      "description": undefined,
+      "isExported": true,
+      "isReadonly": false,
+      "kind": "TypeDeclaration",
+      "name": "User",
+      "type": Object {
+        "kind": "InterfaceCombinator",
+        "name": undefined,
+        "properties": Array [
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "id",
+            "kind": "Property",
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "username",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "firstName",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "lastName",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "email",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "password",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "phone",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "userStatus",
+            "kind": "Property",
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
+            },
+          },
+        ],
+      },
+    },
+    "#/components/schemas/body": Object {
+      "description": undefined,
+      "isExported": true,
+      "isReadonly": false,
+      "kind": "TypeDeclaration",
+      "name": "Body",
+      "type": Object {
+        "kind": "InterfaceCombinator",
+        "name": undefined,
+        "properties": Array [
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "name",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "status",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+        ],
+      },
+    },
+    "#/paths/~1pet~1findByStatus/get/parameters/0/schema/items": Object {
+      "description": undefined,
+      "isExported": true,
+      "isReadonly": false,
+      "kind": "TypeDeclaration",
+      "name": "StatusItems",
+      "type": Object {
+        "kind": "UnionCombinator",
+        "name": undefined,
+        "types": Array [
+          Object {
+            "kind": "LiteralCombinator",
+            "name": undefined,
+            "value": "available",
+          },
+          Object {
+            "kind": "LiteralCombinator",
+            "name": undefined,
+            "value": "pending",
+          },
+          Object {
+            "kind": "LiteralCombinator",
+            "name": undefined,
+            "value": "sold",
+          },
+        ],
+      },
     },
   },
 }
