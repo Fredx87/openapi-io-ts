@@ -68,8 +68,8 @@ function parseEnum(
   schema: OpenAPIV3.SchemaObject
 ): GenRTE<gen.TypeReference> {
   return createNewModel(
-    createPointer(basePointer, "enum"),
-    `${name}Enum`,
+    basePointer,
+    name,
     gen.unionCombinator(schema.enum!.map(e => gen.literalCombinator(e)))
   );
 }
