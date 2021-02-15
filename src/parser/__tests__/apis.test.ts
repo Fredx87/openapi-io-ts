@@ -1,6 +1,6 @@
 import assert from "assert";
-import * as E from "fp-ts/lib/Either";
-import { newIORef } from "fp-ts/lib/IORef";
+import * as E from "fp-ts/Either";
+import { newIORef } from "fp-ts/IORef";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { Environment } from "../../environment";
@@ -11,8 +11,8 @@ function createEnvironment(operation: OpenAPIV3.OperationObject) {
   const state = parserState();
   state.document.paths = {
     "/pet": {
-      get: operation
-    }
+      get: operation,
+    },
   };
   state.models["#/components/schemas/User"] = gen.typeDeclaration(
     "User",
@@ -23,7 +23,7 @@ function createEnvironment(operation: OpenAPIV3.OperationObject) {
     inputFile: "",
     outputDir: "",
     parseDocument: jest.fn(),
-    parserState: newIORef(state)()
+    parserState: newIORef(state)(),
   };
 }
 
@@ -34,7 +34,7 @@ describe("path-parser", () => {
 
     test("should return empty array on operation without responses", async () => {
       const input: OpenAPIV3.OperationObject = {
-        responses: undefined
+        responses: undefined,
       };
       env = createEnvironment(input);
 
@@ -47,12 +47,12 @@ describe("path-parser", () => {
       const input: OpenAPIV3.OperationObject = {
         responses: {
           "400": {
-            description: "Invalid ID supplied"
+            description: "Invalid ID supplied",
           },
           "404": {
-            description: "Order not found"
-          }
-        }
+            description: "Order not found",
+          },
+        },
       };
       env = createEnvironment(input);
 
@@ -69,26 +69,26 @@ describe("path-parser", () => {
             content: {
               "application/json": {
                 schema: {
-                  type: "string"
-                }
+                  type: "string",
+                },
               },
               "application/xml": {
                 schema: {
-                  type: "string"
-                }
-              }
-            }
+                  type: "string",
+                },
+              },
+            },
           },
           "400": {
-            description: "Invalid username/password supplied"
-          }
-        }
+            description: "Invalid username/password supplied",
+          },
+        },
       };
       env = createEnvironment(input);
 
       const result = await parseApiResponses(basePointer, input)(env)();
       const expected: ApiResponse[] = [
-        { code: "200", mediaType: "application/json", type: gen.stringType }
+        { code: "200", mediaType: "application/json", type: gen.stringType },
       ];
       expect(result).toEqual(E.right(expected));
     });
@@ -101,23 +101,23 @@ describe("path-parser", () => {
             content: {
               "application/json": {
                 schema: {
-                  $ref: "#/components/schemas/User"
-                }
+                  $ref: "#/components/schemas/User",
+                },
               },
               "application/xml": {
                 schema: {
-                  $ref: "#/components/schemas/User"
-                }
-              }
-            }
+                  $ref: "#/components/schemas/User",
+                },
+              },
+            },
           },
           "400": {
-            description: "Invalid username supplied"
+            description: "Invalid username supplied",
           },
           "404": {
-            description: "User not found"
-          }
-        }
+            description: "User not found",
+          },
+        },
       };
       env = createEnvironment(input);
 
@@ -126,8 +126,8 @@ describe("path-parser", () => {
         {
           code: "200",
           mediaType: "application/json",
-          type: gen.customCombinator("models.User", "models.User")
-        }
+          type: gen.customCombinator("models.User", "models.User"),
+        },
       ];
       expect(result).toEqual(E.right(expected));
     });
@@ -144,28 +144,28 @@ describe("path-parser", () => {
                   type: "object",
                   properties: {
                     bar: {
-                      type: "string"
+                      type: "string",
                     },
                     baz: {
-                      type: "number"
-                    }
-                  }
-                }
+                      type: "number",
+                    },
+                  },
+                },
               },
               "application/xml": {
                 schema: {
-                  $ref: "#/components/schemas/User"
-                }
-              }
-            }
+                  $ref: "#/components/schemas/User",
+                },
+              },
+            },
           },
           "400": {
-            description: "Invalid username supplied"
+            description: "Invalid username supplied",
           },
           "404": {
-            description: "User not found"
-          }
-        }
+            description: "User not found",
+          },
+        },
       };
       env = createEnvironment(input);
 
@@ -177,8 +177,8 @@ describe("path-parser", () => {
           type: gen.customCombinator(
             "models.FooResponse200",
             "models.FooResponse200"
-          )
-        }
+          ),
+        },
       ];
       expect(result).toEqual(E.right(expected));
       const models = env.parserState.read().models;

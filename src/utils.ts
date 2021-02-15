@@ -1,6 +1,6 @@
-import * as A from "fp-ts/lib/Array";
-import * as E from "fp-ts/lib/Either";
-import { pipe } from "fp-ts/lib/pipeable";
+import * as A from "fp-ts/Array";
+import * as E from "fp-ts/Either";
+import { pipe } from "fp-ts/function";
 import { get } from "lodash";
 import { OpenAPIV3 } from "openapi-types";
 import { JSONPointerToken, JSONReference } from "./common/JSONReference";
@@ -17,8 +17,8 @@ export function pointerToPath(pointer: string): E.Either<string, string[]> {
 
   return pipe(
     E.fromOption(() => `Not enought tokens in pointer`)(A.tail(tokens)),
-    E.chain(tail =>
-      A.array.traverse(E.either)(tail, t =>
+    E.chain((tail) =>
+      A.array.traverse(E.either)(tail, (t) =>
         pipe(
           JSONPointerToken.decode(t),
           E.mapLeft(() => `Cannot decode pointer token`)
@@ -34,7 +34,7 @@ export function getObjectByRef(
 ): unknown | undefined {
   return pipe(
     pointerToPath(ref),
-    E.map(path => get(document, path)),
+    E.map((path) => get(document, path)),
     E.getOrElse(() => undefined)
   );
 }

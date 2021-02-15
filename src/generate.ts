@@ -1,9 +1,9 @@
-import { error, log } from "fp-ts/lib/Console";
-import { newIORef } from "fp-ts/lib/IORef";
-import { pipe } from "fp-ts/lib/pipeable";
-import * as RTE from "fp-ts/lib/ReaderTaskEither";
-import * as T from "fp-ts/lib/Task";
-import * as TE from "fp-ts/lib/TaskEither";
+import { error, log } from "fp-ts/Console";
+import { pipe } from "fp-ts/function";
+import { newIORef } from "fp-ts/IORef";
+import * as RTE from "fp-ts/ReaderTaskEither";
+import * as T from "fp-ts/Task";
+import * as TE from "fp-ts/TaskEither";
 import SwaggerParser from "swagger-parser";
 import { Environment } from "./environment";
 import { writeModels } from "./file-writer/models";
@@ -21,7 +21,7 @@ function onRight(): T.Task<void> {
 function parseDocument(inputFile: string) {
   return TE.tryCatch(
     () => SwaggerParser.default.bundle(inputFile),
-    e => `Error in OpenApi file: ${String(e)}`
+    (e) => `Error in OpenApi file: ${String(e)}`
   );
 }
 
@@ -30,7 +30,7 @@ export function generate(inputFile: string, outputDir: string): void {
     parseDocument,
     inputFile,
     outputDir,
-    parserState: newIORef(parserState())()
+    parserState: newIORef(parserState())(),
   };
 
   const result = pipe(

@@ -1,5 +1,5 @@
-import { pipe } from "fp-ts/lib/pipeable";
-import * as RTE from "fp-ts/lib/ReaderTaskEither";
+import { pipe } from "fp-ts/function";
+import * as RTE from "fp-ts/ReaderTaskEither";
 import { GenRTE } from "../environment";
 import { parseAllApis } from "./apis";
 import { openApiParser } from "./openapi";

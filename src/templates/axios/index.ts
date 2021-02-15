@@ -1,10 +1,10 @@
-import * as O from "fp-ts/lib/Option";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/function";
+import * as O from "fp-ts/Option";
 import { Api, ApiBody, ApiMethod } from "../../parser/parserState";
 import {
   createUrlTemplate,
   generateFunctionArgs,
-  getResponsesType
+  getResponsesType,
 } from "../common";
 
 function createAxiosRequest(

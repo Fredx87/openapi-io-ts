@@ -1,4 +1,4 @@
-import * as O from "fp-ts/lib/Option";
+import * as O from "fp-ts/Option";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 
@@ -43,13 +43,13 @@ export interface ParserState {
 const emptyDocument: OpenAPIV3.Document = {
   info: { title: "", version: "" },
   openapi: "3",
-  paths: {}
+  paths: {},
 };
 
 export function parserState(): ParserState {
   return {
     document: emptyDocument,
     models: {},
-    apis: {}
+    apis: {},
   };
 }

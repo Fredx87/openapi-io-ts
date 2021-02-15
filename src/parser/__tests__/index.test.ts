@@ -1,5 +1,5 @@
-import { newIORef } from "fp-ts/lib/IORef";
-import * as TE from "fp-ts/lib/TaskEither";
+import { newIORef } from "fp-ts/IORef";
+import * as TE from "fp-ts/TaskEither";
 // import { promises } from "fs";
 import { OpenAPI } from "openapi-types";
 import { parse } from "..";
@@ -13,7 +13,7 @@ describe("OpenAPI parser", () => {
       parseDocument: () => TE.right(petStore as OpenAPI.Document),
       inputFile: "",
       outputDir: "",
-      parserState: newIORef(parserState())()
+      parserState: newIORef(parserState())(),
     };
 
     await parse()(env)();

@@ -1,4 +1,4 @@
-import * as E from "fp-ts/lib/Either";
+import * as E from "fp-ts/Either";
 import * as t from "io-ts";
 
 function JSONPointerTokenEncode(path: string): string {
@@ -21,5 +21,5 @@ export function createPointer(basePointer: string, token: string): string {
 }
 
 export const JSONReference = t.type({
-  $ref: t.string
+  $ref: t.string,
 });

@@ -1,9 +1,9 @@
-import * as A from "fp-ts/lib/Array";
-import * as O from "fp-ts/lib/Option";
-import { pipe } from "fp-ts/lib/pipeable";
-import * as RTE from "fp-ts/lib/ReaderTaskEither";
-import * as R from "fp-ts/lib/Record";
-import * as TE from "fp-ts/lib/TaskEither";
+import * as A from "fp-ts/Array";
+import { pipe } from "fp-ts/function";
+import * as O from "fp-ts/Option";
+import * as RTE from "fp-ts/ReaderTaskEither";
+import * as R from "fp-ts/Record";
+import * as TE from "fp-ts/TaskEither";
 import produce from "immer";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
@@ -19,7 +19,7 @@ function modelRefCombinator(name: string): gen.CustomCombinator {
 function getModelsNames(): GenRTE<string[]> {
   return pipe(
     readParserState(),
-    RTE.map(state => Object.values(state.models).map(model => model.name))
+    RTE.map((state) => Object.values(state.models).map((model) => model.name))
   );
 }
 
@@ -27,7 +27,7 @@ function getModelsNames(): GenRTE<string[]> {
 function getNameForNewModel(name: string): GenRTE<string> {
   return pipe(
     getModelsNames(),
-    RTE.map(names => {
+    RTE.map((names) => {
       const res = names.includes(name) ? `${name}_1` : name;
       return pascalCase(res);
     })
@@ -35,10 +35,10 @@ function getNameForNewModel(name: string): GenRTE<string> {
 }
 
 function setModel(pointer: string, model: gen.TypeDeclaration): GenRTE<void> {
-  return env =>
+  return (env) =>
     TE.rightIO(
-      env.parserState.modify(state =>
-        produce(state, draft => {
+      env.parserState.modify((state) =>
+        produce(state, (draft) => {
           draft.models[pointer] = model;
         })
       )
@@ -64,10 +64,10 @@ function createNewModel(
 ): GenRTE<gen.TypeReference> {
   return pipe(
     getNameForNewModel(simplifyModelName(pointer, name)),
-    RTE.chain(modelName =>
+    RTE.chain((modelName) =>
       pipe(
         RTE.right(gen.typeDeclaration(modelName, typeRef, true)),
-        RTE.chain(t => setModel(pointer, t)),
+        RTE.chain((t) => setModel(pointer, t)),
         RTE.map(() => modelRefCombinator(modelName))
       )
     )
@@ -82,7 +82,7 @@ function parseEnum(
   return createNewModel(
     basePointer,
     name,
-    gen.unionCombinator(schema.enum!.map(e => gen.literalCombinator(e)))
+    gen.unionCombinator(schema.enum!.map((e) => gen.literalCombinator(e)))
   );
 }
 
@@ -113,7 +113,7 @@ function parseSchemaArray(
       `${name}Items`,
       schema.items
     ),
-    RTE.map(t => gen.arrayCombinator(t))
+    RTE.map((t) => gen.arrayCombinator(t))
   );
 }
 
@@ -130,7 +130,7 @@ function parseProperty(
       `${name}${pascalCase(propName)}`,
       propSchema
     ),
-    RTE.map(t =>
+    RTE.map((t) =>
       gen.property(
         propName,
         t,
@@ -153,8 +153,8 @@ function parseSchemaObject(
         (propName, prop) =>
           parseProperty(basePointer, name, propName, prop, schema)
       ),
-      RTE.map(props => gen.interfaceCombinator(Object.values(props))),
-      RTE.chain(t => createNewModel(basePointer, name, t))
+      RTE.map((props) => gen.interfaceCombinator(Object.values(props))),
+      RTE.chain((t) => createNewModel(basePointer, name, t))
     );
   }
 
@@ -165,7 +165,7 @@ function getObjectFromState(ref: string): GenRTE<OpenAPIV3.SchemaObject> {
   return pipe(
     readParserState(),
     RTE.map(
-      state => getObjectByRef(ref, state.document) as OpenAPIV3.SchemaObject
+      (state) => getObjectByRef(ref, state.document) as OpenAPIV3.SchemaObject
     )
   );
 }
@@ -175,7 +175,7 @@ function parseSchemas(
   name: string,
   schemas: Array<OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>
 ): GenRTE<gen.TypeReference[]> {
-  return A.array.traverse(RTE.readerTaskEitherSeq)(schemas, schema =>
+  return A.array.traverse(RTE.readerTaskEitherSeq)(schemas, (schema) =>
     parseSchema(createPointer(basePointer, "0"), `${name}0`, schema)
   );
 }
@@ -187,8 +187,8 @@ function parseAllOf(
 ): GenRTE<gen.TypeReference> {
   return pipe(
     parseSchemas(basePointer, name, schemas),
-    RTE.map(t => gen.intersectionCombinator(t)),
-    RTE.chain(t => createNewModel(basePointer, name, t))
+    RTE.map((t) => gen.intersectionCombinator(t)),
+    RTE.chain((t) => createNewModel(basePointer, name, t))
   );
 }
 
@@ -199,8 +199,8 @@ function parseAnyOf(
 ): GenRTE<gen.TypeReference> {
   return pipe(
     parseSchemas(basePointer, name, schemas),
-    RTE.map(t => gen.unionCombinator(t)),
-    RTE.chain(t => createNewModel(basePointer, name, t))
+    RTE.map((t) => gen.unionCombinator(t)),
+    RTE.chain((t) => createNewModel(basePointer, name, t))
   );
 }
 
@@ -254,10 +254,10 @@ function createModelFromPointer(
 ): GenRTE<gen.TypeReference> {
   return pipe(
     getNameForNewModel(name),
-    RTE.chain(modelName =>
+    RTE.chain((modelName) =>
       pipe(
         getObjectFromState(ref),
-        RTE.chain(schema => parseSchema(ref, modelName, schema))
+        RTE.chain((schema) => parseSchema(ref, modelName, schema))
       )
     )
   );
@@ -269,13 +269,13 @@ export function getOrCreateModel(
 ): GenRTE<gen.TypeReference> {
   return pipe(
     readParserState(),
-    RTE.map(state => O.fromNullable(state.models[pointer])),
-    RTE.chain(model =>
+    RTE.map((state) => O.fromNullable(state.models[pointer])),
+    RTE.chain((model) =>
       pipe(
         model,
         O.fold(
           () => createModelFromPointer(pointer, name),
-          model => RTE.right(modelRefCombinator(model.name))
+          (model) => RTE.right(modelRefCombinator(model.name))
         )
       )
     )

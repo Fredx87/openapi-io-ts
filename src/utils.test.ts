@@ -1,4 +1,4 @@
-import * as E from "fp-ts/lib/Either";
+import * as E from "fp-ts/Either";
 import { pascalCase, pointerToPath } from "./utils";
 
 describe("utils", () => {
