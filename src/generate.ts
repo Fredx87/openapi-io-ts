@@ -15,7 +15,7 @@ function onLeft(e: string): T.Task<void> {
 }
 
 function onRight(): T.Task<void> {
-  return T.fromIO(log("Files generated succeessfully!"));
+  return T.fromIO(log("Files generated successfully!"));
 }
 
 function parseDocument(inputFile: string) {

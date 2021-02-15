@@ -16,7 +16,7 @@ export function pointerToPath(pointer: string): E.Either<string, string[]> {
   const tokens = pointer.split("/");
 
   return pipe(
-    E.fromOption(() => `Not enought tokens in pointer`)(A.tail(tokens)),
+    E.fromOption(() => `Not enough tokens in pointer`)(A.tail(tokens)),
     E.chain((tail) =>
       A.array.traverse(E.either)(tail, (t) =>
         pipe(
