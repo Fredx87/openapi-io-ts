@@ -20,7 +20,7 @@ function onRight(): T.Task<void> {
 
 function parseDocument(inputFile: string) {
   return TE.tryCatch(
-    () => SwaggerParser.bundle(inputFile),
+    () => SwaggerParser.default.bundle(inputFile),
     e => `Error in OpenApi file: ${String(e)}`
   );
 }

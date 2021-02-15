@@ -126,6 +126,35 @@ Object {
         "body": Object {
           "_tag": "None",
         },
+        "method": "delete",
+        "name": "deletePet",
+        "params": Array [
+          Object {
+            "in": "header",
+            "name": "api_key",
+            "required": false,
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+          Object {
+            "in": "path",
+            "name": "petId",
+            "required": true,
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
+            },
+          },
+        ],
+        "path": "/pet/{petId}",
+        "responses": Array [],
+      },
+      Object {
+        "body": Object {
+          "_tag": "None",
+        },
         "method": "get",
         "name": "getPetById",
         "params": Array [
@@ -160,35 +189,6 @@ Object {
         "method": "post",
         "name": "updatePetWithForm",
         "params": Array [
-          Object {
-            "in": "path",
-            "name": "petId",
-            "required": true,
-            "type": Object {
-              "kind": "IntegerType",
-              "name": "Integer",
-            },
-          },
-        ],
-        "path": "/pet/{petId}",
-        "responses": Array [],
-      },
-      Object {
-        "body": Object {
-          "_tag": "None",
-        },
-        "method": "delete",
-        "name": "deletePet",
-        "params": Array [
-          Object {
-            "in": "header",
-            "name": "api_key",
-            "required": false,
-            "type": Object {
-              "kind": "StringType",
-              "name": "string",
-            },
-          },
           Object {
             "in": "path",
             "name": "petId",
@@ -288,6 +288,26 @@ Object {
         "body": Object {
           "_tag": "None",
         },
+        "method": "delete",
+        "name": "deleteOrder",
+        "params": Array [
+          Object {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
+            },
+          },
+        ],
+        "path": "/store/order/{orderId}",
+        "responses": Array [],
+      },
+      Object {
+        "body": Object {
+          "_tag": "None",
+        },
         "method": "get",
         "name": "getOrderById",
         "params": Array [
@@ -314,26 +334,6 @@ Object {
             },
           },
         ],
-      },
-      Object {
-        "body": Object {
-          "_tag": "None",
-        },
-        "method": "delete",
-        "name": "deleteOrder",
-        "params": Array [
-          Object {
-            "in": "path",
-            "name": "orderId",
-            "required": true,
-            "type": Object {
-              "kind": "IntegerType",
-              "name": "Integer",
-            },
-          },
-        ],
-        "path": "/store/order/{orderId}",
-        "responses": Array [],
       },
     ],
     "user": Array [
@@ -454,6 +454,26 @@ Object {
         "body": Object {
           "_tag": "None",
         },
+        "method": "delete",
+        "name": "deleteUser",
+        "params": Array [
+          Object {
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
+            },
+          },
+        ],
+        "path": "/user/{username}",
+        "responses": Array [],
+      },
+      Object {
+        "body": Object {
+          "_tag": "None",
+        },
         "method": "get",
         "name": "getUserByName",
         "params": Array [
@@ -496,26 +516,6 @@ Object {
         },
         "method": "put",
         "name": "updateUser",
-        "params": Array [
-          Object {
-            "in": "path",
-            "name": "username",
-            "required": true,
-            "type": Object {
-              "kind": "StringType",
-              "name": "string",
-            },
-          },
-        ],
-        "path": "/user/{username}",
-        "responses": Array [],
-      },
-      Object {
-        "body": Object {
-          "_tag": "None",
-        },
-        "method": "delete",
-        "name": "deleteUser",
         "params": Array [
           Object {
             "in": "path",
@@ -1635,7 +1635,7 @@ out more about Swagger at
           Object {
             "description": undefined,
             "isOptional": false,
-            "key": "type",
+            "key": "message",
             "kind": "Property",
             "type": Object {
               "kind": "StringType",
@@ -1645,7 +1645,7 @@ out more about Swagger at
           Object {
             "description": undefined,
             "isOptional": false,
-            "key": "message",
+            "key": "type",
             "kind": "Property",
             "type": Object {
               "kind": "StringType",
@@ -1701,6 +1701,16 @@ out more about Swagger at
           Object {
             "description": undefined,
             "isOptional": false,
+            "key": "complete",
+            "kind": "Property",
+            "type": Object {
+              "kind": "BooleanType",
+              "name": "boolean",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
             "key": "id",
             "kind": "Property",
             "type": Object {
@@ -1752,16 +1762,6 @@ out more about Swagger at
               "static": "models.OrderStatus",
             },
           },
-          Object {
-            "description": undefined,
-            "isOptional": false,
-            "key": "complete",
-            "kind": "Property",
-            "type": Object {
-              "kind": "BooleanType",
-              "name": "boolean",
-            },
-          },
         ],
       },
     },
@@ -1806,16 +1806,6 @@ out more about Swagger at
           Object {
             "description": undefined,
             "isOptional": true,
-            "key": "id",
-            "kind": "Property",
-            "type": Object {
-              "kind": "IntegerType",
-              "name": "Integer",
-            },
-          },
-          Object {
-            "description": undefined,
-            "isOptional": true,
             "key": "category",
             "kind": "Property",
             "type": Object {
@@ -1823,6 +1813,16 @@ out more about Swagger at
               "kind": "CustomCombinator",
               "runtime": "models.Category",
               "static": "models.Category",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": true,
+            "key": "id",
+            "kind": "Property",
+            "type": Object {
+              "kind": "IntegerType",
+              "name": "Integer",
             },
           },
           Object {
@@ -1852,6 +1852,18 @@ out more about Swagger at
           Object {
             "description": undefined,
             "isOptional": true,
+            "key": "status",
+            "kind": "Property",
+            "type": Object {
+              "dependencies": Array [],
+              "kind": "CustomCombinator",
+              "runtime": "models.PetStatus",
+              "static": "models.PetStatus",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": true,
             "key": "tags",
             "kind": "Property",
             "type": Object {
@@ -1863,18 +1875,6 @@ out more about Swagger at
                 "runtime": "models.Tag",
                 "static": "models.Tag",
               },
-            },
-          },
-          Object {
-            "description": undefined,
-            "isOptional": true,
-            "key": "status",
-            "kind": "Property",
-            "type": Object {
-              "dependencies": Array [],
-              "kind": "CustomCombinator",
-              "runtime": "models.PetStatus",
-              "static": "models.PetStatus",
             },
           },
         ],
@@ -1954,17 +1954,7 @@ out more about Swagger at
           Object {
             "description": undefined,
             "isOptional": false,
-            "key": "id",
-            "kind": "Property",
-            "type": Object {
-              "kind": "IntegerType",
-              "name": "Integer",
-            },
-          },
-          Object {
-            "description": undefined,
-            "isOptional": false,
-            "key": "username",
+            "key": "email",
             "kind": "Property",
             "type": Object {
               "kind": "StringType",
@@ -1984,17 +1974,17 @@ out more about Swagger at
           Object {
             "description": undefined,
             "isOptional": false,
-            "key": "lastName",
+            "key": "id",
             "kind": "Property",
             "type": Object {
-              "kind": "StringType",
-              "name": "string",
+              "kind": "IntegerType",
+              "name": "Integer",
             },
           },
           Object {
             "description": undefined,
             "isOptional": false,
-            "key": "email",
+            "key": "lastName",
             "kind": "Property",
             "type": Object {
               "kind": "StringType",
@@ -2029,6 +2019,16 @@ out more about Swagger at
             "type": Object {
               "kind": "IntegerType",
               "name": "Integer",
+            },
+          },
+          Object {
+            "description": undefined,
+            "isOptional": false,
+            "key": "username",
+            "kind": "Property",
+            "type": Object {
+              "kind": "StringType",
+              "name": "string",
             },
           },
         ],

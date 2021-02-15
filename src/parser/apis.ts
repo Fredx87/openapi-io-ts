@@ -242,13 +242,13 @@ function parseOperation(
 
 function parsePath(
   path: string,
-  pathObj: OpenAPIV3.PathItemObject
+  pathObj?: OpenAPIV3.PathItemObject
 ): GenRTE<unknown> {
   const operations: Record<ApiMethod, O.Option<OpenAPIV3.OperationObject>> = {
-    get: O.fromNullable(pathObj.get),
-    post: O.fromNullable(pathObj.post),
-    put: O.fromNullable(pathObj.put),
-    delete: O.fromNullable(pathObj.delete)
+    get: O.fromNullable(pathObj?.get),
+    post: O.fromNullable(pathObj?.post),
+    put: O.fromNullable(pathObj?.put),
+    delete: O.fromNullable(pathObj?.delete)
   };
   return pipe(
     R.record.traverseWithIndex(RTE.readerTaskEitherSeq)(
