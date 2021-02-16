@@ -243,7 +243,7 @@ function parseOperation(
 function parsePath(
   path: string,
   pathObj?: OpenAPIV3.PathItemObject
-): ParserRTE<unknown> {
+): ParserRTE<void> {
   const operations: Record<ApiMethod, O.Option<OpenAPIV3.OperationObject>> = {
     get: O.fromNullable(pathObj?.get),
     post: O.fromNullable(pathObj?.post),
@@ -255,7 +255,8 @@ function parsePath(
       operations,
       (method, operation) =>
         parseOperation(path, method as ApiMethod, operation)
-    )
+    ),
+    RTE.map(() => undefined)
   );
 }
 
@@ -266,11 +267,12 @@ function getPaths(): ParserRTE<OpenAPIV3.PathsObject> {
   );
 }
 
-export function parseAllApis(): ParserRTE<unknown> {
+export function parseAllApis(): ParserRTE<void> {
   return pipe(
     getPaths(),
     RTE.chain((paths) =>
       R.record.traverseWithIndex(RTE.readerTaskEitherSeq)(paths, parsePath)
-    )
+    ),
+    RTE.map(() => undefined)
   );
 }
