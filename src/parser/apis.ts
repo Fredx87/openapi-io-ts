@@ -8,8 +8,8 @@ import * as TE from "fp-ts/TaskEither";
 import produce from "immer";
 import { OpenAPIV3 } from "openapi-types";
 import { JSONPointerToken, JSONReference } from "../common/JSONReference";
-import { GenRTE, readParserState } from "../environment";
 import { getOrResolveRef } from "../utils";
+import { ParserRTE, readParserState } from "./context";
 import { getOrCreateModel } from "./models";
 import {
   Api,
@@ -24,7 +24,7 @@ const JSON_MEDIA_TYPE = "application/json";
 
 function getObjectFromDocument<T>(
   obj: OpenAPIV3.ReferenceObject | T
-): GenRTE<T> {
+): ParserRTE<T> {
   return pipe(
     readParserState(),
     RTE.map((state) => getOrResolveRef(obj, state.document))
@@ -36,7 +36,7 @@ export function parseApiResponseObject(
   operation: OpenAPIV3.OperationObject,
   code: string,
   resp: OpenAPIV3.ReferenceObject | OpenAPIV3.ResponseObject
-): GenRTE<O.Option<ApiResponse>> {
+): ParserRTE<O.Option<ApiResponse>> {
   const basePointer = JSONReference.is(resp)
     ? resp.$ref
     : `${apiPointer}/responses/${code}`;
@@ -73,7 +73,7 @@ export function parseApiResponseObject(
 export function parseApiResponses(
   apiPointer: string,
   operation: OpenAPIV3.OperationObject
-): GenRTE<ApiResponse[]> {
+): ParserRTE<ApiResponse[]> {
   if (operation.responses == null) {
     return RTE.right([]);
   }
@@ -98,7 +98,7 @@ function parseRequestBodyContent(
   apiPointer: string,
   operation: OpenAPIV3.OperationObject,
   requestBody: OpenAPIV3.ReferenceObject | OpenAPIV3.RequestBodyObject
-): GenRTE<O.Option<ApiBody>> {
+): ParserRTE<O.Option<ApiBody>> {
   const basePointer = JSONReference.is(requestBody)
     ? requestBody.$ref
     : `${apiPointer}/requestBody`;
@@ -134,7 +134,7 @@ function parseRequestBodyContent(
 function parseApiRequestBody(
   apiPointer: string,
   operation: OpenAPIV3.OperationObject
-): GenRTE<O.Option<ApiBody>> {
+): ParserRTE<O.Option<ApiBody>> {
   return pipe(
     O.fromNullable(operation.requestBody),
     O.fold(
@@ -147,7 +147,7 @@ function parseApiRequestBody(
 function createApiParameter(
   basePointer: string,
   param: OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject
-): GenRTE<ApiParameter> {
+): ParserRTE<ApiParameter> {
   const paramPointer = JSONReference.is(param) ? param.$ref : basePointer;
   return pipe(
     getObjectFromDocument(param),
@@ -171,7 +171,7 @@ function createApiParameter(
 function parseApiParameters(
   apiPointer: string,
   operation: OpenAPIV3.OperationObject
-): GenRTE<ApiParameter[]> {
+): ParserRTE<ApiParameter[]> {
   const parameters = O.fromNullable(operation.parameters);
   return pipe(
     parameters,
@@ -185,7 +185,7 @@ function parseApiParameters(
   );
 }
 
-function addApi(tag: string, api: Api): GenRTE<void> {
+function addApi(tag: string, api: Api): ParserRTE<void> {
   return (env) =>
     TE.rightIO(
       env.parserState.modify((context) =>
@@ -202,7 +202,7 @@ function createApi(
   path: string,
   method: ApiMethod,
   operation: OpenAPIV3.OperationObject
-): GenRTE<Api> {
+): ParserRTE<Api> {
   const apiPointer = `#/paths/${JSONPointerToken.encode(path)}/${method}`;
   return sequenceS(RTE.readerTaskEither)({
     path: RTE.right(path),
@@ -218,7 +218,7 @@ export function parseApi(
   path: string,
   method: ApiMethod,
   operation: OpenAPIV3.OperationObject
-): GenRTE<void> {
+): ParserRTE<void> {
   const tag = operation.tags ? operation.tags[0] : "";
   return pipe(
     createApi(path, method, operation),
@@ -230,7 +230,7 @@ function parseOperation(
   path: string,
   method: ApiMethod,
   operation: O.Option<OpenAPIV3.OperationObject>
-): GenRTE<void> {
+): ParserRTE<void> {
   return pipe(
     operation,
     O.fold(
@@ -243,7 +243,7 @@ function parseOperation(
 function parsePath(
   path: string,
   pathObj?: OpenAPIV3.PathItemObject
-): GenRTE<unknown> {
+): ParserRTE<unknown> {
   const operations: Record<ApiMethod, O.Option<OpenAPIV3.OperationObject>> = {
     get: O.fromNullable(pathObj?.get),
     post: O.fromNullable(pathObj?.post),
@@ -259,14 +259,14 @@ function parsePath(
   );
 }
 
-function getPaths(): GenRTE<OpenAPIV3.PathsObject> {
+function getPaths(): ParserRTE<OpenAPIV3.PathsObject> {
   return pipe(
     readParserState(),
     RTE.map((state) => state.document.paths)
   );
 }
 
-export function parseAllApis(): GenRTE<unknown> {
+export function parseAllApis(): ParserRTE<unknown> {
   return pipe(
     getPaths(),
     RTE.chain((paths) =>

@@ -2,23 +2,21 @@ import { newIORef } from "fp-ts/IORef";
 import * as TE from "fp-ts/TaskEither";
 // import { promises } from "fs";
 import { OpenAPI } from "openapi-types";
-import { parse } from "..";
-import { Environment } from "../../environment";
+import { parseOpenApiDocument } from "..";
+import { ParserContext } from "../context";
 import { parserState } from "../parserState";
 import petStore from "./__fixtures__/pet-store.json";
 
 describe("OpenAPI parser", () => {
   test("petstore parser", async () => {
-    const env: Environment = {
+    const context: ParserContext = {
       parseDocument: () => TE.right(petStore as OpenAPI.Document),
       inputFile: "",
       outputDir: "",
       parserState: newIORef(parserState())(),
     };
 
-    await parse()(env)();
-
-    const result = env.parserState.read();
+    const result = await parseOpenApiDocument()(context)();
 
     // await promises.writeFile(
     //   `${__dirname}/../../templates/__fixtures__/pet-store-state.json`,

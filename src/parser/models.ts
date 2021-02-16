@@ -8,15 +8,15 @@ import produce from "immer";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { createPointer, JSONReference } from "../common/JSONReference";
-import { GenRTE, readParserState } from "../environment";
 import { getObjectByRef, pascalCase } from "../utils";
+import { ParserRTE, readParserState } from "./context";
 
 function modelRefCombinator(name: string): gen.CustomCombinator {
   const repr = `models.${name}`;
   return gen.customCombinator(repr, repr);
 }
 
-function getModelsNames(): GenRTE<string[]> {
+function getModelsNames(): ParserRTE<string[]> {
   return pipe(
     readParserState(),
     RTE.map((state) => Object.values(state.models).map((model) => model.name))
@@ -24,7 +24,7 @@ function getModelsNames(): GenRTE<string[]> {
 }
 
 // @todo: better handling of duplicated names
-function getNameForNewModel(name: string): GenRTE<string> {
+function getNameForNewModel(name: string): ParserRTE<string> {
   return pipe(
     getModelsNames(),
     RTE.map((names) => {
@@ -34,7 +34,10 @@ function getNameForNewModel(name: string): GenRTE<string> {
   );
 }
 
-function setModel(pointer: string, model: gen.TypeDeclaration): GenRTE<void> {
+function setModel(
+  pointer: string,
+  model: gen.TypeDeclaration
+): ParserRTE<void> {
   return (env) =>
     TE.rightIO(
       env.parserState.modify((state) =>
@@ -61,7 +64,7 @@ function createNewModel(
   pointer: string,
   name: string,
   typeRef: gen.TypeReference
-): GenRTE<gen.TypeReference> {
+): ParserRTE<gen.TypeReference> {
   return pipe(
     getNameForNewModel(simplifyModelName(pointer, name)),
     RTE.chain((modelName) =>
@@ -78,7 +81,7 @@ function parseEnum(
   basePointer: string,
   name: string,
   schema: OpenAPIV3.SchemaObject
-): GenRTE<gen.TypeReference> {
+): ParserRTE<gen.TypeReference> {
   return createNewModel(
     basePointer,
     name,
@@ -90,7 +93,7 @@ function parseSchemaString(
   basePointer: string,
   name: string,
   schema: OpenAPIV3.SchemaObject
-): GenRTE<gen.TypeReference> {
+): ParserRTE<gen.TypeReference> {
   if (schema.enum) {
     return parseEnum(basePointer, name, schema);
   }
@@ -106,7 +109,7 @@ function parseSchemaArray(
   basePointer: string,
   name: string,
   schema: OpenAPIV3.ArraySchemaObject
-): GenRTE<gen.TypeReference> {
+): ParserRTE<gen.TypeReference> {
   return pipe(
     parseSchema(
       createPointer(basePointer, "items"),
@@ -123,7 +126,7 @@ function parseProperty(
   propName: string,
   propSchema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject,
   containerSchema: OpenAPIV3.NonArraySchemaObject
-): GenRTE<gen.Property> {
+): ParserRTE<gen.Property> {
   return pipe(
     parseSchema(
       createPointer(basePointer, propName),
@@ -144,7 +147,7 @@ function parseSchemaObject(
   basePointer: string,
   name: string,
   schema: OpenAPIV3.NonArraySchemaObject
-): GenRTE<gen.TypeReference> {
+): ParserRTE<gen.TypeReference> {
   // todo: parse additionalProperties
   if (schema.properties) {
     return pipe(
@@ -161,7 +164,7 @@ function parseSchemaObject(
   return RTE.right(gen.unknownRecordType);
 }
 
-function getObjectFromState(ref: string): GenRTE<OpenAPIV3.SchemaObject> {
+function getObjectFromState(ref: string): ParserRTE<OpenAPIV3.SchemaObject> {
   return pipe(
     readParserState(),
     RTE.map(
@@ -174,7 +177,7 @@ function parseSchemas(
   basePointer: string,
   name: string,
   schemas: Array<OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>
-): GenRTE<gen.TypeReference[]> {
+): ParserRTE<gen.TypeReference[]> {
   return A.array.traverse(RTE.readerTaskEitherSeq)(schemas, (schema) =>
     parseSchema(createPointer(basePointer, "0"), `${name}0`, schema)
   );
@@ -184,7 +187,7 @@ function parseAllOf(
   basePointer: string,
   name: string,
   schemas: Array<OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>
-): GenRTE<gen.TypeReference> {
+): ParserRTE<gen.TypeReference> {
   return pipe(
     parseSchemas(basePointer, name, schemas),
     RTE.map((t) => gen.intersectionCombinator(t)),
@@ -196,7 +199,7 @@ function parseAnyOf(
   basePointer: string,
   name: string,
   schemas: Array<OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>
-): GenRTE<gen.TypeReference> {
+): ParserRTE<gen.TypeReference> {
   return pipe(
     parseSchemas(basePointer, name, schemas),
     RTE.map((t) => gen.unionCombinator(t)),
@@ -208,7 +211,7 @@ export function parseSchema(
   basePointer: string,
   name: string,
   schema?: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
-): GenRTE<gen.TypeReference> {
+): ParserRTE<gen.TypeReference> {
   if (schema == null) {
     return RTE.right(gen.unknownType);
   }
@@ -251,7 +254,7 @@ export function parseSchema(
 function createModelFromPointer(
   ref: string,
   name: string
-): GenRTE<gen.TypeReference> {
+): ParserRTE<gen.TypeReference> {
   return pipe(
     getNameForNewModel(name),
     RTE.chain((modelName) =>
@@ -266,7 +269,7 @@ function createModelFromPointer(
 export function getOrCreateModel(
   pointer: string,
   name: string
-): GenRTE<gen.TypeReference> {
+): ParserRTE<gen.TypeReference> {
   return pipe(
     readParserState(),
     RTE.map((state) => O.fromNullable(state.models[pointer])),

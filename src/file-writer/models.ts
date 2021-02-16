@@ -2,7 +2,8 @@ import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
 import * as gen from "io-ts-codegen";
-import { GenRTE, readParserState } from "../environment";
+import { GenRTE } from "../environment";
+import { ParserState } from "../parser/parserState";
 import { createDir, writeFormatted } from "./common";
 
 function writeModel(model: gen.TypeDeclaration): GenRTE<void> {
@@ -24,12 +25,10 @@ function writeModelIndex(models: string[]): GenRTE<void> {
   return writeFormatted("models/index.ts", content);
 }
 
-export function writeModels(): GenRTE<unknown> {
+export function writeModels({ models }: ParserState): GenRTE<unknown> {
   return pipe(
     createDir("models"),
-    RTE.chain(() => readParserState()),
-    RTE.map((state) => state.models),
-    RTE.chain((models) =>
+    RTE.chain(() =>
       pipe(
         R.record.traverse(RTE.readerTaskEither)(models, (model) =>
           writeModel(model)

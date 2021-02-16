@@ -3,11 +3,11 @@ import * as E from "fp-ts/Either";
 import { newIORef } from "fp-ts/IORef";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { Environment } from "../../environment";
 import { parseApiResponses } from "../apis";
+import { ParserContext } from "../context";
 import { ApiResponse, parserState } from "../parserState";
 
-function createEnvironment(operation: OpenAPIV3.OperationObject) {
+function createContext(operation: OpenAPIV3.OperationObject): ParserContext {
   const state = parserState();
   state.document.paths = {
     "/pet": {
@@ -29,16 +29,16 @@ function createEnvironment(operation: OpenAPIV3.OperationObject) {
 
 describe("path-parser", () => {
   describe("responses parser", () => {
-    let env: Environment;
+    let context: ParserContext;
     const basePointer = "#/paths/~1pet/get";
 
     test("should return empty array on operation without responses", async () => {
       const input: OpenAPIV3.OperationObject = {
         responses: undefined,
       };
-      env = createEnvironment(input);
+      context = createContext(input);
 
-      const result = await parseApiResponses(basePointer, input)(env)();
+      const result = await parseApiResponses(basePointer, input)(context)();
       const expected: ApiResponse[] = [];
       expect(result).toEqual(E.right(expected));
     });
@@ -54,9 +54,9 @@ describe("path-parser", () => {
           },
         },
       };
-      env = createEnvironment(input);
+      context = createContext(input);
 
-      const result = await parseApiResponses(basePointer, input)(env)();
+      const result = await parseApiResponses(basePointer, input)(context)();
       const expected: ApiResponse[] = [];
       expect(result).toEqual(E.right(expected));
     });
@@ -84,9 +84,9 @@ describe("path-parser", () => {
           },
         },
       };
-      env = createEnvironment(input);
+      context = createContext(input);
 
-      const result = await parseApiResponses(basePointer, input)(env)();
+      const result = await parseApiResponses(basePointer, input)(context)();
       const expected: ApiResponse[] = [
         { code: "200", mediaType: "application/json", type: gen.stringType },
       ];
@@ -119,9 +119,9 @@ describe("path-parser", () => {
           },
         },
       };
-      env = createEnvironment(input);
+      context = createContext(input);
 
-      const result = await parseApiResponses(basePointer, input)(env)();
+      const result = await parseApiResponses(basePointer, input)(context)();
       const expected: ApiResponse[] = [
         {
           code: "200",
@@ -167,9 +167,9 @@ describe("path-parser", () => {
           },
         },
       };
-      env = createEnvironment(input);
+      context = createContext(input);
 
-      const result = await parseApiResponses(basePointer, input)(env)();
+      const result = await parseApiResponses(basePointer, input)(context)();
       const expected: ApiResponse[] = [
         {
           code: "200",
@@ -181,7 +181,7 @@ describe("path-parser", () => {
         },
       ];
       expect(result).toEqual(E.right(expected));
-      const models = env.parserState.read().models;
+      const models = context.parserState.read().models;
       const expectedPointer = `${basePointer}/responses/200/content/application~1json/schema`;
       assert(expectedPointer in models);
       expect(models[expectedPointer]).toMatchInlineSnapshot(`

@@ -2,14 +2,15 @@ import * as A from "fp-ts/Array";
 import { pipe } from "fp-ts/function";
 import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
+import { TypeReference } from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { createPointer } from "../common/JSONReference";
-import { GenRTE, readParserState } from "../environment";
+import { ParserRTE, readParserState } from "./context";
 import { getOrCreateModel } from "./models";
 
 function parseDocumentSchemas(
   schemas: Record<string, OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>
-): GenRTE<unknown> {
+): ParserRTE<TypeReference[]> {
   return pipe(
     A.array.traverse(RTE.readerTaskEitherSeq)(Object.keys(schemas), (name) => {
       const pointer = createPointer("#/components/schemas", name);
@@ -18,7 +19,7 @@ function parseDocumentSchemas(
   );
 }
 
-function getSchemas(): GenRTE<
+function getSchemas(): ParserRTE<
   O.Option<Record<string, OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>>
 > {
   return pipe(
@@ -27,9 +28,18 @@ function getSchemas(): GenRTE<
   );
 }
 
-export function parseAllSchemas(): GenRTE<unknown> {
+export function parseAllSchemas(): ParserRTE<void> {
   return pipe(
     getSchemas(),
-    RTE.chain(O.fold(() => RTE.right(undefined), parseDocumentSchemas))
+    RTE.chain(
+      O.fold(
+        () => RTE.right(undefined),
+        (schemas) =>
+          pipe(
+            parseDocumentSchemas(schemas),
+            RTE.map((as) => undefined)
+          )
+      )
+    )
   );
 }
