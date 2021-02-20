@@ -1,8 +1,8 @@
+import SwaggerParser from "@apidevtools/swagger-parser";
 import { pipe } from "fp-ts/function";
 import { newIORef } from "fp-ts/lib/IORef";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as TE from "fp-ts/TaskEither";
-import SwaggerParser from "swagger-parser";
 import { GenRTE } from "../environment";
 import { parseAllApis } from "./apis";
 import { ParserContext, ParserRTE, readParserState } from "./context";
@@ -21,7 +21,7 @@ export function parseOpenApiDocument(): ParserRTE<ParserState> {
 
 function parseDocument(inputFile: string) {
   return TE.tryCatch(
-    () => SwaggerParser.default.bundle(inputFile),
+    () => SwaggerParser.bundle(inputFile),
     (e) => `Error in OpenApi file: ${String(e)}`
   );
 }
