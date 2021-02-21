@@ -1,6 +1,5 @@
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
-import * as R from "fp-ts/Record";
 import * as gen from "io-ts-codegen";
 import { GenRTE } from "../environment";
 import { ParserState } from "../parser/parserState";
@@ -25,14 +24,14 @@ function writeModelIndex(models: string[]): GenRTE<void> {
   return writeFormatted("models/index.ts", content);
 }
 
-export function writeModels({ models }: ParserState): GenRTE<unknown> {
+export function writeModels({ models }: ParserState): GenRTE<void> {
+  const tasks = Object.values(models).map(writeModel);
+
   return pipe(
     createDir("models"),
     RTE.chain(() =>
       pipe(
-        R.record.traverse(RTE.readerTaskEither)(models, (model) =>
-          writeModel(model)
-        ),
+        RTE.sequenceSeqArray(tasks),
         RTE.chain(() =>
           writeModelIndex(Object.values(models).map((m) => m.name))
         )

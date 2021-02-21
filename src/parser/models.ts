@@ -1,8 +1,6 @@
-import * as A from "fp-ts/Array";
 import { pipe } from "fp-ts/function";
 import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
-import * as R from "fp-ts/Record";
 import * as TE from "fp-ts/TaskEither";
 import produce from "immer";
 import * as gen from "io-ts-codegen";
@@ -150,13 +148,13 @@ function parseSchemaObject(
 ): ParserRTE<gen.TypeReference> {
   // todo: parse additionalProperties
   if (schema.properties) {
+    const tasks = Object.entries(schema.properties).map(([propName, prop]) =>
+      parseProperty(basePointer, name, propName, prop, schema)
+    );
+
     return pipe(
-      R.record.traverseWithIndex(RTE.readerTaskEitherSeq)(
-        schema.properties,
-        (propName, prop) =>
-          parseProperty(basePointer, name, propName, prop, schema)
-      ),
-      RTE.map((props) => gen.interfaceCombinator(Object.values(props))),
+      RTE.sequenceSeqArray(tasks),
+      RTE.map((props) => gen.interfaceCombinator(props as gen.Property[])),
       RTE.chain((t) => createNewModel(basePointer, name, t))
     );
   }
@@ -178,9 +176,11 @@ function parseSchemas(
   name: string,
   schemas: Array<OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>
 ): ParserRTE<gen.TypeReference[]> {
-  return A.array.traverse(RTE.readerTaskEitherSeq)(schemas, (schema) =>
+  const tasks = schemas.map((schema) =>
     parseSchema(createPointer(basePointer, "0"), `${name}0`, schema)
   );
+
+  return RTE.sequenceSeqArray(tasks) as ParserRTE<gen.TypeReference[]>;
 }
 
 function parseAllOf(

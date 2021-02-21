@@ -1,9 +1,7 @@
 import { sequenceS } from "fp-ts/Apply";
-import * as A from "fp-ts/Array";
 import { pipe } from "fp-ts/function";
 import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
-import * as R from "fp-ts/Record";
 import * as TE from "fp-ts/TaskEither";
 import produce from "immer";
 import { OpenAPIV3 } from "openapi-types";
@@ -79,18 +77,13 @@ export function parseApiResponses(
   }
 
   const { responses } = operation;
+  const tasks = Object.entries(responses).map(([code, mediaRecord]) =>
+    parseApiResponseObject(apiPointer, operation, code, mediaRecord)
+  );
 
   return pipe(
-    R.record.traverseWithIndex(RTE.readerTaskEitherSeq)(
-      responses,
-      (code, mediaRecord) =>
-        parseApiResponseObject(apiPointer, operation, code, mediaRecord)
-    ),
-    RTE.map((res) =>
-      Object.values(res)
-        .filter(O.isSome)
-        .map((o) => o.value)
-    )
+    RTE.sequenceSeqArray(tasks),
+    RTE.map((res) => res.filter(O.isSome).map((o) => o.value))
   );
 }
 
@@ -177,10 +170,12 @@ function parseApiParameters(
     parameters,
     O.fold(
       () => RTE.right([]),
-      (params) =>
-        A.array.traverseWithIndex(RTE.readerTaskEitherSeq)(params, (i, param) =>
+      (params) => {
+        const tasks = params.map((param, i) =>
           createApiParameter(`${apiPointer}/parameters/${i}`, param)
-        )
+        );
+        return RTE.sequenceSeqArray(tasks) as ParserRTE<ApiParameter[]>;
+      }
     )
   );
 }
@@ -244,19 +239,20 @@ function parsePath(
   path: string,
   pathObj?: OpenAPIV3.PathItemObject
 ): ParserRTE<void> {
-  const operations: Record<ApiMethod, O.Option<OpenAPIV3.OperationObject>> = {
+  const operations = {
     get: O.fromNullable(pathObj?.get),
     post: O.fromNullable(pathObj?.post),
     put: O.fromNullable(pathObj?.put),
     delete: O.fromNullable(pathObj?.delete),
-  };
+  } as const;
+
+  const tasks = Object.entries(operations).map(([method, operation]) =>
+    parseOperation(path, method as ApiMethod, operation)
+  );
+
   return pipe(
-    R.record.traverseWithIndex(RTE.readerTaskEitherSeq)(
-      operations,
-      (method, operation) =>
-        parseOperation(path, method as ApiMethod, operation)
-    ),
-    RTE.map(() => undefined)
+    RTE.sequenceSeqArray(tasks),
+    RTE.map(() => {})
   );
 }
 
@@ -270,9 +266,12 @@ function getPaths(): ParserRTE<OpenAPIV3.PathsObject> {
 export function parseAllApis(): ParserRTE<void> {
   return pipe(
     getPaths(),
-    RTE.chain((paths) =>
-      R.record.traverseWithIndex(RTE.readerTaskEitherSeq)(paths, parsePath)
-    ),
-    RTE.map(() => undefined)
+    RTE.chain((paths) => {
+      const tasks = Object.entries(paths).map(([path, pathObj]) =>
+        parsePath(path, pathObj)
+      );
+      return RTE.sequenceSeqArray(tasks);
+    }),
+    RTE.map(() => {})
   );
 }
