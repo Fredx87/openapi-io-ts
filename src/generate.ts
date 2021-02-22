@@ -5,6 +5,7 @@ import * as T from "fp-ts/Task";
 import * as TE from "fp-ts/TaskEither";
 import { Environment } from "./environment";
 import { writeModels } from "./file-writer/models";
+import { writeServices } from "./file-writer/services";
 import { parse } from "./parser";
 
 function onLeft(e: string): T.Task<void> {
@@ -23,7 +24,9 @@ export function generate(inputFile: string, outputDir: string): void {
 
   const result = pipe(
     parse(),
-    RTE.chain((parseResult) => writeModels(parseResult))
+    RTE.bindTo("parseResult"),
+    RTE.chainFirst(({ parseResult }) => writeModels(parseResult)),
+    RTE.chainFirst(({ parseResult }) => writeServices(parseResult))
   )(env);
 
   pipe(result, TE.fold(onLeft, onRight))();
