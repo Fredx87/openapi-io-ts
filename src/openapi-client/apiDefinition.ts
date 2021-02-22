@@ -13,5 +13,5 @@ export interface ApiDefinition<ReturnType> {
   path: string;
   method: "get" | "post" | "put" | "delete";
   params: ApiParams;
-  responseDecoder: t.Decoder<unknown, ReturnType>;
+  responseDecoder?: t.Decoder<unknown, ReturnType>;
 }
