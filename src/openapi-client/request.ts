@@ -2,34 +2,42 @@ import * as E from "fp-ts/Either";
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/TaskEither";
 import * as t from "io-ts";
-import { ApiDefinition, RequestParams } from "./apiDefinition";
-import { HttpRequestArgs, HttpRequestHandler } from "./httpRequestHandler";
+import { HttpRequestAdapter, HttpRequestArgs } from "./httpRequestAdapter";
+import { RequestDefinition } from "./requestDefinition";
 import { parseResponse } from "./responseParser";
 import { buildUrl } from "./urlBuilder";
 
-export function request<ReturnType>(
-  api: ApiDefinition<ReturnType>,
-  requestParams: RequestParams,
-  body: unknown,
-  requestHandler: HttpRequestHandler
-): TE.TaskEither<ApiError, ReturnType> {
-  const { path, method, params: apiParams, responseDecoder } = api;
+export type RequestParameters = Record<string, unknown>;
 
-  const url = buildUrl(path, requestParams, apiParams);
+export function request<ReturnType>(
+  definition: RequestDefinition<ReturnType>,
+  requestParameters: RequestParameters,
+  requestBody: unknown,
+  requestAdapter: HttpRequestAdapter
+): TE.TaskEither<ApiError, ReturnType> {
+  const {
+    path,
+    method,
+    parametersDefinitions,
+    successfulResponse,
+  } = definition;
+  const url = buildUrl(path, requestParameters, parametersDefinitions);
 
   const requestArgs: HttpRequestArgs = {
     url,
     method,
-    body,
+    body:
+      definition.body === "json" ? JSON.stringify(requestBody) : requestBody,
+    headers: requestHeaders(definition),
   };
 
   return pipe(
     TE.tryCatch(
-      () => requestHandler(requestArgs),
+      () => requestAdapter(requestArgs),
       (e): RequestError => ({ type: "RequestError", error: E.toError(e) })
     ),
     TE.chainW((response) =>
-      TE.fromEither(parseResponse(response, responseDecoder))
+      TE.fromEither(parseResponse(response, successfulResponse))
     )
   );
 }
@@ -56,3 +64,19 @@ export interface JsonParseError {
 }
 
 export type ApiError = RequestError | HttpError | DecoderError | JsonParseError;
+
+function requestHeaders(
+  definition: RequestDefinition<unknown>
+): Record<string, string> {
+  const res: Record<string, string> = {};
+
+  if (definition.successfulResponse?._tag === "JsonResponse") {
+    res["Accept"] = "application/json";
+  }
+
+  if (definition.body === "json") {
+    res["Content-Type"] = "application/json";
+  }
+
+  return res;
+}

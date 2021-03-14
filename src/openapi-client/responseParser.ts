@@ -1,28 +1,26 @@
 import * as E from "fp-ts/Either";
 import { pipe } from "fp-ts/function";
 import * as t from "io-ts";
-import { HttpResponse } from "./httpRequestHandler";
+import { HttpResponse } from "./httpRequestAdapter";
 import { DecoderError, HttpError, JsonParseError } from "./request";
+import { JsonResponse, TextResponse } from "./response";
 
 export function parseResponse<ReturnType>(
   response: HttpResponse,
-  decoder?: t.Decoder<unknown, ReturnType>
+  responseDefinition?: TextResponse | JsonResponse<ReturnType>
 ): E.Either<HttpError | DecoderError | JsonParseError, ReturnType> {
   if (response.code >= 200 && response.code < 300) {
-    if (decoder) {
-      return parseSuccessfulResponse(response.data, decoder);
+    if (responseDefinition?._tag === "JsonResponse") {
+      return parseSuccessfulResponse(response.data, responseDefinition.decoder);
     } else {
-      return parseJson(response.data) as E.Either<
-        HttpError | DecoderError | JsonParseError,
-        ReturnType
-      >;
+      return E.right((response.data as unknown) as ReturnType);
     }
   }
 
   return E.left(parseFailedResponse(response));
 }
 
-function parseSuccessfulResponse<ReturnType>(
+function parseSuccessfulResponse<ReturnType = string>(
   data: string,
   decoder: t.Decoder<unknown, ReturnType>
 ): E.Either<DecoderError | JsonParseError, ReturnType> {

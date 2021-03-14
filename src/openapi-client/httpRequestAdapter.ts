@@ -1,9 +1,10 @@
-import { ApiMethod } from "../parser/parserOutput";
+export type RequestMethod = "get" | "post" | "put" | "delete";
 
 export interface HttpRequestArgs {
   url: string;
-  method: ApiMethod;
+  method: RequestMethod;
   body?: unknown;
+  headers: Record<string, string>;
 }
 
 export interface HttpResponse {
@@ -11,6 +12,6 @@ export interface HttpResponse {
   data: string;
 }
 
-export type HttpRequestHandler = (
+export type HttpRequestAdapter = (
   args: HttpRequestArgs
 ) => Promise<HttpResponse>;

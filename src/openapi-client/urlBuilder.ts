@@ -1,24 +1,27 @@
-import { ApiParams, RequestParams } from "./apiDefinition";
+import { ParametersDefinitions } from "./parameter";
+import { RequestParameters } from "./request";
 
 export function buildUrl(
   path: string,
-  requestParams: RequestParams,
-  apiParams: ApiParams
+  requestParameters: RequestParameters,
+  parametersDefinitions: ParametersDefinitions
 ): string {
   let returnPath = path;
   const searchParams = new URLSearchParams();
 
-  Object.entries(apiParams).forEach(([name, apiParam]) => {
-    const value = stringifyParameterValue(
-      requestParams[name] ?? apiParam.defaultValue
-    );
+  Object.entries(parametersDefinitions).forEach(
+    ([name, parameterDefinition]) => {
+      const value = stringifyParameterValue(
+        requestParameters[name] ?? parametersDefinitions.defaultValue
+      );
 
-    if (apiParam.in === "path") {
-      returnPath = returnPath.replace(`{${name}}`, value);
-    } else if (apiParam.in === "query") {
-      searchParams.append(name, value);
+      if (parameterDefinition.in === "path") {
+        returnPath = returnPath.replace(`{${name}}`, value);
+      } else if (parameterDefinition.in === "query") {
+        searchParams.append(name, value);
+      }
     }
-  });
+  );
 
   const queryString = searchParams.toString() && `?${searchParams.toString()}`;
 
