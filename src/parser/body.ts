@@ -17,12 +17,12 @@ interface BaseParsedBody {
   required: boolean;
 }
 
-interface ParsedJsonBody extends BaseParsedBody {
+export interface ParsedJsonBody extends BaseParsedBody {
   _tag: "JsonBody";
   type: gen.TypeDeclaration | gen.TypeReference;
 }
 
-interface ParsedTextBody extends BaseParsedBody {
+export interface ParsedTextBody extends BaseParsedBody {
   _tag: "TextBody";
 }
 

@@ -49,7 +49,7 @@ export type ComponentType = keyof ParsedComponents;
 export interface ComponentRef<T extends ComponentType> {
   _tag: "ComponentRef";
   componentType: T;
-  name: string;
+  component: ParsedComponents[T][string];
 }
 
 export interface InlineObject<T> {
@@ -59,12 +59,12 @@ export interface InlineObject<T> {
 
 export function componentRef<T extends ComponentType>(
   componentType: T,
-  name: string
+  component: ParsedComponents[T][string]
 ): ComponentRef<T> {
   return {
     _tag: "ComponentRef",
     componentType,
-    name,
+    component,
   };
 }
 
@@ -80,21 +80,21 @@ export function getComponentRef<T extends ComponentType>(
   pointer: string
 ): ParserRTE<ComponentRef<T>> {
   return pipe(
-    getComponentName(componentType, pointer),
-    RTE.map((name) => componentRef(componentType, name))
+    getComponent(componentType, pointer),
+    RTE.map((component) => componentRef(componentType, component))
   );
 }
 
-function getComponentName<T extends ComponentType>(
+function getComponent<T extends ComponentType>(
   componentType: T,
   pointer: string
-): ParserRTE<string> {
+): ParserRTE<ParsedComponents[T][string]> {
   return pipe(
     readParserOutput(),
     RTE.map((output) => output.components[componentType][pointer]),
     RTE.chain((component) =>
       component
-        ? RTE.right(getNameFromComponent(component))
+        ? RTE.right(component as ParsedComponents[T][string])
         : RTE.left(
             new Error(
               `Cannot get component name for componentType ${componentType}, pointer ${pointer}`
@@ -121,8 +121,8 @@ export function getOrCreateType(
 ): ParserRTE<gen.TypeDeclaration | gen.TypeReference> {
   if (JsonReference.is(schema)) {
     return pipe(
-      getComponentName("schemas", schema.$ref),
-      RTE.map((name) => gen.identifier(`schemas.${name}`))
+      getComponent("schemas", schema.$ref),
+      RTE.map((schema) => gen.identifier(`schemas.${schema.type.name}`))
     );
   }
 

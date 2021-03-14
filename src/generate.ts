@@ -3,6 +3,7 @@ import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as T from "fp-ts/Task";
 import * as TE from "fp-ts/TaskEither";
+import { codegen } from "./codegen";
 import { Environment } from "./environment";
 import { parse } from "./parser";
 
@@ -22,9 +23,8 @@ export function generate(inputFile: string, outputDir: string): void {
 
   const result = pipe(
     parse(),
-    RTE.bindTo("parseResult")
-    // RTE.chainFirst(({ parseResult }) => writeModels(parseResult)),
-    // RTE.chainFirst(({ parseResult }) => writeServices(parseResult))
+    RTE.bindTo("parseResult"),
+    RTE.chainFirst(({ parseResult }) => codegen(parseResult))
   )(env);
 
   pipe(result, TE.fold(onLeft, onRight))();

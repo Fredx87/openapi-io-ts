@@ -11,7 +11,7 @@ import { ParsedResponse, parseResponse } from "./response";
 
 type OperationMethod = "get" | "post" | "put" | "delete";
 
-interface OperationResponses {
+export interface OperationResponses {
   success: ParsedResponse;
   errors: Record<string, ParsedResponse>;
 }

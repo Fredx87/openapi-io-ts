@@ -10,7 +10,7 @@ import {
   inlineObject,
   InlineObject,
 } from "./common";
-import { ParserRTE } from "./context";
+import { ParserContext, ParserRTE } from "./context";
 
 type ParsedParameterIn = "query" | "header" | "path" | "cookie";
 
@@ -19,6 +19,7 @@ export interface ParsedParameterObject {
   name: string;
   in: ParsedParameterIn;
   required: boolean;
+  defaultValue?: unknown;
 }
 
 export type ParsedParameter =
@@ -52,7 +53,35 @@ export function parseParameterObject(
         name,
         in: parameterIn as ParsedParameterIn,
         required: required || false,
+        defaultValue: getDefaultValue(schema),
       })
+    )
+  );
+}
+
+function getDefaultValue(
+  s: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
+): ParserRTE<unknown> {
+  return pipe(
+    RTE.Do,
+    RTE.bind("schema", () =>
+      JsonReference.is(s)
+        ? getOpenapiSchemaFromRef(s)
+        : RTE.right<ParserContext, Error, OpenAPIV3.SchemaObject>(s)
+    ),
+    RTE.map((obj) => obj.schema.default)
+  );
+}
+
+function getOpenapiSchemaFromRef(
+  ref: OpenAPIV3.ReferenceObject
+): ParserRTE<OpenAPIV3.SchemaObject> {
+  return pipe(
+    RTE.asks(
+      (context) =>
+        context.document.components?.schemas?.[
+          ref.$ref
+        ] as OpenAPIV3.SchemaObject
     )
   );
 }
