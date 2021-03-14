@@ -1,42 +1,34 @@
-import SwaggerParser from "@apidevtools/swagger-parser";
 import { pipe } from "fp-ts/function";
 import { newIORef } from "fp-ts/lib/IORef";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as TE from "fp-ts/TaskEither";
 import { GenRTE } from "../environment";
-import { parseAllApis } from "./apis";
-import { ParserContext, ParserRTE, readParserState } from "./context";
+import { parseAllComponents } from "./components";
+import { ParserRTE, readParserOutput } from "./context";
 import { openApiParser } from "./openapi";
-import { parserState, ParserState } from "./parserState";
-import { parseAllSchemas } from "./schemas";
+import { parseAllPaths } from "./operation";
+import { ParserOutput, parserOutput } from "./parserOutput";
 
-export function parseOpenApiDocument(): ParserRTE<ParserState> {
+export function parseOpenApiDocument(): ParserRTE<ParserOutput> {
   return pipe(
-    openApiParser(),
-    RTE.chain(() => parseAllSchemas()),
-    RTE.chain(() => parseAllApis()),
-    RTE.chain(() => readParserState())
+    parseAllComponents(),
+    RTE.chain(() => parseAllPaths()),
+    RTE.chain(() => readParserOutput())
   );
 }
 
-function parseDocument(inputFile: string) {
-  return TE.tryCatch(
-    () => SwaggerParser.bundle(inputFile),
-    (e) => `Error in OpenApi file: ${String(e)}`
-  );
-}
-
-export function parse(): GenRTE<ParserState> {
+export function parse(): GenRTE<ParserOutput> {
   return (env) =>
     pipe(
-      TE.rightIO(newIORef(parserState())),
-      TE.map(
-        (initialState): ParserContext => ({
-          ...env,
-          parserState: initialState,
-          parseDocument,
+      openApiParser(env.inputFile),
+      TE.bindTo("document"),
+      TE.bind("initialState", () => TE.rightIO(newIORef(parserOutput()))),
+      TE.bind("context", ({ initialState, document }) =>
+        TE.of({
+          outputRef: initialState,
+          document,
         })
       ),
-      TE.chain((context) => parseOpenApiDocument()(context))
+      TE.chain(({ context }) => parseOpenApiDocument()(context))
     );
 }

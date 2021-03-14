@@ -5,14 +5,14 @@ import * as gen from "io-ts-codegen";
 import { camelCase } from "lodash";
 import { GenRTE } from "../environment";
 import {
-  Api,
   ApiParameter,
   ApiResponse,
-  ParserState,
-} from "../parser/parserState";
+  ParsedOperation,
+  ParserOutput,
+} from "../parser/parserOutput";
 import { createDir, writeFormatted } from "./common";
 
-export function writeServices({ apis }: ParserState): GenRTE<void> {
+export function writeServices({ apis }: ParserOutput): GenRTE<void> {
   const tasks = Object.entries(apis).map(([tag, apis]) =>
     writeFormatted(`services/${tag}.ts`, generateService(tag, apis))
   );
@@ -24,7 +24,7 @@ export function writeServices({ apis }: ParserState): GenRTE<void> {
   );
 }
 
-function generateService(tag: string, apis: Api[]): string {
+function generateService(tag: string, apis: ParsedOperation[]): string {
   const generatedApis = apis.map(generateApi).join("");
   const imports = `import * as t from "io-ts";
   import * as models from "../models";
@@ -38,14 +38,16 @@ function generateService(tag: string, apis: Api[]): string {
     
     export const ${tag}ServiceBuilder = (requestHandler: HttpRequestHandler) => ({
         ${apis
-          .map((api) => `${api.name}: ${api.name}(requestHandler)`)
+          .map(
+            (api) => `${api.operationId}: ${api.operationId}(requestHandler)`
+          )
           .join(",\n")}
       });`;
 
   return res;
 }
 
-function generateApi(api: Api): string {
+function generateApi(api: ParsedOperation): string {
   const requestParams = generateApiRequestParams(api);
   const apiDefinition = generateApiDefinition(api);
   const callFunction = generateCallFunction(
@@ -68,12 +70,14 @@ interface GeneratedItem {
   content: string;
 }
 
-function generateApiRequestParams(api: Api): GeneratedItem | undefined {
+function generateApiRequestParams(
+  api: ParsedOperation
+): GeneratedItem | undefined {
   if (api.params.length === 0) {
     return undefined;
   }
 
-  const name = `${camelCase(api.name)}RequestParameters`;
+  const name = `${camelCase(api.operationId)}RequestParameters`;
   const content = `type ${name} = { ${api.params
     .map(generateApiRequestParam)
     .join("\n")} }`;
@@ -87,8 +91,8 @@ function generateApiRequestParam(param: ApiParameter): string {
   return `${name}: ${gen.printStatic(type)} ${!required ? `| undefined` : ""};`;
 }
 
-function generateApiDefinition(api: Api): GeneratedItem {
-  const { path, name: apiName, method, params, responses } = api;
+function generateApiDefinition(api: ParsedOperation): GeneratedItem {
+  const { path, operationId: apiName, method, params, responses } = api;
 
   const returnType = getReturnType(responses);
 
@@ -133,7 +137,7 @@ function generateApiDefinitionParam(param: ApiParameter): string {
 }
 
 function generateCallFunction(
-  api: Api,
+  api: ParsedOperation,
   apiDefinitionName: string,
   requestParamsName?: string
 ): string {
@@ -144,7 +148,7 @@ function generateCallFunction(
     .join(`,`);
 
   return `export const ${
-    api.name
+    api.operationId
   } = (requestHandler: HttpRequestHandler) => (${paramsKeysValues}) =>
   request(${apiDefinitionName}, ${params.params ? "params" : "undefined"}, ${
     params.body ? "body" : "undefined"
@@ -157,7 +161,7 @@ interface CallFunctionParameters {
 }
 
 function getCallFunctionParameters(
-  api: Api,
+  api: ParsedOperation,
   requestParamsName?: string
 ): CallFunctionParameters {
   const res: CallFunctionParameters = {};

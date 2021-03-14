@@ -1,25 +1,15 @@
-import * as E from "fp-ts/Either";
+import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
 import * as t from "io-ts";
 
-function JSONPointerTokenEncode(path: string): string {
+function jsonPointerTokenEncode(path: string): string {
   return path.replace(/~/g, "~0").replace(/\//g, "~1");
 }
 
-function JSONPointerTokenDecode(path: string): E.Either<t.Errors, string> {
-  return t.success(path.replace(/~1/g, "/").replace(/~0/g, "~"));
+export function jsonPointer(tokens: NonEmptyArray<string>): string {
+  const encodedTokens = tokens.map((t) => jsonPointerTokenEncode(t)).join("/");
+  return `#/${encodedTokens}`;
 }
 
-export const JSONPointerToken = new t.Type<string, string, string>(
-  "JSONPointerToken",
-  t.string.is,
-  JSONPointerTokenDecode,
-  JSONPointerTokenEncode
-);
-
-export function createPointer(basePointer: string, token: string): string {
-  return `${basePointer}/${JSONPointerToken.encode(token)}`;
-}
-
-export const JSONReference = t.type({
+export const JsonReference = t.type({
   $ref: t.string,
 });

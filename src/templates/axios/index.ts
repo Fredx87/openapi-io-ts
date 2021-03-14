@@ -1,6 +1,6 @@
 import { pipe } from "fp-ts/function";
 import * as O from "fp-ts/Option";
-import { Api, ApiBody, ApiMethod } from "../../parser/parserState";
+import { ApiBody, ApiMethod, ParsedOperation } from "../../parser/parserOutput";
 import {
   createUrlTemplate,
   generateFunctionArgs,
@@ -21,8 +21,8 @@ function createAxiosRequest(
   );
 }
 
-function createApiTemplate(api: Api): string {
-  const { path, name, method, body, params, responses } = api;
+function createApiTemplate(api: ParsedOperation): string {
+  const { path, operationId: name, method, body, params, responses } = api;
   const request = createAxiosRequest(method, path, body);
   const fnArgs = generateFunctionArgs(params, body);
   const respType = getResponsesType(responses);
@@ -44,7 +44,7 @@ function createApiTemplate(api: Api): string {
         }`;
 }
 
-export function generateAxiosApiTemplate(apis: Api[]): string {
+export function generateAxiosApiTemplate(apis: ParsedOperation[]): string {
   let template = `
         import axios from 'axios';
         import * as TE from 'fp-ts/lib/TaskEither';

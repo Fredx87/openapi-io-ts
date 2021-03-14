@@ -1,21 +1,31 @@
 import { IORef } from "fp-ts/IORef";
 import { pipe } from "fp-ts/lib/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
-import * as TE from "fp-ts/TaskEither";
-import { OpenAPI } from "openapi-types";
-import { Environment } from "../environment";
-import { ParserState } from "./parserState";
+import produce, { Draft } from "immer";
+import { OpenAPIV3 } from "openapi-types";
+import { ParserOutput } from "./parserOutput";
 
-export interface ParserContext extends Environment {
-  parseDocument: (inputFile: string) => TE.TaskEither<string, OpenAPI.Document>;
-  parserState: IORef<ParserState>;
+export interface ParserContext {
+  document: OpenAPIV3.Document;
+  outputRef: IORef<ParserOutput>;
 }
 
-export type ParserRTE<A> = RTE.ReaderTaskEither<ParserContext, string, A>;
+export type ParserRTE<A> = RTE.ReaderTaskEither<ParserContext, Error, A>;
 
-export function readParserState(): ParserRTE<ParserState> {
+export function readParserOutput(): ParserRTE<ParserOutput> {
   return pipe(
-    RTE.asks((e: ParserContext) => e.parserState),
-    RTE.chain((state) => RTE.rightIO(state.read))
+    RTE.asks((e: ParserContext) => e.outputRef),
+    RTE.chain((ref) => RTE.rightIO(ref.read))
+  );
+}
+
+export function modifyParserOutput(
+  recipe: (draft: Draft<ParserOutput>) => void
+): ParserRTE<void> {
+  return pipe(
+    RTE.asks((e: ParserContext) => e.outputRef),
+    RTE.chain((ref) =>
+      RTE.fromIO(ref.modify((output) => produce(output, recipe)))
+    )
   );
 }

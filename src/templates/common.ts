@@ -1,6 +1,6 @@
 import * as O from "fp-ts/Option";
 import * as gen from "io-ts-codegen";
-import { ApiBody, ApiParameter, ApiResponse } from "../parser/parserState";
+import { ApiBody, ApiParameter, ApiResponse } from "../parser/parserOutput";
 
 export function getTypeName(type: gen.TypeReference): string {
   return gen.printStatic(type);

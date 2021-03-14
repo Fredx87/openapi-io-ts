@@ -1,4 +1,4 @@
-import { ApiMethod } from "../parser/parserState";
+import { ApiMethod } from "../parser/parserOutput";
 
 export interface HttpRequestArgs {
   url: string;
