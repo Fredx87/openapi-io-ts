@@ -5,6 +5,7 @@ import { TypeDeclaration, TypeReference } from "io-ts-codegen";
 import * as util from "util";
 import { GenRTE } from "../environment";
 import { generateSchema } from "./schema";
+import * as prettier from "prettier";
 
 function writeFile(name: string, content: string): GenRTE<void> {
   return (env) =>
@@ -18,8 +19,8 @@ function writeFile(name: string, content: string): GenRTE<void> {
 }
 
 export function writeFormatted(name: string, content: string): GenRTE<void> {
-  // const formatted = prettier.format(content, { parser: "typescript" });
-  return writeFile(name, content);
+  const formatted = prettier.format(content, { parser: "typescript" });
+  return writeFile(name, formatted);
 }
 
 export function createDir(dir: string): GenRTE<void> {
