@@ -39,6 +39,7 @@ interface GeneratedItems {
   parameters?: GeneratedOperationParameters;
   body?: GeneratedBody;
   successfulResponse: string;
+  returnType: string;
 }
 
 function generateOperation(
@@ -53,7 +54,8 @@ function generateOperation(
   import { RequestDefinition } from "../openapi-client/requestDefinition";
   import { ParametersDefinitions } from "../openapi-client/parameter";
   import { HttpRequestAdapter } from "../openapi-client/httpRequestAdapter";
-  import { request } from "../openapi-client/request";
+  import { ApiError, request } from "../openapi-client/request";
+  import { TaskEither } from "fp-ts/TaskEither";
 
   ${
     generatedItems.parameters
@@ -80,6 +82,7 @@ function generateItems(
     parameters: generateOperationParameters(operationId, operation.parameters),
     body: generateBody(operationId, operation.body),
     successfulResponse: generateSuccessfulResponse(operation.responses.success),
+    returnType: getReturnType(operation.responses),
   };
 }
 
@@ -184,13 +187,11 @@ function generateRequestDefinition(
   operation: ParsedOperation,
   generatedItems: GeneratedItems
 ): string {
-  const { path, method, responses } = operation;
-
-  const returnType = getReturnType(responses);
+  const { path, method } = operation;
 
   return `export const ${requestDefinitionName(
     operationId
-  )}: RequestDefinition<${returnType}> = {
+  )}: RequestDefinition<${generatedItems.returnType}> = {
       path: "${path}",
       method: "${method}",
       successfulResponse: ${generatedItems.successfulResponse},
@@ -248,7 +249,7 @@ function generateRequest(
 
   return `export const ${operationId} = (requestAdapter: HttpRequestAdapter) => (${args.join(
     ", "
-  )}) =>
+  )}): TaskEither<ApiError, ${generatedItems.returnType}> =>
       request(${operationId}RequestDefinition, ${
     generatedItems.parameters ? PARAM_ARG_NAME : "undefined"
   }, ${generatedItems.body ? BODY_ARG_NAME : "undefined"}, requestAdapter);`;
