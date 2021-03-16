@@ -47,13 +47,15 @@ export function parseParameterObject(
 
   return pipe(
     getOrCreateType(name, schema),
-    RTE.map((type) =>
+    RTE.bindTo("type"),
+    RTE.bind("defaultValue", () => getDefaultValue(schema)),
+    RTE.map(({ type, defaultValue }) =>
       inlineObject({
         type,
         name,
         in: parameterIn as ParsedParameterIn,
         required: required || false,
-        defaultValue: getDefaultValue(schema),
+        defaultValue,
       })
     )
   );

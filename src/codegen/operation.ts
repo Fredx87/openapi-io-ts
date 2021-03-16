@@ -4,10 +4,11 @@ import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
 import * as gen from "io-ts-codegen";
 import { GenRTE } from "../environment";
-import { ParsedBody } from "../parser/body";
+import { ParsedBody, ParsedBodyObject } from "../parser/body";
 import { OperationResponses, ParsedOperation } from "../parser/operation";
 import { ParsedParameter } from "../parser/parameter";
 import { ParsedResponse } from "../parser/response";
+import { pascalCase } from "../utils";
 import { generateBodyType } from "./body";
 import { generateSchemaIfDeclaration, writeFormatted } from "./common";
 import { generateParameterDefinition } from "./parameter";
@@ -23,10 +24,29 @@ export function generateOperations(
   );
 }
 
+interface GeneratedOperationParameters {
+  schemas: string;
+  definition: string;
+  requestMap: string;
+}
+
+interface GeneratedBody {
+  bodyType: string;
+  requestBody: string;
+}
+
+interface GeneratedItems {
+  parameters?: GeneratedOperationParameters;
+  body?: GeneratedBody;
+  successfulResponse: string;
+}
+
 function generateOperation(
   operationId: string,
   operation: ParsedOperation
 ): GenRTE<void> {
+  const generatedItems = generateItems(operationId, operation);
+
   const content = `import * as t from "io-ts";
   import * as schemas from "../components/schemas";
   import * as parameters from "../components/parameters";
@@ -34,67 +54,87 @@ function generateOperation(
   import { ParametersDefinitions } from "../openapi-client/parameter";
   import { HttpRequestAdapter } from "../openapi-client/httpRequestAdapter";
   import { request } from "../openapi-client/request";
-  
-  ${generateOperationParametersDefinitions(operation.parameters)}
 
-  ${generateRequestParametersMap(operationId, operation.parameters)}
+  ${
+    generatedItems.parameters
+      ? `${generatedItems.parameters.schemas}
+  ${generatedItems.parameters.requestMap}`
+      : ""
+  }
 
-  ${generateSuccessfulResponse(operation.responses.success)}
+  ${generatedItems.body ? generatedItems.body.requestBody : ""}
 
-  ${generateBody(operation.body)}
+  ${generateRequestDefinition(operationId, operation, generatedItems)}
 
-  ${generateRequestDefinition(operationId, operation)}
-
-  ${generateRequest(operationId)}
+  ${generateRequest(operationId, generatedItems)}
   `;
 
   return writeFormatted(`operations/${operationId}.ts`, content);
 }
 
-function generateOperationParametersDefinitions(
+function generateItems(
+  operationId: string,
+  operation: ParsedOperation
+): GeneratedItems {
+  return {
+    parameters: generateOperationParameters(operationId, operation.parameters),
+    body: generateBody(operationId, operation.body),
+    successfulResponse: generateSuccessfulResponse(operation.responses.success),
+  };
+}
+
+function generateOperationParameters(
+  operationId: string,
+  parameters: ParsedParameter[]
+): GeneratedOperationParameters | undefined {
+  if (parameters.length === 0) {
+    return undefined;
+  }
+
+  const res: GeneratedOperationParameters = {
+    schemas: generateOperationParametersSchemas(parameters),
+    definition: generateOperationParametersDefinition(parameters),
+    requestMap: generateRequestParametersMap(operationId, parameters),
+  };
+
+  return res;
+}
+
+function generateOperationParametersSchemas(
   parameters: ParsedParameter[]
 ): string {
-  const schemas: string[] = [];
-  const definitions: string[] = [];
+  return parameters
+    .map((p) =>
+      p._tag === "ComponentRef" ? "" : generateSchemaIfDeclaration(p.value.type)
+    )
+    .join("\n");
+}
 
-  parameters.forEach((p) => {
-    const [schema, definition] = generateOperationParameterDefinition(p);
-    schemas.push(schema);
-    definitions.push(definition);
-  });
-
-  return `${schemas.join("\n")}
-    
-    const parametersDefinitions: ParametersDefinitions = {
-        ${definitions.join("\n")}
-    }`;
+function generateOperationParametersDefinition(
+  parameters: ParsedParameter[]
+): string {
+  return `{ ${parameters
+    .map(generateOperationParameterDefinition)
+    .join(",")} }`;
 }
 
 function generateOperationParameterDefinition(
   parameter: ParsedParameter
-): [string, string] {
+): string {
   if (parameter._tag === "ComponentRef") {
-    return [
-      "",
-      `${parameter.component.name}: parameters.${parameter.component.name}`,
-    ];
+    return `${parameter.component.name}: parameters.${parameter.component.name}`;
+  } else {
+    return `${parameter.value.name}: ${generateParameterDefinition(
+      parameter.value
+    )}`;
   }
-
-  return [
-    generateSchemaIfDeclaration(parameter.value.type),
-    `${parameter.value.name}: ${generateParameterDefinition(parameter.value)}`,
-  ];
 }
 
 function generateRequestParametersMap(
   operationId: string,
   parameters: ParsedParameter[]
 ): string {
-  if (parameters.length === 0) {
-    return `type ${operationId}RequestParameters = undefined;`;
-  }
-
-  return `interface ${operationId}RequestParameters {
+  return `export type ${requestParametersMapName(operationId)} = {
       ${parameters.map(generateRequestParameter).join("\n")}
   }`;
 }
@@ -118,14 +158,13 @@ function generateRequestParameter(parameter: ParsedParameter): string {
 }
 
 function generateSuccessfulResponse(response: ParsedResponse): string {
-  const name = "successfulResponse";
   const responseObject =
     response._tag === "ComponentRef"
       ? response.component.object
       : response.value;
 
   if (responseObject._tag === "TextResponse") {
-    return `const ${name} = { _tag: "TextResponse"} as const; `;
+    return `{ _tag: "TextResponse"}`;
   }
 
   const typePrefix = response._tag === "ComponentRef" ? "responses." : "";
@@ -137,29 +176,35 @@ function generateSuccessfulResponse(response: ParsedResponse): string {
       ? `${typePrefix}${type.name}`
       : gen.printRuntime(type);
 
-  return `${name} = { _tag: "JsonResponse", decoder: ${runtimeType}}; `;
+  return `{ _tag: "JsonResponse", decoder: ${runtimeType}}`;
 }
 
 function generateRequestDefinition(
   operationId: string,
-  operation: ParsedOperation
+  operation: ParsedOperation,
+  generatedItems: GeneratedItems
 ): string {
   const { path, method, responses } = operation;
 
   const returnType = getReturnType(responses);
 
-  return `const ${operationId}RequestDefinition: RequestDefinition<${returnType}> = {
+  return `export const ${requestDefinitionName(
+    operationId
+  )}: RequestDefinition<${returnType}> = {
       path: "${path}",
       method: "${method}",
-      parametersDefinitions,
-      successfulResponse,
-      body
+      successfulResponse: ${generatedItems.successfulResponse},
+      parametersDefinitions: ${generatedItems.parameters?.definition ?? "{}"},
+      ${generatedItems.body ? `bodyType: ${generatedItems.body.bodyType}` : ""}
   }`;
 }
 
-function generateBody(body: O.Option<ParsedBody>): string {
+function generateBody(
+  operationId: string,
+  body: O.Option<ParsedBody>
+): GeneratedBody | undefined {
   if (O.isNone(body)) {
-    return `const body = undefined; const requestBody = undefined; `;
+    return undefined;
   }
 
   const bodyObject =
@@ -167,28 +212,46 @@ function generateBody(body: O.Option<ParsedBody>): string {
       ? body.value.component.object
       : body.value.value;
 
-  let res = `const body = ${generateBodyType(bodyObject)}; `;
-
-  if (bodyObject._tag === "JsonBody") {
-    if (bodyObject.type.kind === "TypeDeclaration") {
-      res += `${gen.printStatic(bodyObject.type)}`;
-    }
-
-    res += `type RequestBody = ${
-      bodyObject.type.kind === "TypeDeclaration"
-        ? bodyObject.type.name
-        : gen.printStatic(bodyObject.type)
-    }`;
-  } else {
-    res += `type RequestBody = string`;
-  }
+  const res: GeneratedBody = {
+    bodyType: generateBodyType(bodyObject),
+    requestBody: generateRequestBody(operationId, bodyObject),
+  };
 
   return res;
 }
 
-function generateRequest(operationId: string): string {
-  return `export const ${operationId} = (requestAdapter: HttpRequestAdapter) => (params: ${operationId}RequestParameters, body: RequestBody) =>
-      request(${operationId}RequestDefinition, params, body, requestAdapter);`;
+function generateRequestBody(
+  operationId: string,
+  bodyObject: ParsedBodyObject
+): string {
+  return `export type ${requestBodyName(operationId)} = ${
+    bodyObject._tag === "JsonBody" ? gen.printStatic(bodyObject.type) : "string"
+  }`;
+}
+
+function generateRequest(
+  operationId: string,
+  generatedItems: GeneratedItems
+): string {
+  const PARAM_ARG_NAME = "params";
+  const BODY_ARG_NAME = "body";
+
+  const args: string[] = [];
+
+  if (generatedItems.parameters) {
+    args.push(`${PARAM_ARG_NAME}: ${requestParametersMapName(operationId)}`);
+  }
+
+  if (generatedItems.body) {
+    args.push(`${BODY_ARG_NAME}: ${requestBodyName(operationId)}`);
+  }
+
+  return `export const ${operationId} = (requestAdapter: HttpRequestAdapter) => (${args.join(
+    ", "
+  )}) =>
+      request(${operationId}RequestDefinition, ${
+    generatedItems.parameters ? PARAM_ARG_NAME : "undefined"
+  }, ${generatedItems.body ? BODY_ARG_NAME : "undefined"}, requestAdapter);`;
 }
 
 function getReturnType(responses: OperationResponses): string {
@@ -211,4 +274,16 @@ function getReturnType(responses: OperationResponses): string {
       : gen.printStatic(type);
 
   return staticType;
+}
+
+function requestParametersMapName(operationId: string): string {
+  return `${pascalCase(operationId)}RequestParameters`;
+}
+
+function requestBodyName(operationId: string): string {
+  return `${pascalCase(operationId)}RequestBody`;
+}
+
+function requestDefinitionName(operationId: string): string {
+  return `${operationId}RequestDefinition`;
 }

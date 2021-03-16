@@ -67,10 +67,11 @@ function writeParameterFile(
   parameter: GenericComponent<ParsedParameterObject>
 ): GenRTE<void> {
   const content = `${getImports()}
+    import { ParameterDefinition } from "../../openapi-client/parameter";
     
     ${generateSchemaIfDeclaration(parameter.object.type)}
     
-    const ${
+    export const ${
       parameter.name
     }: ParameterDefinition = ${generateParameterDefinition(parameter.object)}`;
 
