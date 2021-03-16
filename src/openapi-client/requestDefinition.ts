@@ -8,5 +8,5 @@ export interface RequestDefinition<ReturnType> {
   method: "get" | "post" | "put" | "delete";
   parametersDefinitions: ParametersDefinitions;
   successfulResponse?: TextResponse | JsonResponse<ReturnType>;
-  body?: BodyType;
+  bodyType?: BodyType;
 }

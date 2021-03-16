@@ -27,7 +27,9 @@ export function request<ReturnType>(
     url,
     method,
     body:
-      definition.body === "json" ? JSON.stringify(requestBody) : requestBody,
+      definition.bodyType === "json"
+        ? JSON.stringify(requestBody)
+        : requestBody,
     headers: requestHeaders(definition),
   };
 
@@ -74,7 +76,7 @@ function requestHeaders(
     res["Accept"] = "application/json";
   }
 
-  if (definition.body === "json") {
+  if (definition.bodyType === "json") {
     res["Content-Type"] = "application/json";
   }
 
