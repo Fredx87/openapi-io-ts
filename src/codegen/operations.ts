@@ -20,7 +20,7 @@ export function generateOperations(
     operations,
     R.mapWithIndex(generateOperation),
     R.sequence(RTE.readerTaskEitherSeq),
-    RTE.map(() => {})
+    RTE.map(() => void 0)
   );
 }
 

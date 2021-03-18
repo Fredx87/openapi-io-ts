@@ -13,14 +13,14 @@ const argv = yargs
     input: {
       alias: "i",
       demandOption: true,
-      description: "OpenAPI file to parse"
+      description: "OpenAPI file to parse",
     },
     output: {
       alias: "o",
       demandOption: true,
       description: "Output directory",
-      default: "./out"
-    }
+      default: "./out",
+    },
   }).argv;
 
 generate(argv.input as string, argv.output as string);

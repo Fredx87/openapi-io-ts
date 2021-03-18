@@ -21,7 +21,7 @@ export function parseAllComponents(): ParserRTE<void> {
         : [];
       return pipe(
         RTE.sequenceSeqArray(tasks),
-        RTE.map(() => {})
+        RTE.map(() => void 0)
       );
     })
   );
@@ -77,7 +77,7 @@ function parseAllSchemas(
 
   return pipe(
     RTE.sequenceSeqArray(tasks),
-    RTE.map(() => {})
+    RTE.map(() => void 0)
   );
 }
 
@@ -104,7 +104,7 @@ function parseAllParameters(
     Object.entries(parameters),
     A.map(([name, param]) => parseParameterComponent(pointer, name, param)),
     RTE.sequenceSeqArray,
-    RTE.map(() => {})
+    RTE.map(() => void 0)
   );
 }
 
@@ -143,7 +143,7 @@ function parseAllBodies(
     Object.entries(bodies),
     A.map(([name, body]) => parseBodyComponent(pointer, name, body)),
     RTE.sequenceSeqArray,
-    RTE.map(() => {})
+    RTE.map(() => void 0)
   );
 }
 
@@ -184,7 +184,7 @@ function parseAllResponses(
       parseResponseComponent(pointer, name, response)
     ),
     RTE.sequenceSeqArray,
-    RTE.map(() => {})
+    RTE.map(() => void 0)
   );
 }
 

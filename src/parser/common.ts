@@ -104,17 +104,6 @@ function getComponent<T extends ComponentType>(
   );
 }
 
-function getNameFromComponent(
-  component: SchemaComponent | GenericComponent<unknown>
-): string {
-  switch (component._tag) {
-    case "SchemaComponent":
-      return component.type.name;
-    case "GenericComponent":
-      return component.name;
-  }
-}
-
 export function getOrCreateType(
   name: string,
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject

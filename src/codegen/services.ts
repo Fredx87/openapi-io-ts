@@ -9,7 +9,7 @@ export function generateServices(tags: Record<string, string[]>): GenRTE<void> {
     Object.entries(tags),
     A.map(([tag, operationsIds]) => generateServiceFile(tag, operationsIds)),
     RTE.sequenceSeqArray,
-    RTE.map(() => {})
+    RTE.map(() => void 0)
   );
 }
 

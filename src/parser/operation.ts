@@ -33,7 +33,7 @@ export function parseAllPaths(): ParserRTE<void> {
       );
       return RTE.sequenceSeqArray(tasks);
     }),
-    RTE.map(() => {})
+    RTE.map(() => void 0)
   );
 }
 
@@ -56,7 +56,7 @@ function parsePath(
 
   return pipe(
     RTE.sequenceSeqArray(tasks),
-    RTE.map(() => {})
+    RTE.map(() => void 0)
   );
 }
 
@@ -127,7 +127,7 @@ function parseOperationTags(
   return pipe(
     tasks,
     RTE.sequenceSeqArray,
-    RTE.map(() => {})
+    RTE.map(() => void 0)
   );
 }
 
