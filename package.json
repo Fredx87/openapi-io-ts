@@ -21,7 +21,6 @@
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.0.2",
     "@types/lodash": "^4.14.168",
-    "@types/prettier": "^2.2.1",
     "@types/yargs": "^16.0.0",
     "fp-ts": "^2.9.5",
     "immer": "^8.0.1",
@@ -30,7 +29,7 @@
     "io-ts-types": "^0.5.14",
     "lodash": "^4.17.20",
     "openapi-types": "^7.2.3",
-    "prettier": "^2.2.1",
+    "typescript": "^4.1.5",
     "yargs": "^16.2.0"
   },
   "devDependencies": {
@@ -38,9 +37,9 @@
     "husky": "^3.1.0",
     "jest": "^26.6.3",
     "lint-staged": "^10.5.4",
+    "prettier": "^2.2.1",
     "ts-jest": "^26.5.1",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.1.5"
+    "ts-node": "^9.1.1"
   },
   "husky": {
     "hooks": {
