@@ -1,11 +1,10 @@
 import * as A from "fp-ts/Array";
 import * as E from "fp-ts/Either";
 import { pipe } from "fp-ts/function";
-import * as NEA from "fp-ts/lib/NonEmptyArray";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { jsonPointer, JsonReference } from "../common/JSONReference";
+import { JsonPointer, JsonReference } from "../common/JSONReference";
 import { parseBodyObject } from "./body";
 import { genericComponent, schemaComponent, SchemaComponent } from "./common";
 import { modifyParserOutput, ParserContext, ParserRTE } from "./context";
@@ -31,47 +30,45 @@ export function parseAllComponents(): ParserRTE<void> {
 function createTasks(
   components: OpenAPIV3.ComponentsObject
 ): ParserRTE<void>[] {
-  const pointerTokens: NEA.NonEmptyArray<string> = ["components"];
+  const pointer = new JsonPointer(["#", "components"]);
 
   const tasks: ParserRTE<void>[] = [];
 
   const { schemas, parameters, requestBodies, responses } = components;
 
   if (schemas) {
-    tasks.push(parseAllSchemas(pointerTokens, schemas));
+    tasks.push(parseAllSchemas(pointer, schemas));
   }
 
   if (parameters) {
-    tasks.push(parseAllParameters(pointerTokens, parameters));
+    tasks.push(parseAllParameters(pointer, parameters));
   }
 
   if (requestBodies) {
-    tasks.push(parseAllBodies(pointerTokens, requestBodies));
+    tasks.push(parseAllBodies(pointer, requestBodies));
   }
 
   if (responses) {
-    tasks.push(parseAllResponses(pointerTokens, responses));
+    tasks.push(parseAllResponses(pointer, responses));
   }
 
   return tasks;
 }
 
 function parseAllSchemas(
-  componentsPointerTokens: NEA.NonEmptyArray<string>,
+  componentsPointer: JsonPointer,
   schemas: Record<string, OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>
 ): ParserRTE<void> {
-  const pointerTokens = NEA.concat(componentsPointerTokens, ["schemas"]);
-
   const tasks: ParserRTE<void>[] = Object.entries(schemas).map(
     ([name, schema]) => {
-      const pointer = jsonPointer(NEA.concat(pointerTokens, [name]));
+      const pointer = componentsPointer.concat(["schemas", name]);
 
       return pipe(
         createSchemaComponent(name, schema),
         RTE.fromEither,
         RTE.chain((component) =>
           modifyParserOutput((draft) => {
-            draft.components.schemas[pointer] = component;
+            draft.components.schemas[pointer.toString()] = component;
           })
         )
       );
@@ -95,26 +92,24 @@ function createSchemaComponent(
 }
 
 function parseAllParameters(
-  componentsPointerTokens: NEA.NonEmptyArray<string>,
+  componentsPointer: JsonPointer,
   parameters: Record<
     string,
     OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject
   >
 ): ParserRTE<void> {
-  const pointerTokens = NEA.concat(componentsPointerTokens, ["parameters"]);
+  const pointer = componentsPointer.concat(["parameters"]);
 
   return pipe(
     Object.entries(parameters),
-    A.map(([name, param]) =>
-      parseParameterComponent(pointerTokens, name, param)
-    ),
+    A.map(([name, param]) => parseParameterComponent(pointer, name, param)),
     RTE.sequenceSeqArray,
     RTE.map(() => {})
   );
 }
 
 function parseParameterComponent(
-  parametersPointerTokens: NEA.NonEmptyArray<string>,
+  parametersPointer: JsonPointer,
   name: string,
   parameter: OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject
 ): ParserRTE<void> {
@@ -122,38 +117,38 @@ function parseParameterComponent(
     return RTE.left(new Error("Found $ref in components/parameter"));
   }
 
-  const pointer = jsonPointer(NEA.concat(parametersPointerTokens, [name]));
+  const pointer = parametersPointer.concat([name]);
 
   return pipe(
     parseParameterObject(parameter),
     RTE.map((object) => genericComponent(name, object.value)),
     RTE.chain((parsedComponent) =>
       modifyParserOutput((draft) => {
-        draft.components.parameters[pointer] = parsedComponent;
+        draft.components.parameters[pointer.toString()] = parsedComponent;
       })
     )
   );
 }
 
 function parseAllBodies(
-  componentsPointerTokens: NEA.NonEmptyArray<string>,
+  componentsPointer: JsonPointer,
   bodies: Record<
     string,
     OpenAPIV3.ReferenceObject | OpenAPIV3.RequestBodyObject
   >
 ): ParserRTE<void> {
-  const pointerTokens = NEA.concat(componentsPointerTokens, ["requestBodies"]);
+  const pointer = componentsPointer.concat(["requestBodies"]);
 
   return pipe(
     Object.entries(bodies),
-    A.map(([name, body]) => parseBodyComponent(pointerTokens, name, body)),
+    A.map(([name, body]) => parseBodyComponent(pointer, name, body)),
     RTE.sequenceSeqArray,
     RTE.map(() => {})
   );
 }
 
 function parseBodyComponent(
-  parentPointerTokens: NEA.NonEmptyArray<string>,
+  bodiesPointer: JsonPointer,
   name: string,
   body: OpenAPIV3.ReferenceObject | OpenAPIV3.RequestBodyObject
 ): ParserRTE<void> {
@@ -161,32 +156,32 @@ function parseBodyComponent(
     return RTE.left(new Error("Found $ref in components/requestBodies"));
   }
 
-  const pointer = jsonPointer(NEA.concat(parentPointerTokens, [name]));
+  const pointer = bodiesPointer.concat([name]);
 
   return pipe(
     parseBodyObject(name, body),
     RTE.map((object) => genericComponent(name, object.value)),
     RTE.chain((parsedComponent) =>
       modifyParserOutput((draft) => {
-        draft.components.bodies[pointer] = parsedComponent;
+        draft.components.bodies[pointer.toString()] = parsedComponent;
       })
     )
   );
 }
 
 function parseAllResponses(
-  componentsPointerTokens: NEA.NonEmptyArray<string>,
+  componentsPointer: JsonPointer,
   responses: Record<
     string,
     OpenAPIV3.ReferenceObject | OpenAPIV3.ResponseObject
   >
 ): ParserRTE<void> {
-  const pointerTokens = NEA.concat(componentsPointerTokens, ["responses"]);
+  const pointer = componentsPointer.concat(["responses"]);
 
   return pipe(
     Object.entries(responses),
     A.map(([name, response]) =>
-      parseResponseComponent(pointerTokens, name, response)
+      parseResponseComponent(pointer, name, response)
     ),
     RTE.sequenceSeqArray,
     RTE.map(() => {})
@@ -194,7 +189,7 @@ function parseAllResponses(
 }
 
 function parseResponseComponent(
-  parentPointerTokens: NEA.NonEmptyArray<string>,
+  responsesPointer: JsonPointer,
   name: string,
   response: OpenAPIV3.ReferenceObject | OpenAPIV3.ResponseObject
 ): ParserRTE<void> {
@@ -202,14 +197,14 @@ function parseResponseComponent(
     return RTE.left(new Error("Found $ref in components/responses"));
   }
 
-  const pointer = jsonPointer(NEA.concat(parentPointerTokens, [name]));
+  const pointer = responsesPointer.concat([name]);
 
   return pipe(
     parseResponseObject(name, response),
     RTE.map((object) => genericComponent(name, object.value)),
     RTE.chain((parsedComponent) =>
       modifyParserOutput((draft) => {
-        draft.components.responses[pointer] = parsedComponent;
+        draft.components.responses[pointer.toString()] = parsedComponent;
       })
     )
   );
