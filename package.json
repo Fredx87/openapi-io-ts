@@ -2,7 +2,10 @@
   "name": "openapi-io-ts",
   "version": "1.0.0-alpha.0",
   "description": "",
-  "main": "index.js",
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
   "bin": {
     "openapi-io-ts": "dist/index.js"
   },
