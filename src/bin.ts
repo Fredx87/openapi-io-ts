@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as yargs from "yargs";
-import { generate } from "./src/generate";
+import { generate } from ".";
 
 const argv = yargs
   .usage("Usage: $0 [options]")
@@ -23,4 +23,4 @@ const argv = yargs
     },
   }).argv;
 
-generate(argv.input as string, argv.output as string);
+generate(argv.input as string, argv.output);

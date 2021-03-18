@@ -1,14 +1,14 @@
 import { pipe } from "fp-ts/function";
-import * as A from "fp-ts/Array";
 import { GenRTE } from "../environment";
-import * as RTE from "fp-ts/lib/ReaderTaskEither";
+import * as RTE from "fp-ts/ReaderTaskEither";
 import { writeFormatted } from "./common";
 
 export function generateServices(tags: Record<string, string[]>): GenRTE<void> {
   return pipe(
     Object.entries(tags),
-    A.map(([tag, operationsIds]) => generateServiceFile(tag, operationsIds)),
-    RTE.sequenceSeqArray,
+    RTE.traverseSeqArray(([tag, operationsIds]) =>
+      generateServiceFile(tag, operationsIds)
+    ),
     RTE.map(() => void 0)
   );
 }

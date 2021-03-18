@@ -1,4 +1,3 @@
-import * as A from "fp-ts/Array";
 import * as E from "fp-ts/Either";
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
@@ -59,8 +58,9 @@ function parseAllSchemas(
   componentsPointer: JsonPointer,
   schemas: Record<string, OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>
 ): ParserRTE<void> {
-  const tasks: ParserRTE<void>[] = Object.entries(schemas).map(
-    ([name, schema]) => {
+  return pipe(
+    Object.entries(schemas),
+    RTE.traverseSeqArray(([name, schema]) => {
       const pointer = componentsPointer.concat(["schemas", name]);
 
       return pipe(
@@ -72,11 +72,7 @@ function parseAllSchemas(
           })
         )
       );
-    }
-  );
-
-  return pipe(
-    RTE.sequenceSeqArray(tasks),
+    }),
     RTE.map(() => void 0)
   );
 }
@@ -102,8 +98,9 @@ function parseAllParameters(
 
   return pipe(
     Object.entries(parameters),
-    A.map(([name, param]) => parseParameterComponent(pointer, name, param)),
-    RTE.sequenceSeqArray,
+    RTE.traverseSeqArray(([name, param]) =>
+      parseParameterComponent(pointer, name, param)
+    ),
     RTE.map(() => void 0)
   );
 }
@@ -141,8 +138,9 @@ function parseAllBodies(
 
   return pipe(
     Object.entries(bodies),
-    A.map(([name, body]) => parseBodyComponent(pointer, name, body)),
-    RTE.sequenceSeqArray,
+    RTE.traverseSeqArray(([name, body]) =>
+      parseBodyComponent(pointer, name, body)
+    ),
     RTE.map(() => void 0)
   );
 }
@@ -180,10 +178,9 @@ function parseAllResponses(
 
   return pipe(
     Object.entries(responses),
-    A.map(([name, response]) =>
+    RTE.traverseSeqArray(([name, response]) =>
       parseResponseComponent(pointer, name, response)
     ),
-    RTE.sequenceSeqArray,
     RTE.map(() => void 0)
   );
 }

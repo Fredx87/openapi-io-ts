@@ -1,4 +1,4 @@
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/function";
 import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
@@ -48,14 +48,13 @@ function parsePath(
     delete: pathObject?.delete,
   };
 
-  const tasks = Object.entries(operations).map(([method, operation]) =>
-    operation
-      ? parseAndAddOperation(path, method as OperationMethod, operation)
-      : RTE.right(undefined)
-  );
-
   return pipe(
-    RTE.sequenceSeqArray(tasks),
+    Object.entries(operations),
+    RTE.traverseSeqArray(([method, operation]) =>
+      operation
+        ? parseAndAddOperation(path, method as OperationMethod, operation)
+        : RTE.right(undefined)
+    ),
     RTE.map(() => void 0)
   );
 }
@@ -115,18 +114,16 @@ function parseOperationTags(
     return RTE.right(undefined);
   }
 
-  const tasks = tags.map((tag) =>
-    modifyParserOutput((draft) => {
-      const currentTags = draft.tags[tag];
-      draft.tags[tag] = currentTags
-        ? currentTags.concat(operationId)
-        : [operationId];
-    })
-  );
-
   return pipe(
-    tasks,
-    RTE.sequenceSeqArray,
+    tags,
+    RTE.traverseSeqArray((tag) =>
+      modifyParserOutput((draft) => {
+        const currentTags = draft.tags[tag];
+        draft.tags[tag] = currentTags
+          ? currentTags.concat(operationId)
+          : [operationId];
+      })
+    ),
     RTE.map(() => void 0)
   );
 }
@@ -138,13 +135,9 @@ function parseOperationParameters(
     return RTE.right([]);
   }
 
-  const tasks = pipe(
-    params.map((p) => parseParameter(p)),
-    RTE.sequenceArray
-  );
-
   return pipe(
-    tasks,
+    params,
+    RTE.traverseSeqArray(parseParameter),
     RTE.map((res) => res as ParsedParameter[])
   );
 }
@@ -208,9 +201,8 @@ function parseErrorResponses(
 ): ParserRTE<OperationResponses["errors"]> {
   return pipe(
     responses,
-    R.mapWithIndex((code, response) =>
+    R.traverseWithIndex(RTE.readerTaskEitherSeq)((code, response) =>
       parseResponse(`Response${code}`, response)
-    ),
-    R.sequence(RTE.readerTaskEitherSeq)
+    )
   );
 }

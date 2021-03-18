@@ -1,5 +1,5 @@
 import * as E from "fp-ts/Either";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/function";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { JsonReference } from "../common/JSONReference";
@@ -109,20 +109,21 @@ function parseArray(
 function parseSchemas(
   schemas: Array<OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>
 ): E.Either<Error, gen.TypeReference[]> {
-  const tasks = schemas.map(parseSchema);
-  return E.sequenceArray(tasks) as E.Either<Error, gen.TypeReference[]>;
+  return pipe(schemas, E.traverseArray(parseSchema)) as E.Either<
+    Error,
+    gen.TypeReference[]
+  >;
 }
 
 function parseObject(
   schema: OpenAPIV3.NonArraySchemaObject
 ): E.Either<Error, gen.TypeReference> {
   if (schema.properties) {
-    const tasks = Object.entries(schema.properties).map(([name, propSchema]) =>
-      parseProperty(name, propSchema, schema)
-    );
-
     return pipe(
-      E.sequenceArray(tasks),
+      Object.entries(schema.properties),
+      E.traverseArray(([name, propSchema]) =>
+        parseProperty(name, propSchema, schema)
+      ),
       E.map((props) => gen.typeCombinator(props as gen.Property[]))
     );
   }

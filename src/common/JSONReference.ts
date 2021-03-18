@@ -1,4 +1,4 @@
-import { ReadonlyNonEmptyArray, concat } from "fp-ts/lib/ReadonlyNonEmptyArray";
+import { ReadonlyNonEmptyArray, concat } from "fp-ts/ReadonlyNonEmptyArray";
 import * as t from "io-ts";
 
 export class JsonPointer {

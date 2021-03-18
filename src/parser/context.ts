@@ -1,5 +1,5 @@
 import { IORef } from "fp-ts/IORef";
-import { pipe } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import produce, { Draft } from "immer";
 import { OpenAPIV3 } from "openapi-types";

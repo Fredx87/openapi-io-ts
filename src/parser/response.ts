@@ -1,4 +1,4 @@
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";

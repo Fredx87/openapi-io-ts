@@ -18,8 +18,7 @@ export function generateOperations(
 ): GenRTE<void> {
   return pipe(
     operations,
-    R.mapWithIndex(generateOperation),
-    R.sequence(RTE.readerTaskEitherSeq),
+    R.traverseWithIndex(RTE.readerTaskEitherSeq)(generateOperation),
     RTE.map(() => void 0)
   );
 }

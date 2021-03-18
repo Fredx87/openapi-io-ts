@@ -1,4 +1,3 @@
-import * as A from "fp-ts/Array";
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import { TypeDeclaration } from "io-ts-codegen";
@@ -29,8 +28,7 @@ export function generateComponents(components: ParsedComponents): GenRTE<void> {
 function generateSchemas(schemas: SchemaComponent[]): GenRTE<void> {
   return pipe(
     schemas,
-    A.map((schema) => writeSchemaFile(schema.type)),
-    RTE.sequenceSeqArray,
+    RTE.traverseSeqArray((schema) => writeSchemaFile(schema.type)),
     RTE.chain(() =>
       writeIndex(
         `components/schemas/index.ts`,
@@ -52,8 +50,7 @@ function generateParameters(
 ): GenRTE<void> {
   return pipe(
     parameters,
-    A.map((p) => writeParameterFile(p)),
-    RTE.sequenceSeqArray,
+    RTE.traverseSeqArray((p) => writeParameterFile(p)),
     RTE.chain(() =>
       writeIndex(
         `components/parameters/index.ts`,

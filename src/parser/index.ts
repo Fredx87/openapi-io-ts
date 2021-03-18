@@ -1,5 +1,5 @@
 import { pipe } from "fp-ts/function";
-import { newIORef } from "fp-ts/lib/IORef";
+import { newIORef } from "fp-ts/IORef";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as TE from "fp-ts/TaskEither";
 import { GenRTE } from "../environment";

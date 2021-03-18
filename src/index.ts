@@ -27,5 +27,6 @@ export function generate(inputFile: string, outputDir: string): void {
     RTE.chainFirst(({ parseResult }) => codegen(parseResult))
   )(env);
 
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
   pipe(result, TE.fold(onLeft, onRight))();
 }

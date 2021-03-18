@@ -1,5 +1,5 @@
 import { pipe } from "fp-ts/function";
-import * as RTE from "fp-ts/lib/ReaderTaskEither";
+import * as RTE from "fp-ts/ReaderTaskEither";
 import { GenRTE } from "../environment";
 import { ParserOutput } from "../parser/parserOutput";
 import { createDir } from "./common";

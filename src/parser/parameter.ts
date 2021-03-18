@@ -71,6 +71,7 @@ function getDefaultValue(
         ? getOpenapiSchemaFromRef(s)
         : RTE.right<ParserContext, Error, OpenAPIV3.SchemaObject>(s)
     ),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     RTE.map((obj) => obj.schema.default)
   );
 }
