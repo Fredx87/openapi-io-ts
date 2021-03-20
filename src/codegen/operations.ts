@@ -3,19 +3,25 @@ import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
 import * as gen from "io-ts-codegen";
-import { GenRTE } from "../environment";
 import { ParsedBody, ParsedBodyObject } from "../parser/body";
 import { OperationResponses, ParsedOperation } from "../parser/operation";
 import { ParsedParameter } from "../parser/parameter";
 import { ParsedResponse } from "../parser/response";
 import { pascalCase } from "../utils";
 import { generateBodyType } from "./body";
-import { generateSchemaIfDeclaration, writeFormatted } from "./common";
+import {
+  generateSchemaIfDeclaration,
+  OPERATIONS_PATH,
+  PARAMETERS_PATH,
+  SCHEMAS_PATH,
+  writeGeneratedFile,
+} from "./common";
+import { CodegenRTE } from "./context";
 import { generateParameterDefinition } from "./parameter";
 
 export function generateOperations(
   operations: Record<string, ParsedOperation>
-): GenRTE<void> {
+): CodegenRTE<void> {
   return pipe(
     operations,
     R.traverseWithIndex(RTE.readerTaskEitherSeq)(generateOperation),
@@ -44,12 +50,12 @@ interface GeneratedItems {
 function generateOperation(
   operationId: string,
   operation: ParsedOperation
-): GenRTE<void> {
+): CodegenRTE<void> {
   const generatedItems = generateItems(operationId, operation);
 
   const content = `import * as t from "io-ts";
-  import * as schemas from "../components/schemas";
-  import * as parameters from "../components/parameters";
+  import * as schemas from "../${SCHEMAS_PATH}";
+  import * as parameters from "../${PARAMETERS_PATH}";
   import { RequestDefinition } from "../openapi-client/requestDefinition";
   import { ParametersDefinitions } from "../openapi-client/parameter";
   import { HttpRequestAdapter } from "../openapi-client/httpRequestAdapter";
@@ -70,7 +76,7 @@ function generateOperation(
   ${generateRequest(operationId, generatedItems)}
   `;
 
-  return writeFormatted(`operations/${operationId}.ts`, content);
+  return writeGeneratedFile(OPERATIONS_PATH, `${operationId}.ts`, content);
 }
 
 function generateItems(

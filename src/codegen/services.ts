@@ -1,9 +1,11 @@
 import { pipe } from "fp-ts/function";
-import { GenRTE } from "../environment";
 import * as RTE from "fp-ts/ReaderTaskEither";
-import { writeFormatted } from "./common";
+import { CodegenRTE } from "./context";
+import { OPERATIONS_PATH, SERVICES_PATH, writeGeneratedFile } from "./common";
 
-export function generateServices(tags: Record<string, string[]>): GenRTE<void> {
+export function generateServices(
+  tags: Record<string, string[]>
+): CodegenRTE<void> {
   return pipe(
     Object.entries(tags),
     RTE.traverseSeqArray(([tag, operationsIds]) =>
@@ -16,11 +18,11 @@ export function generateServices(tags: Record<string, string[]>): GenRTE<void> {
 function generateServiceFile(
   tag: string,
   operationsIds: string[]
-): GenRTE<void> {
+): CodegenRTE<void> {
   const content = `import { HttpRequestAdapter } from "../openapi-client/httpRequestAdapter";
 
   ${operationsIds
-    .map((o) => `import { ${o} } from '../operations/${o}'`)
+    .map((o) => `import { ${o} } from '../${OPERATIONS_PATH}/${o}'`)
     .join("\n")}
     
     export const ${tag}ServiceBuilder = (requestAdapter: HttpRequestAdapter) => ({
@@ -28,5 +30,5 @@ function generateServiceFile(
     })
     `;
 
-  return writeFormatted(`services/${tag}Service.ts`, content);
+  return writeGeneratedFile(SERVICES_PATH, `${tag}Service.ts`, content);
 }

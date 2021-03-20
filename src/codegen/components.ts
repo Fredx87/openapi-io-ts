@@ -1,7 +1,6 @@
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import { TypeDeclaration } from "io-ts-codegen";
-import { GenRTE } from "../environment";
 import {
   GenericComponent,
   ParsedComponents,
@@ -11,12 +10,17 @@ import { ParsedParameterObject } from "../parser/parameter";
 import {
   generateSchemaIfDeclaration,
   getImports,
-  writeFormatted,
+  PARAMETERS_PATH,
+  SCHEMAS_PATH,
+  writeGeneratedFile,
 } from "./common";
+import { CodegenRTE } from "./context";
 import { generateParameterDefinition } from "./parameter";
 import { generateSchema } from "./schema";
 
-export function generateComponents(components: ParsedComponents): GenRTE<void> {
+export function generateComponents(
+  components: ParsedComponents
+): CodegenRTE<void> {
   const { schemas, parameters, bodies, responses } = components;
 
   return pipe(
@@ -25,35 +29,36 @@ export function generateComponents(components: ParsedComponents): GenRTE<void> {
   );
 }
 
-function generateSchemas(schemas: SchemaComponent[]): GenRTE<void> {
+function generateSchemas(schemas: SchemaComponent[]): CodegenRTE<void> {
   return pipe(
     schemas,
     RTE.traverseSeqArray((schema) => writeSchemaFile(schema.type)),
     RTE.chain(() =>
       writeIndex(
-        `components/schemas/index.ts`,
+        SCHEMAS_PATH,
         schemas.map((s) => s.type.name)
       )
     )
   );
 }
 
-function writeSchemaFile(declaration: TypeDeclaration): GenRTE<void> {
+function writeSchemaFile(declaration: TypeDeclaration): CodegenRTE<void> {
   const content = `${getImports()}
+
     ${generateSchema(declaration)}`;
 
-  return writeFormatted(`components/schemas/${declaration.name}.ts`, content);
+  return writeGeneratedFile(SCHEMAS_PATH, `${declaration.name}.ts`, content);
 }
 
 function generateParameters(
   parameters: GenericComponent<ParsedParameterObject>[]
-): GenRTE<void> {
+): CodegenRTE<void> {
   return pipe(
     parameters,
-    RTE.traverseSeqArray((p) => writeParameterFile(p)),
+    RTE.traverseSeqArray(writeParameterFile),
     RTE.chain(() =>
       writeIndex(
-        `components/parameters/index.ts`,
+        PARAMETERS_PATH,
         parameters.map((p) => p.name)
       )
     )
@@ -62,7 +67,7 @@ function generateParameters(
 
 function writeParameterFile(
   parameter: GenericComponent<ParsedParameterObject>
-): GenRTE<void> {
+): CodegenRTE<void> {
   const content = `${getImports()}
     import { ParameterDefinition } from "../../openapi-client/parameter";
     
@@ -72,10 +77,10 @@ function writeParameterFile(
       parameter.name
     }: ParameterDefinition = ${generateParameterDefinition(parameter.object)}`;
 
-  return writeFormatted(`components/parameters/${parameter.name}.ts`, content);
+  return writeGeneratedFile(PARAMETERS_PATH, `${parameter.name}.ts`, content);
 }
 
-function writeIndex(fileName: string, names: string[]): GenRTE<void> {
+function writeIndex(path: string, names: string[]): CodegenRTE<void> {
   const content = names.map((n) => `export * from "./${n}";`).join("\n");
-  return writeFormatted(fileName, content);
+  return writeGeneratedFile(path, "index.ts", content);
 }

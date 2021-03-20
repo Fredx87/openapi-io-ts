@@ -5,4 +5,4 @@ export interface Environment {
   outputDir: string;
 }
 
-export type GenRTE<A> = RTE.ReaderTaskEither<Environment, Error, A>;
+export type ProgramRTE<A> = RTE.ReaderTaskEither<Environment, Error, A>;

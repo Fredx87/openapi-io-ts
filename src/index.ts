@@ -7,26 +7,22 @@ import { codegen } from "./codegen";
 import { Environment } from "./environment";
 import { parse } from "./parser";
 
+export function main(inputFile: string, outputDir: string): void {
+  const env: Environment = {
+    inputFile,
+    outputDir,
+  };
+
+  const program = pipe(parse(), RTE.chain(codegen));
+
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  pipe(program(env), TE.fold(onLeft, onRight))();
+}
+
 function onLeft(e: Error): T.Task<void> {
   return T.fromIO(error(e));
 }
 
 function onRight(): T.Task<void> {
   return T.fromIO(log("Files generated successfully!"));
-}
-
-export function generate(inputFile: string, outputDir: string): void {
-  const env: Environment = {
-    inputFile,
-    outputDir,
-  };
-
-  const result = pipe(
-    parse(),
-    RTE.bindTo("parseResult"),
-    RTE.chainFirst(({ parseResult }) => codegen(parseResult))
-  )(env);
-
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  pipe(result, TE.fold(onLeft, onRight))();
 }
