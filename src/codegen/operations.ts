@@ -7,7 +7,7 @@ import { ParsedBody, ParsedBodyObject } from "../parser/body";
 import { OperationResponses, ParsedOperation } from "../parser/operation";
 import { ParsedParameter } from "../parser/parameter";
 import { ParsedResponse } from "../parser/response";
-import { pascalCase } from "../utils";
+import { pascalCase } from "../common/utils";
 import { generateBodyType } from "./body";
 import {
   generateSchemaIfDeclaration,
