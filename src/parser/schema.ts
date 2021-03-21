@@ -50,7 +50,8 @@ function parseJsonReference(
     tokens[1] === "components" &&
     tokens[2] === "schemas"
   ) {
-    return E.right(gen.identifier(`${tokens[2]}.${tokens[3]}`));
+    const name = `${tokens[2]}.${tokens[3]}`;
+    return E.right(gen.customCombinator(name, name));
   }
 
   return E.left(
@@ -86,7 +87,7 @@ function parseString(
   }
 
   if (schema.format === "date" || schema.format === "date-time") {
-    return E.right(gen.identifier("DateFromISOString"));
+    return E.right(gen.customCombinator("Date", "DateFromISOString"));
   }
 
   return E.right(gen.stringType);

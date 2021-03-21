@@ -99,7 +99,12 @@ export function getOrCreateType(
   if (JsonReference.is(schema)) {
     return pipe(
       getComponent("schemas", schema.$ref),
-      RTE.map((component) => gen.identifier(`schemas.${component.name}`))
+      RTE.map((component) =>
+        gen.customCombinator(
+          `schemas.${component.name}`,
+          `schemas.${component.name}`
+        )
+      )
     );
   }
 
