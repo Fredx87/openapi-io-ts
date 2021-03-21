@@ -1,11 +1,7 @@
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import { TypeDeclaration } from "io-ts-codegen";
-import {
-  GenericComponent,
-  ParsedComponents,
-  SchemaComponent,
-} from "../parser/common";
+import { Component, ParsedComponents } from "../parser/common";
 import { ParsedParameterObject } from "../parser/parameter";
 import {
   generateSchemaIfDeclaration,
@@ -17,6 +13,7 @@ import {
 import { CodegenRTE } from "./context";
 import { generateParameterDefinition } from "./parameter";
 import { generateSchema } from "./schema";
+import * as gen from "io-ts-codegen";
 
 export function generateComponents(
   components: ParsedComponents
@@ -29,14 +26,16 @@ export function generateComponents(
   );
 }
 
-function generateSchemas(schemas: SchemaComponent[]): CodegenRTE<void> {
+function generateSchemas(
+  schemas: Component<gen.TypeDeclaration>[]
+): CodegenRTE<void> {
   return pipe(
     schemas,
-    RTE.traverseSeqArray((schema) => writeSchemaFile(schema.type)),
+    RTE.traverseSeqArray((component) => writeSchemaFile(component.object)),
     RTE.chain(() =>
       writeIndex(
         SCHEMAS_PATH,
-        schemas.map((s) => s.type.name)
+        schemas.map((c) => c.name)
       )
     )
   );
@@ -51,7 +50,7 @@ function writeSchemaFile(declaration: TypeDeclaration): CodegenRTE<void> {
 }
 
 function generateParameters(
-  parameters: GenericComponent<ParsedParameterObject>[]
+  parameters: Component<ParsedParameterObject>[]
 ): CodegenRTE<void> {
   return pipe(
     parameters,
@@ -66,7 +65,7 @@ function generateParameters(
 }
 
 function writeParameterFile(
-  parameter: GenericComponent<ParsedParameterObject>
+  parameter: Component<ParsedParameterObject>
 ): CodegenRTE<void> {
   const content = `${getImports()}
     import { ParameterDefinition } from "../../openapi-client/parameter";

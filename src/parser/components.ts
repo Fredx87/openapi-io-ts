@@ -5,7 +5,7 @@ import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { JsonPointer, JsonReference } from "../common/JSONReference";
 import { parseBodyObject } from "./body";
-import { genericComponent, schemaComponent, SchemaComponent } from "./common";
+import { Component, component } from "./common";
 import { modifyParserOutput, ParserContext, ParserRTE } from "./context";
 import { parseParameterObject } from "./parameter";
 import { parseResponseObject } from "./response";
@@ -80,10 +80,10 @@ function parseAllSchemas(
 function createSchemaComponent(
   name: string,
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
-): E.Either<Error, SchemaComponent> {
+): E.Either<Error, Component<gen.TypeDeclaration>> {
   return pipe(
     parseSchema(schema),
-    E.map((type) => schemaComponent(gen.typeDeclaration(name, type, true)))
+    E.map((type) => component(name, gen.typeDeclaration(name, type, true)))
   );
 }
 
@@ -118,7 +118,7 @@ function parseParameterComponent(
 
   return pipe(
     parseParameterObject(parameter),
-    RTE.map((object) => genericComponent(name, object.value)),
+    RTE.map((object) => component(name, object.value)),
     RTE.chain((parsedComponent) =>
       modifyParserOutput((draft) => {
         draft.components.parameters[pointer.toString()] = parsedComponent;
@@ -158,7 +158,7 @@ function parseBodyComponent(
 
   return pipe(
     parseBodyObject(name, body),
-    RTE.map((object) => genericComponent(name, object.value)),
+    RTE.map((object) => component(name, object.value)),
     RTE.chain((parsedComponent) =>
       modifyParserOutput((draft) => {
         draft.components.bodies[pointer.toString()] = parsedComponent;
@@ -198,7 +198,7 @@ function parseResponseComponent(
 
   return pipe(
     parseResponseObject(name, response),
-    RTE.map((object) => genericComponent(name, object.value)),
+    RTE.map((object) => component(name, object.value)),
     RTE.chain((parsedComponent) =>
       modifyParserOutput((draft) => {
         draft.components.responses[pointer.toString()] = parsedComponent;

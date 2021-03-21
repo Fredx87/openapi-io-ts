@@ -11,37 +11,25 @@ import { parseSchema } from "./schema";
 
 export const JSON_MEDIA_TYPE = "application/json";
 
-export interface GenericComponent<T> {
-  _tag: "GenericComponent";
+export interface Component<T> {
+  _tag: "Component";
   name: string;
   object: T;
 }
 
-export function genericComponent<T>(
-  name: string,
-  object: T
-): GenericComponent<T> {
+export function component<T>(name: string, object: T): Component<T> {
   return {
-    _tag: "GenericComponent",
+    _tag: "Component",
     name,
     object,
   };
 }
 
-export interface SchemaComponent {
-  _tag: "SchemaComponent";
-  type: gen.TypeDeclaration;
-}
-
-export function schemaComponent(type: gen.TypeDeclaration): SchemaComponent {
-  return { _tag: "SchemaComponent", type };
-}
-
 export interface ParsedComponents {
-  schemas: Record<string, SchemaComponent>;
-  parameters: Record<string, GenericComponent<ParsedParameterObject>>;
-  responses: Record<string, GenericComponent<ParsedResponseObject>>;
-  bodies: Record<string, GenericComponent<ParsedBodyObject>>;
+  schemas: Record<string, Component<gen.TypeDeclaration>>;
+  parameters: Record<string, Component<ParsedParameterObject>>;
+  responses: Record<string, Component<ParsedResponseObject>>;
+  bodies: Record<string, Component<ParsedBodyObject>>;
 }
 
 export type ComponentType = keyof ParsedComponents;
@@ -111,7 +99,7 @@ export function getOrCreateType(
   if (JsonReference.is(schema)) {
     return pipe(
       getComponent("schemas", schema.$ref),
-      RTE.map((schema) => gen.identifier(`schemas.${schema.type.name}`))
+      RTE.map((component) => gen.identifier(`schemas.${component.name}`))
     );
   }
 
