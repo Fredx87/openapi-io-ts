@@ -3,11 +3,11 @@ import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
 import * as gen from "io-ts-codegen";
+import { capitalize } from "../common/utils";
 import { ParsedBody, ParsedBodyObject } from "../parser/body";
 import { OperationResponses, ParsedOperation } from "../parser/operation";
 import { ParsedParameter } from "../parser/parameter";
 import { ParsedResponse } from "../parser/response";
-import { pascalCase } from "../common/utils";
 import { generateBodyType } from "./body";
 import {
   generateSchemaIfDeclaration,
@@ -255,7 +255,7 @@ function generateRequest(
   return `export const ${operationId} = (requestAdapter: HttpRequestAdapter) => (${args.join(
     ", "
   )}): TaskEither<ApiError, ${generatedItems.returnType}> =>
-      request(${operationId}RequestDefinition, ${
+      request(${requestDefinitionName(operationId)}, ${
     generatedItems.parameters ? PARAM_ARG_NAME : "undefined"
   }, ${generatedItems.body ? BODY_ARG_NAME : "undefined"}, requestAdapter);`;
 }
@@ -283,13 +283,13 @@ function getReturnType(responses: OperationResponses): string {
 }
 
 function requestParametersMapName(operationId: string): string {
-  return `${pascalCase(operationId)}RequestParameters`;
+  return `${capitalize(operationId, "pascal")}RequestParameters`;
 }
 
 function requestBodyName(operationId: string): string {
-  return `${pascalCase(operationId)}RequestBody`;
+  return `${capitalize(operationId, "pascal")}RequestBody`;
 }
 
 function requestDefinitionName(operationId: string): string {
-  return `${operationId}RequestDefinition`;
+  return `${capitalize(operationId, "camel")}RequestDefinition`;
 }

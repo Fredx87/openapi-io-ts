@@ -3,6 +3,7 @@ import { pipe } from "fp-ts/function";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { JsonReference } from "../common/JSONReference";
+import { toValidVariableName } from "../common/utils";
 
 export function parseSchema(
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
@@ -50,7 +51,7 @@ function parseJsonReference(
     tokens[1] === "components" &&
     tokens[2] === "schemas"
   ) {
-    const name = `${tokens[2]}.${tokens[3]}`;
+    const name = `${tokens[2]}.${toValidVariableName(tokens[3], "pascal")}`;
     return E.right(gen.customCombinator(name, name));
   }
 

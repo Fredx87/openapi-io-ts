@@ -4,6 +4,7 @@ import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { JsonPointer, JsonReference } from "../common/JSONReference";
+import { toValidVariableName } from "../common/utils";
 import { parseBodyObject } from "./body";
 import { Component, component } from "./common";
 import { modifyParserOutput, ParserContext, ParserRTE } from "./context";
@@ -62,9 +63,10 @@ function parseAllSchemas(
     Object.entries(schemas),
     RTE.traverseSeqArray(([name, schema]) => {
       const pointer = componentsPointer.concat(["schemas", name]);
+      const generatedName = toValidVariableName(name, "pascal");
 
       return pipe(
-        createSchemaComponent(name, schema),
+        createSchemaComponent(generatedName, schema),
         RTE.fromEither,
         RTE.chain((component) =>
           modifyParserOutput((draft) => {
@@ -115,10 +117,11 @@ function parseParameterComponent(
   }
 
   const pointer = parametersPointer.concat([name]);
+  const generatedName = toValidVariableName(name, "camel");
 
   return pipe(
     parseParameterObject(parameter),
-    RTE.map((object) => component(name, object.value)),
+    RTE.map((object) => component(generatedName, object.value)),
     RTE.chain((parsedComponent) =>
       modifyParserOutput((draft) => {
         draft.components.parameters[pointer.toString()] = parsedComponent;
@@ -155,10 +158,11 @@ function parseBodyComponent(
   }
 
   const pointer = bodiesPointer.concat([name]);
+  const generatedName = toValidVariableName(name, "camel");
 
   return pipe(
-    parseBodyObject(name, body),
-    RTE.map((object) => component(name, object.value)),
+    parseBodyObject(generatedName, body),
+    RTE.map((object) => component(generatedName, object.value)),
     RTE.chain((parsedComponent) =>
       modifyParserOutput((draft) => {
         draft.components.bodies[pointer.toString()] = parsedComponent;
@@ -195,10 +199,11 @@ function parseResponseComponent(
   }
 
   const pointer = responsesPointer.concat([name]);
+  const generatedName = toValidVariableName("name", "camel");
 
   return pipe(
-    parseResponseObject(name, response),
-    RTE.map((object) => component(name, object.value)),
+    parseResponseObject(generatedName, response),
+    RTE.map((object) => component(generatedName, object.value)),
     RTE.chain((parsedComponent) =>
       modifyParserOutput((draft) => {
         draft.components.responses[pointer.toString()] = parsedComponent;

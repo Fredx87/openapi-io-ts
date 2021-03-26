@@ -3,6 +3,7 @@ import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
 import { OpenAPIV3 } from "openapi-types";
+import { toValidVariableName } from "../common/utils";
 import { parseBody, ParsedBody } from "./body";
 import { inlineObject } from "./common";
 import { modifyParserOutput, ParserContext, ParserRTE } from "./context";
@@ -70,14 +71,16 @@ function parseAndAddOperation(
     return RTE.left(new Error(`Missing operationId in path ${path}`));
   }
 
+  const generatedName = toValidVariableName(operationId, "camel");
+
   return pipe(
     parseOperation(path, method, operation),
     RTE.chain((parsed) =>
       modifyParserOutput((draft) => {
-        draft.operations[operationId] = parsed;
+        draft.operations[generatedName] = parsed;
       })
     ),
-    RTE.chain(() => parseOperationTags(operationId, tags))
+    RTE.chain(() => parseOperationTags(generatedName, tags))
   );
 }
 
