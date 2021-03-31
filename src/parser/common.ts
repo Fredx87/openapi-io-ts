@@ -1,35 +1,40 @@
 import { pipe } from "fp-ts/function";
+import * as E from "fp-ts/Either";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { JsonReference } from "../common/JSONReference";
-import { ParsedBodyObject } from "./body";
+import {
+  createJsonPointer,
+  JsonPointer,
+  JsonReference,
+} from "../common/JSONReference";
+import { ParsedBody } from "./body";
 import { ParserRTE, readParserOutput } from "./context";
-import { ParsedParameterObject } from "./parameter";
-import { ParsedResponseObject } from "./response";
+import { ParsedParameter } from "./parameter";
+import { ParsedResponse } from "./response";
 import { parseSchema } from "./schema";
 
 export const JSON_MEDIA_TYPE = "application/json";
 
-export interface Component<T> {
-  _tag: "Component";
+export interface ParsedItem<T> {
+  _tag: "ParsedItem";
   name: string;
-  object: T;
+  item: T;
 }
 
-export function component<T>(name: string, object: T): Component<T> {
+export function parsedItem<T>(item: T, name: string): ParsedItem<T> {
   return {
-    _tag: "Component",
+    _tag: "ParsedItem",
     name,
-    object,
+    item,
   };
 }
 
 export interface ParsedComponents {
-  schemas: Record<string, Component<gen.TypeDeclaration>>;
-  parameters: Record<string, Component<ParsedParameterObject>>;
-  responses: Record<string, Component<ParsedResponseObject>>;
-  bodies: Record<string, Component<ParsedBodyObject>>;
+  schemas: Record<string, ParsedItem<gen.TypeDeclaration>>;
+  parameters: Record<string, ParsedItem<ParsedParameter>>;
+  responses: Record<string, ParsedItem<ParsedResponse>>;
+  requestBodies: Record<string, ParsedItem<ParsedBody>>;
 }
 
 export type ComponentType = keyof ParsedComponents;
@@ -37,39 +42,57 @@ export type ComponentType = keyof ParsedComponents;
 export interface ComponentRef<T extends ComponentType> {
   _tag: "ComponentRef";
   componentType: T;
-  component: ParsedComponents[T][string];
+  pointer: string;
 }
 
-export interface InlineObject<T> {
-  _tag: "InlineObject";
-  value: T;
-}
-
-export function componentRef<T extends ComponentType>(
+function componentRef<T extends ComponentType>(
   componentType: T,
-  component: ParsedComponents[T][string]
+  pointer: string
 ): ComponentRef<T> {
   return {
     _tag: "ComponentRef",
     componentType,
-    component,
+    pointer,
   };
 }
 
-export function inlineObject<T>(value: T): InlineObject<T> {
-  return {
-    _tag: "InlineObject",
-    value,
-  };
+export type ComponentRefItemType<
+  C extends ComponentType
+> = ParsedComponents[C][string];
+
+export type ItemOrRef<C extends ComponentType> =
+  | ComponentRefItemType<C>
+  | ComponentRef<C>;
+
+export function checkValidReference(
+  componentType: ComponentType,
+  pointer: JsonPointer
+): E.Either<Error, JsonPointer> {
+  const { tokens } = pointer;
+
+  if (
+    tokens.length === 4 &&
+    tokens[1] === "components" &&
+    tokens[2] === componentType
+  ) {
+    return E.right(pointer);
+  }
+
+  return E.left(
+    new Error(
+      `Cannot parse a reference to a ${componentType} not in '#/components/${componentType}'. Reference: ${pointer.toString()}`
+    )
+  );
 }
 
-export function getComponentRef<T extends ComponentType>(
+export function createComponentRef<T extends ComponentType>(
   componentType: T,
   pointer: string
-): ParserRTE<ComponentRef<T>> {
+): E.Either<Error, ComponentRef<T>> {
   return pipe(
-    getComponent(componentType, pointer),
-    RTE.map((component) => componentRef(componentType, component))
+    createJsonPointer(pointer),
+    E.chain((jsonPointer) => checkValidReference(componentType, jsonPointer)),
+    E.map((jsonPointer) => componentRef(componentType, jsonPointer.toString()))
   );
 }
 

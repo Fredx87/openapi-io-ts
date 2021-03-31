@@ -1,6 +1,11 @@
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import { TypeDeclaration, TypeReference } from "io-ts-codegen";
+import {
+  ComponentRefItemType,
+  ComponentType,
+  ItemOrRef,
+} from "../parser/common";
 import { CodegenContext, CodegenRTE } from "./context";
 import { generateSchema } from "./schema";
 
@@ -38,4 +43,25 @@ export function writeGeneratedFile(
     ),
     RTE.map(() => void 0)
   );
+}
+
+export function getParsedItem<C extends ComponentType>(
+  itemOrRef: ItemOrRef<C>
+): CodegenRTE<ComponentRefItemType<C>> {
+  if (itemOrRef._tag === "ParsedItem") {
+    return RTE.right(itemOrRef);
+  }
+
+  return RTE.asks(
+    (context) =>
+      context.parserOutput.components[itemOrRef.componentType][
+        itemOrRef.pointer
+      ] as ComponentRefItemType<C>
+  );
+}
+
+export function isParsedItem<C extends ComponentType>(
+  itemOrRef: ItemOrRef<C>
+): itemOrRef is ComponentRefItemType<C> {
+  return itemOrRef._tag === "ParsedItem";
 }

@@ -1,15 +1,19 @@
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
-import { CodegenRTE } from "./context";
+import * as R from "fp-ts/Record";
+import { CodegenContext, CodegenRTE } from "./context";
 import { OPERATIONS_PATH, SERVICES_PATH, writeGeneratedFile } from "./common";
 
-export function generateServices(
-  tags: Record<string, string[]>
-): CodegenRTE<void> {
+export function generateServices(): CodegenRTE<void> {
   return pipe(
-    Object.entries(tags),
-    RTE.traverseSeqArray(([tag, operationsIds]) =>
-      generateServiceFile(tag, operationsIds)
+    RTE.asks((context: CodegenContext) => context.parserOutput.tags),
+    RTE.chain((tags) =>
+      pipe(
+        tags,
+        R.traverseWithIndex(RTE.readerTaskEitherSeq)((tag, operationsIds) =>
+          generateServiceFile(tag, operationsIds)
+        )
+      )
     ),
     RTE.map(() => void 0)
   );

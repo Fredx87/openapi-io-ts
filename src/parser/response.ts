@@ -4,12 +4,12 @@ import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { JsonReference } from "../common/JSONReference";
 import {
-  ComponentRef,
-  getComponentRef,
+  createComponentRef,
   getOrCreateType,
-  inlineObject,
-  InlineObject,
+  parsedItem,
+  ParsedItem,
   JSON_MEDIA_TYPE,
+  ComponentRef,
 } from "./common";
 import { ParserRTE } from "./context";
 
@@ -22,18 +22,18 @@ interface ParsedTextResponse {
   _tag: "TextResponse";
 }
 
-export type ParsedResponseObject = ParsedJsonResponse | ParsedTextResponse;
+export type ParsedResponse = ParsedJsonResponse | ParsedTextResponse;
 
-export type ParsedResponse =
-  | ComponentRef<"responses">
-  | InlineObject<ParsedResponseObject>;
+export type ResponseItemOrRef =
+  | ParsedItem<ParsedResponse>
+  | ComponentRef<"responses">;
 
 export function parseResponse(
   name: string,
   response: OpenAPIV3.ReferenceObject | OpenAPIV3.ResponseObject
-): ParserRTE<ParsedResponse> {
+): ParserRTE<ResponseItemOrRef> {
   if (JsonReference.is(response)) {
-    return getComponentRef("responses", response.$ref);
+    return RTE.fromEither(createComponentRef("responses", response.$ref));
   }
 
   return parseResponseObject(name, response);
@@ -42,19 +42,17 @@ export function parseResponse(
 export function parseResponseObject(
   name: string,
   response: OpenAPIV3.ResponseObject
-): ParserRTE<InlineObject<ParsedResponseObject>> {
+): ParserRTE<ParsedItem<ParsedResponse>> {
   const { content } = response;
 
   const jsonSchema = content?.[JSON_MEDIA_TYPE]?.schema;
 
   if (jsonSchema == null) {
-    return RTE.right(inlineObject({ _tag: "TextResponse" }));
+    return RTE.right(parsedItem({ _tag: "TextResponse" }, name));
   }
 
   return pipe(
     getOrCreateType(name, jsonSchema),
-    RTE.map((type) =>
-      inlineObject<ParsedJsonResponse>({ _tag: "JsonResponse", type })
-    )
+    RTE.map((type) => parsedItem({ _tag: "JsonResponse", type }, name))
   );
 }

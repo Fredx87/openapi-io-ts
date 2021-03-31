@@ -6,7 +6,7 @@ import { OpenAPIV3 } from "openapi-types";
 import { JsonPointer, JsonReference } from "../common/JSONReference";
 import { toValidVariableName } from "../common/utils";
 import { parseBodyObject } from "./body";
-import { Component, component } from "./common";
+import { parsedItem, ParsedItem } from "./common";
 import { modifyParserOutput, ParserContext, ParserRTE } from "./context";
 import { parseParameterObject } from "./parameter";
 import { parseResponseObject } from "./response";
@@ -82,10 +82,10 @@ function parseAllSchemas(
 function createSchemaComponent(
   name: string,
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
-): E.Either<Error, Component<gen.TypeDeclaration>> {
+): E.Either<Error, ParsedItem<gen.TypeDeclaration>> {
   return pipe(
     parseSchema(schema),
-    E.map((type) => component(name, gen.typeDeclaration(name, type, true)))
+    E.map((type) => parsedItem(gen.typeDeclaration(name, type, true), name))
   );
 }
 
@@ -121,10 +121,10 @@ function parseParameterComponent(
 
   return pipe(
     parseParameterObject(parameter),
-    RTE.map((object) => component(generatedName, object.value)),
-    RTE.chain((parsedComponent) =>
+    RTE.map((res) => parsedItem(res.item, generatedName)),
+    RTE.chain((item) =>
       modifyParserOutput((draft) => {
-        draft.components.parameters[pointer.toString()] = parsedComponent;
+        draft.components.parameters[pointer.toString()] = item;
       })
     )
   );
@@ -162,10 +162,10 @@ function parseBodyComponent(
 
   return pipe(
     parseBodyObject(generatedName, body),
-    RTE.map((object) => component(generatedName, object.value)),
-    RTE.chain((parsedComponent) =>
+    RTE.map((res) => parsedItem(res.item, generatedName)),
+    RTE.chain((item) =>
       modifyParserOutput((draft) => {
-        draft.components.bodies[pointer.toString()] = parsedComponent;
+        draft.components.requestBodies[pointer.toString()] = item;
       })
     )
   );
@@ -203,10 +203,10 @@ function parseResponseComponent(
 
   return pipe(
     parseResponseObject(generatedName, response),
-    RTE.map((object) => component(generatedName, object.value)),
-    RTE.chain((parsedComponent) =>
+    RTE.map((res) => parsedItem(res.item, generatedName)),
+    RTE.chain((item) =>
       modifyParserOutput((draft) => {
-        draft.components.responses[pointer.toString()] = parsedComponent;
+        draft.components.responses[pointer.toString()] = item;
       })
     )
   );

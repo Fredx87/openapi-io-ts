@@ -13,7 +13,7 @@ export function parserOutput(): ParserOutput {
       schemas: {},
       parameters: {},
       responses: {},
-      bodies: {},
+      requestBodies: {},
     },
     operations: {},
     tags: {},

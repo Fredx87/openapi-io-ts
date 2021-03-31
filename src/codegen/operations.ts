@@ -1,30 +1,35 @@
 import { pipe } from "fp-ts/function";
+import * as A from "fp-ts/Array";
 import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
 import * as gen from "io-ts-codegen";
 import { capitalize } from "../common/utils";
-import { ParsedBody, ParsedBodyObject } from "../parser/body";
+import { BodyItemOrRef, ParsedBody } from "../parser/body";
 import { OperationResponses, ParsedOperation } from "../parser/operation";
-import { ParsedParameter } from "../parser/parameter";
-import { ParsedResponse } from "../parser/response";
 import { generateBodyType } from "./body";
 import {
   generateSchemaIfDeclaration,
+  getParsedItem,
+  isParsedItem,
   OPERATIONS_PATH,
   PARAMETERS_PATH,
   SCHEMAS_PATH,
   writeGeneratedFile,
 } from "./common";
-import { CodegenRTE } from "./context";
+import { CodegenContext, CodegenRTE } from "./context";
 import { generateParameterDefinition } from "./parameter";
+import { ParameterItemOrRef } from "../parser/parameter";
+import { ResponseItemOrRef } from "../parser/response";
 
-export function generateOperations(
-  operations: Record<string, ParsedOperation>
-): CodegenRTE<void> {
+export function generateOperations(): CodegenRTE<void> {
   return pipe(
-    operations,
-    R.traverseWithIndex(RTE.readerTaskEitherSeq)(generateOperation),
+    RTE.asks((context: CodegenContext) => context.parserOutput.operations),
+    RTE.chain((operations) =>
+      R.traverseWithIndex(RTE.readerTaskEitherSeq)(generateOperation)(
+        operations
+      )
+    ),
     RTE.map(() => void 0)
   );
 }
@@ -51,8 +56,37 @@ function generateOperation(
   operationId: string,
   operation: ParsedOperation
 ): CodegenRTE<void> {
-  const generatedItems = generateItems(operationId, operation);
+  return pipe(
+    generateItems(operationId, operation),
+    RTE.chain((items) => generateFileContent(operationId, operation, items)),
+    RTE.chain((content) =>
+      writeGeneratedFile(OPERATIONS_PATH, `${operationId}.ts`, content)
+    )
+  );
+}
 
+function generateItems(
+  operationId: string,
+  operation: ParsedOperation
+): CodegenRTE<GeneratedItems> {
+  return pipe(
+    RTE.Do,
+    RTE.bind("parameters", () =>
+      generateOperationParameters(operationId, operation.parameters)
+    ),
+    RTE.bind("body", () => generateBody(operationId, operation.body)),
+    RTE.bind("successfulResponse", () =>
+      generateSuccessfulResponse(operation.responses.success)
+    ),
+    RTE.bind("returnType", () => getReturnType(operation.responses))
+  );
+}
+
+function generateFileContent(
+  operationId: string,
+  operation: ParsedOperation,
+  items: GeneratedItems
+): CodegenRTE<string> {
   const content = `import * as t from "io-ts";
   import * as schemas from "../${SCHEMAS_PATH}";
   import * as parameters from "../${PARAMETERS_PATH}";
@@ -63,128 +97,138 @@ function generateOperation(
   import { TaskEither } from "fp-ts/TaskEither";
 
   ${
-    generatedItems.parameters
-      ? `${generatedItems.parameters.schemas}
-  ${generatedItems.parameters.requestMap}`
+    items.parameters
+      ? `${items.parameters.schemas}
+  ${items.parameters.requestMap}`
       : ""
   }
 
-  ${generatedItems.body ? generatedItems.body.requestBody : ""}
+  ${items.body ? items.body.requestBody : ""}
 
-  ${generateRequestDefinition(operationId, operation, generatedItems)}
+  ${generateRequestDefinition(operationId, operation, items)}
 
-  ${generateRequest(operationId, generatedItems)}
+  ${generateRequest(operationId, items)}
   `;
 
-  return writeGeneratedFile(OPERATIONS_PATH, `${operationId}.ts`, content);
-}
-
-function generateItems(
-  operationId: string,
-  operation: ParsedOperation
-): GeneratedItems {
-  return {
-    parameters: generateOperationParameters(operationId, operation.parameters),
-    body: generateBody(operationId, operation.body),
-    successfulResponse: generateSuccessfulResponse(operation.responses.success),
-    returnType: getReturnType(operation.responses),
-  };
+  return RTE.right(content);
 }
 
 function generateOperationParameters(
   operationId: string,
-  parameters: ParsedParameter[]
-): GeneratedOperationParameters | undefined {
+  parameters: ParameterItemOrRef[]
+): CodegenRTE<GeneratedOperationParameters | undefined> {
   if (parameters.length === 0) {
-    return undefined;
+    return RTE.right(undefined);
   }
 
-  const res: GeneratedOperationParameters = {
-    schemas: generateOperationParametersSchemas(parameters),
-    definition: generateOperationParametersDefinition(parameters),
-    requestMap: generateRequestParametersMap(operationId, parameters),
-  };
-
-  return res;
+  return pipe(
+    RTE.Do,
+    RTE.bind("schemas", () => generateOperationParametersSchemas(parameters)),
+    RTE.bind("definition", () =>
+      generateOperationParametersDefinition(parameters)
+    ),
+    RTE.bind("requestMap", () =>
+      generateRequestParametersMap(operationId, parameters)
+    )
+  );
 }
 
 function generateOperationParametersSchemas(
-  parameters: ParsedParameter[]
-): string {
-  return parameters
-    .map((p) =>
-      p._tag === "ComponentRef" ? "" : generateSchemaIfDeclaration(p.value.type)
-    )
-    .join("\n");
+  parameters: ParameterItemOrRef[]
+): CodegenRTE<string> {
+  const schemas = pipe(
+    parameters,
+    A.filter(isParsedItem),
+    A.map((parameter) => generateSchemaIfDeclaration(parameter.item.type))
+  );
+
+  return RTE.right(schemas.join("\n"));
 }
 
 function generateOperationParametersDefinition(
-  parameters: ParsedParameter[]
-): string {
-  return `{ ${parameters
-    .map(generateOperationParameterDefinition)
-    .join(",")} }`;
+  parameters: ParameterItemOrRef[]
+): CodegenRTE<string> {
+  return pipe(
+    parameters,
+    RTE.traverseSeqArray(generateOperationParameterDefinition),
+    RTE.map((defs) => defs.join(","))
+  );
 }
 
 function generateOperationParameterDefinition(
-  parameter: ParsedParameter
-): string {
-  if (parameter._tag === "ComponentRef") {
-    return `${parameter.component.name}: parameters.${parameter.component.name}`;
-  } else {
-    return `${parameter.value.name}: ${generateParameterDefinition(
-      parameter.value
-    )}`;
-  }
+  parameter: ParameterItemOrRef
+): CodegenRTE<string> {
+  return pipe(
+    getParsedItem(parameter),
+    RTE.map((item) => {
+      if (parameter._tag === "ComponentRef") {
+        return `${item.name}: ${parameter.componentType}.${item.name}`;
+      } else {
+        return `${item.name}: ${generateParameterDefinition(item.item)}`;
+      }
+    })
+  );
 }
 
 function generateRequestParametersMap(
   operationId: string,
-  parameters: ParsedParameter[]
-): string {
-  return `export type ${requestParametersMapName(operationId)} = {
-      ${parameters.map(generateRequestParameter).join("\n")}
-  }`;
+  parameters: ParameterItemOrRef[]
+): CodegenRTE<string> {
+  const mapName = requestParametersMapName(operationId);
+
+  return pipe(
+    parameters,
+    RTE.traverseSeqArray(generateRequestParameter),
+    RTE.map(
+      (ps) => `export type ${mapName} = {
+      ${ps.join("\n")}
+  }`
+    )
+  );
 }
 
-function generateRequestParameter(parameter: ParsedParameter): string {
-  const parameterObject =
-    parameter._tag === "ComponentRef"
-      ? parameter.component.object
-      : parameter.value;
+function generateRequestParameter(
+  itemOrRef: ParameterItemOrRef
+): CodegenRTE<string> {
+  const typePrefix = itemOrRef._tag === "ComponentRef" ? "parameters." : "";
 
-  const typePrefix = parameter._tag === "ComponentRef" ? "parameters." : "";
+  return pipe(
+    getParsedItem(itemOrRef),
+    RTE.map((parameter) => {
+      const staticType =
+        parameter.item.type.kind === "TypeDeclaration"
+          ? `${typePrefix}${parameter.name}`
+          : gen.printStatic(parameter.item.type);
 
-  const { name, type, required } = parameterObject;
-
-  const staticType =
-    type.kind === "TypeDeclaration"
-      ? `${typePrefix}${type.name}`
-      : gen.printStatic(type);
-
-  return `${name}: ${staticType} ${!required ? `| undefined` : ""};`;
+      return `${parameter.name}: ${staticType} ${
+        !parameter.item.required ? `| undefined` : ""
+      };`;
+    })
+  );
 }
 
-function generateSuccessfulResponse(response: ParsedResponse): string {
-  const responseObject =
-    response._tag === "ComponentRef"
-      ? response.component.object
-      : response.value;
+function generateSuccessfulResponse(
+  itemOrRef: ResponseItemOrRef
+): CodegenRTE<string> {
+  return pipe(
+    getParsedItem(itemOrRef),
+    RTE.map((response) => {
+      if (response.item._tag === "TextResponse") {
+        return `{ _tag: "TextResponse"}`;
+      }
 
-  if (responseObject._tag === "TextResponse") {
-    return `{ _tag: "TextResponse"}`;
-  }
+      const typePrefix = itemOrRef._tag === "ComponentRef" ? "responses." : "";
 
-  const typePrefix = response._tag === "ComponentRef" ? "responses." : "";
+      const { type } = response.item;
 
-  const { type } = responseObject;
+      const runtimeType =
+        type.kind === "TypeDeclaration"
+          ? `${typePrefix}${type.name}`
+          : gen.printRuntime(type);
 
-  const runtimeType =
-    type.kind === "TypeDeclaration"
-      ? `${typePrefix}${type.name}`
-      : gen.printRuntime(type);
-
-  return `{ _tag: "JsonResponse", decoder: ${runtimeType}}`;
+      return `{ _tag: "JsonResponse", decoder: ${runtimeType}}`;
+    })
+  );
 }
 
 function generateRequestDefinition(
@@ -207,28 +251,28 @@ function generateRequestDefinition(
 
 function generateBody(
   operationId: string,
-  body: O.Option<ParsedBody>
-): GeneratedBody | undefined {
-  if (O.isNone(body)) {
-    return undefined;
+  itemOrRef: O.Option<BodyItemOrRef>
+): CodegenRTE<GeneratedBody | undefined> {
+  if (O.isNone(itemOrRef)) {
+    return RTE.right(undefined);
   }
 
-  const bodyObject =
-    body.value._tag === "ComponentRef"
-      ? body.value.component.object
-      : body.value.value;
+  return pipe(
+    getParsedItem(itemOrRef.value),
+    RTE.map((body) => {
+      const res: GeneratedBody = {
+        bodyType: generateBodyType(body.item),
+        requestBody: generateRequestBody(operationId, body.item),
+      };
 
-  const res: GeneratedBody = {
-    bodyType: generateBodyType(bodyObject),
-    requestBody: generateRequestBody(operationId, bodyObject),
-  };
-
-  return res;
+      return res;
+    })
+  );
 }
 
 function generateRequestBody(
   operationId: string,
-  bodyObject: ParsedBodyObject
+  bodyObject: ParsedBody
 ): string {
   return `export type ${requestBodyName(operationId)} = ${
     bodyObject._tag === "JsonBody" ? gen.printStatic(bodyObject.type) : "string"
@@ -260,26 +304,28 @@ function generateRequest(
   }, ${generatedItems.body ? BODY_ARG_NAME : "undefined"}, requestAdapter);`;
 }
 
-function getReturnType(responses: OperationResponses): string {
+function getReturnType(responses: OperationResponses): CodegenRTE<string> {
   const { success } = responses;
-
-  const responseObject =
-    success._tag === "ComponentRef" ? success.component.object : success.value;
-
-  if (responseObject._tag === "TextResponse") {
-    return "string";
-  }
 
   const typePrefix = success._tag === "ComponentRef" ? "responses." : "";
 
-  const { type } = responseObject;
+  return pipe(
+    getParsedItem(success),
+    RTE.map((response) => {
+      if (response.item._tag === "TextResponse") {
+        return "string";
+      }
 
-  const staticType =
-    type.kind === "TypeDeclaration"
-      ? `${typePrefix}${type.name}`
-      : gen.printStatic(type);
+      const { type } = response.item;
 
-  return staticType;
+      const staticType =
+        type.kind === "TypeDeclaration"
+          ? `${typePrefix}${type.name}`
+          : gen.printStatic(type);
+
+      return staticType;
+    })
+  );
 }
 
 function requestParametersMapName(operationId: string): string {

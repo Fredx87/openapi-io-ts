@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import { ParsedParameterObject } from "../parser/parameter";
+import { ParsedParameter } from "../parser/parameter";
 
 export function generateParameterDefinition(
-  parameter: ParsedParameterObject
+  parameter: ParsedParameter
 ): string {
   const { in: paramIn, defaultValue } = parameter;
 

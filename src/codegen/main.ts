@@ -12,14 +12,12 @@ import { generateOperations } from "./operations";
 import { generateServices } from "./services";
 import * as RTE from "fp-ts/ReaderTaskEither";
 
-export function main(parserOutput: ParserOutput): CodegenRTE<void> {
-  const { components, operations, tags } = parserOutput;
-
+export function main(): CodegenRTE<void> {
   return pipe(
     createDirs(),
-    RTE.chain(() => generateComponents(components)),
-    RTE.chain(() => generateOperations(operations)),
-    RTE.chain(() => generateServices(tags))
+    RTE.chain(() => generateComponents()),
+    RTE.chain(() => generateOperations()),
+    RTE.chain(() => generateServices())
   );
 }
 

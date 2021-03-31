@@ -8,12 +8,13 @@ import { main } from "./main";
 
 export function codegen(parserOutput: ParserOutput): ProgramRTE<void> {
   return pipe(
-    main(parserOutput),
+    main(),
     RTE.local(
       (env: Environment): CodegenContext => ({
         ...env,
         writeFile: writeFormattedFile,
         createDir,
+        parserOutput,
       })
     )
   );

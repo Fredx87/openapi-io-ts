@@ -4,12 +4,12 @@ import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { JsonReference } from "../common/JSONReference";
 import {
-  ComponentRef,
-  getComponentRef,
+  createComponentRef,
   getOrCreateType,
-  inlineObject,
-  InlineObject,
+  parsedItem,
+  ParsedItem,
   JSON_MEDIA_TYPE,
+  ComponentRef,
 } from "./common";
 import { ParserRTE } from "./context";
 
@@ -26,18 +26,18 @@ export interface ParsedTextBody extends BaseParsedBody {
   _tag: "TextBody";
 }
 
-export type ParsedBodyObject = ParsedJsonBody | ParsedTextBody;
+export type ParsedBody = ParsedJsonBody | ParsedTextBody;
 
-export type ParsedBody =
-  | ComponentRef<"bodies">
-  | InlineObject<ParsedBodyObject>;
+export type BodyItemOrRef =
+  | ParsedItem<ParsedBody>
+  | ComponentRef<"requestBodies">;
 
 export function parseBody(
   name: string,
   body: OpenAPIV3.ReferenceObject | OpenAPIV3.RequestBodyObject
-): ParserRTE<ParsedBody> {
+): ParserRTE<BodyItemOrRef> {
   if (JsonReference.is(body)) {
-    return getComponentRef("bodies", body.$ref);
+    return RTE.fromEither(createComponentRef("requestBodies", body.$ref));
   }
 
   return parseBodyObject(name, body);
@@ -46,7 +46,7 @@ export function parseBody(
 export function parseBodyObject(
   name: string,
   body: OpenAPIV3.RequestBodyObject
-): ParserRTE<InlineObject<ParsedBodyObject>> {
+): ParserRTE<ParsedItem<ParsedBody>> {
   const { content } = body;
   const required = body.required ?? false;
 
@@ -57,7 +57,7 @@ export function parseBodyObject(
       _tag: "TextBody",
       required,
     };
-    return RTE.right(inlineObject(parsedBody));
+    return RTE.right(parsedItem(parsedBody, name));
   } else {
     return pipe(
       getOrCreateType(name, jsonSchema),
@@ -67,7 +67,7 @@ export function parseBodyObject(
           type,
           required,
         };
-        return inlineObject(parsedBody);
+        return parsedItem(parsedBody, name);
       })
     );
   }

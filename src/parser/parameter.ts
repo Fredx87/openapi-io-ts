@@ -5,32 +5,31 @@ import { OpenAPIV3 } from "openapi-types";
 import { JsonReference } from "../common/JSONReference";
 import {
   ComponentRef,
-  getComponentRef,
+  createComponentRef,
   getOrCreateType,
-  inlineObject,
-  InlineObject,
+  parsedItem,
+  ParsedItem,
 } from "./common";
 import { ParserContext, ParserRTE } from "./context";
 
 type ParsedParameterIn = "query" | "header" | "path" | "cookie";
 
-export interface ParsedParameterObject {
+export interface ParsedParameter {
   type: gen.TypeDeclaration | gen.TypeReference;
-  name: string;
   in: ParsedParameterIn;
   required: boolean;
   defaultValue?: unknown;
 }
 
-export type ParsedParameter =
-  | ComponentRef<"parameters">
-  | InlineObject<ParsedParameterObject>;
+export type ParameterItemOrRef =
+  | ParsedItem<ParsedParameter>
+  | ComponentRef<"parameters">;
 
 export function parseParameter(
   param: OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject
-): ParserRTE<ParsedParameter> {
+): ParserRTE<ParameterItemOrRef> {
   if (JsonReference.is(param)) {
-    return getComponentRef("parameters", param.$ref);
+    return RTE.fromEither(createComponentRef("parameters", param.$ref));
   }
 
   return parseParameterObject(param);
@@ -38,7 +37,7 @@ export function parseParameter(
 
 export function parseParameterObject(
   param: OpenAPIV3.ParameterObject
-): ParserRTE<InlineObject<ParsedParameterObject>> {
+): ParserRTE<ParsedItem<ParsedParameter>> {
   const { schema, name, in: parameterIn, required } = param;
 
   if (schema == null) {
@@ -50,13 +49,15 @@ export function parseParameterObject(
     RTE.bindTo("type"),
     RTE.bind("defaultValue", () => getDefaultValue(schema)),
     RTE.map(({ type, defaultValue }) =>
-      inlineObject({
-        type,
-        name,
-        in: parameterIn as ParsedParameterIn,
-        required: required || false,
-        defaultValue,
-      })
+      parsedItem(
+        {
+          type,
+          in: parameterIn as ParsedParameterIn,
+          required: required || false,
+          defaultValue,
+        },
+        name
+      )
     )
   );
 }

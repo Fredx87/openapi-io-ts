@@ -2,8 +2,9 @@ import * as E from "fp-ts/Either";
 import { pipe } from "fp-ts/function";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { JsonReference } from "../common/JSONReference";
+import { createJsonPointer, JsonReference } from "../common/JSONReference";
 import { toValidVariableName } from "../common/utils";
+import { checkValidReference } from "./common";
 
 export function parseSchema(
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
@@ -44,21 +45,16 @@ export function parseSchema(
 function parseJsonReference(
   pointer: string
 ): E.Either<Error, gen.TypeReference> {
-  const tokens = pointer.split("/");
-
-  if (
-    tokens.length === 4 &&
-    tokens[1] === "components" &&
-    tokens[2] === "schemas"
-  ) {
-    const name = `${tokens[2]}.${toValidVariableName(tokens[3], "pascal")}`;
-    return E.right(gen.customCombinator(name, name));
-  }
-
-  return E.left(
-    new Error(
-      `Cannot parse a reference to a schema not in '#/components/schemas. Reference: ${pointer}`
-    )
+  return pipe(
+    createJsonPointer(pointer),
+    E.chain((jsonPointer) => checkValidReference("schemas", jsonPointer)),
+    E.map((jsonPointer) => {
+      const name = `${jsonPointer.tokens[2]}.${toValidVariableName(
+        jsonPointer.tokens[3],
+        "pascal"
+      )}`;
+      return gen.customCombinator(name, name);
+    })
   );
 }
 
