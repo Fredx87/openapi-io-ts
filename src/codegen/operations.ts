@@ -14,6 +14,7 @@ import {
   isParsedItem,
   OPERATIONS_PATH,
   PARAMETERS_PATH,
+  RUNTIME_PACKAGE,
   SCHEMAS_PATH,
   writeGeneratedFile,
 } from "./common";
@@ -91,10 +92,7 @@ function generateFileContent(
   const content = `import * as t from "io-ts";
   import * as schemas from "../${SCHEMAS_PATH}";
   import * as parameters from "../${PARAMETERS_PATH}";
-  import { RequestDefinition } from "../openapi-client/requestDefinition";
-  import { ParametersDefinitions } from "../openapi-client/parameter";
-  import { HttpRequestAdapter } from "../openapi-client/httpRequestAdapter";
-  import { ApiError, request } from "../openapi-client/request";
+  import { RequestDefinition, ParametersDefinitions, HttpRequestAdapter, ApiError, request } from "${RUNTIME_PACKAGE}";
   import { TaskEither } from "fp-ts/TaskEither";
 
   ${

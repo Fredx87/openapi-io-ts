@@ -13,6 +13,7 @@ export const SCHEMAS_PATH = "components/schemas";
 export const PARAMETERS_PATH = "components/parameters";
 export const OPERATIONS_PATH = "operations";
 export const SERVICES_PATH = "services";
+export const RUNTIME_PACKAGE = "openapi-io-ts/dist/runtime";
 
 export function getImports(): string {
   return `import * as t from "io-ts";

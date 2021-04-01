@@ -2,7 +2,12 @@ import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
 import { CodegenContext, CodegenRTE } from "./context";
-import { OPERATIONS_PATH, SERVICES_PATH, writeGeneratedFile } from "./common";
+import {
+  OPERATIONS_PATH,
+  RUNTIME_PACKAGE,
+  SERVICES_PATH,
+  writeGeneratedFile,
+} from "./common";
 
 export function generateServices(): CodegenRTE<void> {
   return pipe(
@@ -23,7 +28,7 @@ function generateServiceFile(
   tag: string,
   operationsIds: string[]
 ): CodegenRTE<void> {
-  const content = `import { HttpRequestAdapter } from "../openapi-client/httpRequestAdapter";
+  const content = `import { HttpRequestAdapter } from "${RUNTIME_PACKAGE}";
 
   ${operationsIds
     .map((o) => `import { ${o} } from '../${OPERATIONS_PATH}/${o}'`)

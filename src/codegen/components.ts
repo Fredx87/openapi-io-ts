@@ -6,6 +6,7 @@ import {
   generateSchemaIfDeclaration,
   getImports,
   PARAMETERS_PATH,
+  RUNTIME_PACKAGE,
   SCHEMAS_PATH,
   writeGeneratedFile,
 } from "./common";
@@ -54,7 +55,7 @@ function writeParameterFile(
   parameter: ParsedItem<ParsedParameter>
 ): CodegenRTE<void> {
   const content = `${getImports()}
-    import { ParameterDefinition } from "../../openapi-client/parameter";
+    import { ParameterDefinition } from "${RUNTIME_PACKAGE}";
     
     ${generateSchemaIfDeclaration(parameter.item.type)}
     
