@@ -151,7 +151,7 @@ function generateOperationParametersDefinition(
   return pipe(
     parameters,
     RTE.traverseSeqArray(generateOperationParameterDefinition),
-    RTE.map((defs) => defs.join(","))
+    RTE.map((defs) => `{ ${defs.join(",")} }`)
   );
 }
 
