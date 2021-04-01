@@ -21,6 +21,7 @@ import { CodegenContext, CodegenRTE } from "./context";
 import { generateParameterDefinition } from "./parameter";
 import { ParameterItemOrRef } from "../parser/parameter";
 import { ResponseItemOrRef } from "../parser/response";
+import { ComponentType, ItemOrRef } from "../parser/common";
 
 export function generateOperations(): CodegenRTE<void> {
   return pipe(
@@ -190,14 +191,12 @@ function generateRequestParametersMap(
 function generateRequestParameter(
   itemOrRef: ParameterItemOrRef
 ): CodegenRTE<string> {
-  const typePrefix = itemOrRef._tag === "ComponentRef" ? "parameters." : "";
-
   return pipe(
     getParsedItem(itemOrRef),
     RTE.map((parameter) => {
       const staticType =
         parameter.item.type.kind === "TypeDeclaration"
-          ? `${typePrefix}${parameter.name}`
+          ? `${getItemOrRefPrefix(parameter)}${parameter.name}`
           : gen.printStatic(parameter.item.type);
 
       return `${parameter.name}: ${staticType} ${
@@ -217,13 +216,11 @@ function generateSuccessfulResponse(
         return `{ _tag: "TextResponse"}`;
       }
 
-      const typePrefix = itemOrRef._tag === "ComponentRef" ? "responses." : "";
-
       const { type } = response.item;
 
       const runtimeType =
         type.kind === "TypeDeclaration"
-          ? `${typePrefix}${type.name}`
+          ? `${getItemOrRefPrefix(response)}${type.name}`
           : gen.printRuntime(type);
 
       return `{ _tag: "JsonResponse", decoder: ${runtimeType}}`;
@@ -307,8 +304,6 @@ function generateRequest(
 function getReturnType(responses: OperationResponses): CodegenRTE<string> {
   const { success } = responses;
 
-  const typePrefix = success._tag === "ComponentRef" ? "responses." : "";
-
   return pipe(
     getParsedItem(success),
     RTE.map((response) => {
@@ -320,12 +315,18 @@ function getReturnType(responses: OperationResponses): CodegenRTE<string> {
 
       const staticType =
         type.kind === "TypeDeclaration"
-          ? `${typePrefix}${type.name}`
+          ? `${getItemOrRefPrefix(response)}${type.name}`
           : gen.printStatic(type);
 
       return staticType;
     })
   );
+}
+
+function getItemOrRefPrefix<C extends ComponentType>(
+  itemOrRef: ItemOrRef<C>
+): string {
+  return isParsedItem(itemOrRef) ? "" : `${itemOrRef.componentType}.`;
 }
 
 function requestParametersMapName(operationId: string): string {
