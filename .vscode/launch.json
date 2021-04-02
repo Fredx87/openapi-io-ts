@@ -9,7 +9,11 @@
       "request": "launch",
       "name": "Launch Program",
       "runtimeArgs": ["-r", "ts-node/register"],
-      "args": ["${workspaceFolder}/src/bin.ts", "-i", "./openapi.json"]
+      "args": [
+        "${workspaceFolder}/src/bin.ts",
+        "-i",
+        "./examples/petstore.json"
+      ]
     },
     {
       "type": "node",

@@ -1,5 +1,4 @@
 import { pipe } from "fp-ts/function";
-import { ParserOutput } from "../parser/parserOutput";
 import {
   SCHEMAS_PATH,
   PARAMETERS_PATH,

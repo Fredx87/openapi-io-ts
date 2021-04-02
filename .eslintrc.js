@@ -1,10 +1,10 @@
 module.exports = {
   root: true,
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint", "prettier", "fp-ts"],
+  plugins: ["@typescript-eslint", "fp-ts", "unused-imports", "prettier"],
   parserOptions: {
     tsconfigRootDir: __dirname,
-    project: ["./tsconfig.json"],
+    project: ["./tsconfig.json", "./examples/tsconfig.json"],
   },
   extends: [
     "eslint:recommended",
@@ -15,5 +15,16 @@ module.exports = {
   ],
   rules: {
     "fp-ts/no-module-imports": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "unused-imports/no-unused-imports": "error",
+    "unused-imports/no-unused-vars": [
+      "warn",
+      {
+        vars: "all",
+        varsIgnorePattern: "^_",
+        args: "after-used",
+        argsIgnorePattern: "^_",
+      },
+    ],
   },
 };

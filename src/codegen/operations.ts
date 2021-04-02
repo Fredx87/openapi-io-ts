@@ -295,7 +295,7 @@ function generateRequest(
     ", "
   )}): TaskEither<ApiError, ${generatedItems.returnType}> =>
       request(${requestDefinitionName(operationId)}, ${
-    generatedItems.parameters ? PARAM_ARG_NAME : "undefined"
+    generatedItems.parameters ? PARAM_ARG_NAME : "{}"
   }, ${generatedItems.body ? BODY_ARG_NAME : "undefined"}, requestAdapter);`;
 }
 

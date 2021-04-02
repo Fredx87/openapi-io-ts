@@ -29,7 +29,6 @@ function generateServiceFile(
   operationsIds: string[]
 ): CodegenRTE<void> {
   const content = `import { HttpRequestAdapter } from "${RUNTIME_PACKAGE}";
-
   ${operationsIds
     .map((o) => `import { ${o} } from '../${OPERATIONS_PATH}/${o}'`)
     .join("\n")}
