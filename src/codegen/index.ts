@@ -3,7 +3,7 @@ import * as RTE from "fp-ts/ReaderTaskEither";
 import { Environment, ProgramRTE } from "../environment";
 import { ParserOutput } from "../parser/parserOutput";
 import { CodegenContext } from "./context";
-import { createDir, writeFormattedFile } from "./fs";
+import { createDir, writeFile } from "./fs";
 import { main } from "./main";
 
 export function codegen(parserOutput: ParserOutput): ProgramRTE<void> {
@@ -12,7 +12,7 @@ export function codegen(parserOutput: ParserOutput): ProgramRTE<void> {
     RTE.local(
       (env: Environment): CodegenContext => ({
         ...env,
-        writeFile: writeFormattedFile,
+        writeFile,
         createDir,
         parserOutput,
       })

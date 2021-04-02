@@ -1,19 +1,7 @@
 import * as TE from "fp-ts/TaskEither";
-import ts from "typescript";
 import * as fs from "fs";
 import { pipe } from "fp-ts/function";
 import * as util from "util";
-
-export function writeFormattedFile(
-  path: string,
-  fileName: string,
-  content: string
-): TE.TaskEither<Error, void> {
-  const source = ts.createSourceFile(fileName, content, ts.ScriptTarget.Latest);
-  const printer = ts.createPrinter();
-  const formatted = printer.printFile(source);
-  return writeFileToDisk(path, fileName, formatted);
-}
 
 export function createDir(path: string): TE.TaskEither<Error, void> {
   return pipe(
@@ -24,7 +12,7 @@ export function createDir(path: string): TE.TaskEither<Error, void> {
   );
 }
 
-function writeFileToDisk(
+export function writeFile(
   path: string,
   name: string,
   content: string
