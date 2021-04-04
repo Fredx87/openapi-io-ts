@@ -1,19 +1,22 @@
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import { TypeDeclaration } from "io-ts-codegen";
+import { ParsedItem } from "../parser/common";
 import { ParsedParameter } from "../parser/parameter";
+import { ParsedResponse } from "../parser/response";
 import {
   generateSchemaIfDeclaration,
   getImports,
   PARAMETERS_PATH,
+  RESPONSES_PATH,
   RUNTIME_PACKAGE,
   SCHEMAS_PATH,
   writeGeneratedFile,
 } from "./common";
 import { CodegenContext, CodegenRTE } from "./context";
 import { generateParameterDefinition } from "./parameter";
+import { generateResponseDefinition } from "./response";
 import { generateSchema } from "./schema";
-import { ParsedItem } from "../parser/common";
 
 export function generateComponents(): CodegenRTE<void> {
   return pipe(
@@ -23,7 +26,8 @@ export function generateComponents(): CodegenRTE<void> {
         generateSchemas(Object.values(components.schemas)),
         RTE.chain(() =>
           generateParameters(Object.values(components.parameters))
-        )
+        ),
+        RTE.chain(() => generateResponses(Object.values(components.responses)))
       )
     )
   );
@@ -66,6 +70,24 @@ function writeParameterFile(
   return writeGeneratedFile(PARAMETERS_PATH, `${parameter.name}.ts`, content);
 }
 
+function generateResponses(
+  responses: ParsedItem<ParsedResponse>[]
+): CodegenRTE<void> {
+  return writeComponentsFiles(RESPONSES_PATH, responses, writeResponseFile);
+}
+
+function writeResponseFile(
+  response: ParsedItem<ParsedResponse>
+): CodegenRTE<void> {
+  return pipe(
+    generateResponseDefinition(response),
+    RTE.map((def) => `export const ${response.name} = ${def};`),
+    RTE.chain((content) =>
+      writeGeneratedFile(RESPONSES_PATH, `${response.name}.ts`, content)
+    )
+  );
+}
+
 function writeComponentsFiles<T>(
   indexPath: string,
   components: ParsedItem<T>[],
@@ -84,6 +106,10 @@ function writeComponentsFiles<T>(
 }
 
 function writeIndex(path: string, names: readonly string[]): CodegenRTE<void> {
+  if (names.length === 0) {
+    return RTE.right(void 0);
+  }
+
   const content = names.map((n) => `export * from "./${n}";`).join("\n");
   return writeGeneratedFile(path, "index.ts", content);
 }

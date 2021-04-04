@@ -17,12 +17,12 @@ import {
   RUNTIME_PACKAGE,
   SCHEMAS_PATH,
   writeGeneratedFile,
+  getItemOrRefPrefix,
 } from "./common";
 import { CodegenContext, CodegenRTE } from "./context";
 import { generateParameterDefinition } from "./parameter";
 import { ParameterItemOrRef } from "../parser/parameter";
-import { ResponseItemOrRef } from "../parser/response";
-import { ComponentType, ItemOrRef } from "../parser/common";
+import { generateResponseDefinition } from "./response";
 
 export function generateOperations(): CodegenRTE<void> {
   return pipe(
@@ -78,7 +78,7 @@ function generateItems(
     ),
     RTE.bind("body", () => generateBody(operationId, operation.body)),
     RTE.bind("successfulResponse", () =>
-      generateSuccessfulResponse(operation.responses.success)
+      generateResponseDefinition(operation.responses.success)
     ),
     RTE.bind("returnType", () => getReturnType(operation.responses))
   );
@@ -204,28 +204,6 @@ function generateRequestParameter(
   );
 }
 
-function generateSuccessfulResponse(
-  itemOrRef: ResponseItemOrRef
-): CodegenRTE<string> {
-  return pipe(
-    getParsedItem(itemOrRef),
-    RTE.map((response) => {
-      if (response.item._tag === "TextResponse") {
-        return `{ _tag: "TextResponse"}`;
-      }
-
-      const { type } = response.item;
-
-      const runtimeType =
-        type.kind === "TypeDeclaration"
-          ? `${getItemOrRefPrefix(response)}${type.name}`
-          : gen.printRuntime(type);
-
-      return `{ _tag: "JsonResponse", decoder: ${runtimeType}}`;
-    })
-  );
-}
-
 function generateRequestDefinition(
   operationId: string,
   operation: ParsedOperation,
@@ -319,12 +297,6 @@ function getReturnType(responses: OperationResponses): CodegenRTE<string> {
       return staticType;
     })
   );
-}
-
-function getItemOrRefPrefix<C extends ComponentType>(
-  itemOrRef: ItemOrRef<C>
-): string {
-  return isParsedItem(itemOrRef) ? "" : `${itemOrRef.componentType}.`;
 }
 
 function requestParametersMapName(operationId: string): string {

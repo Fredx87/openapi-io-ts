@@ -11,6 +11,7 @@ import { generateSchema } from "./schema";
 
 export const SCHEMAS_PATH = "components/schemas";
 export const PARAMETERS_PATH = "components/parameters";
+export const RESPONSES_PATH = "components/responses";
 export const OPERATIONS_PATH = "operations";
 export const SERVICES_PATH = "services";
 export const RUNTIME_PACKAGE = "openapi-io-ts/dist/runtime";
@@ -65,4 +66,10 @@ export function isParsedItem<C extends ComponentType>(
   itemOrRef: ItemOrRef<C>
 ): itemOrRef is ComponentRefItemType<C> {
   return itemOrRef._tag === "ParsedItem";
+}
+
+export function getItemOrRefPrefix<C extends ComponentType>(
+  itemOrRef: ItemOrRef<C>
+): string {
+  return isParsedItem(itemOrRef) ? "" : `${itemOrRef.componentType}.`;
 }

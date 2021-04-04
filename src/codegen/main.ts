@@ -4,6 +4,7 @@ import {
   PARAMETERS_PATH,
   OPERATIONS_PATH,
   SERVICES_PATH,
+  RESPONSES_PATH,
 } from "./common";
 import { generateComponents } from "./components";
 import { CodegenRTE, CodegenContext } from "./context";
@@ -21,7 +22,13 @@ export function main(): CodegenRTE<void> {
 }
 
 function createDirs(): CodegenRTE<void> {
-  const paths = [SCHEMAS_PATH, PARAMETERS_PATH, OPERATIONS_PATH, SERVICES_PATH];
+  const paths = [
+    SCHEMAS_PATH,
+    PARAMETERS_PATH,
+    RESPONSES_PATH,
+    OPERATIONS_PATH,
+    SERVICES_PATH,
+  ];
 
   return pipe(
     RTE.ask<CodegenContext>(),
