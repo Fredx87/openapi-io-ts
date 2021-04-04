@@ -1,4 +1,4 @@
-import * as schemas from "../components/schemas";
+import * as requestBodies from "../components/requestBodies";
 import {
   RequestDefinition,
   HttpRequestAdapter,
@@ -6,8 +6,6 @@ import {
   request,
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
-
-export type CreateUsersWithListInputRequestBody = Array<schemas.User>;
 
 export const createUsersWithListInputRequestDefinition: RequestDefinition<string> = {
   path: "/user/createWithList",
@@ -19,7 +17,5 @@ export const createUsersWithListInputRequestDefinition: RequestDefinition<string
 
 export const createUsersWithListInput = (
   requestAdapter: HttpRequestAdapter
-) => (
-  body: CreateUsersWithListInputRequestBody
-): TaskEither<ApiError, string> =>
+) => (body: requestBodies.UserArray): TaskEither<ApiError, string> =>
   request(createUsersWithListInputRequestDefinition, {}, body, requestAdapter);

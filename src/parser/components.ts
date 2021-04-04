@@ -158,7 +158,7 @@ function parseBodyComponent(
   }
 
   const pointer = bodiesPointer.concat([name]);
-  const generatedName = toValidVariableName(name, "camel");
+  const generatedName = toValidVariableName(name, "pascal");
 
   return pipe(
     parseBodyObject(generatedName, body),

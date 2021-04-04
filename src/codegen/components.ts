@@ -1,13 +1,16 @@
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import { TypeDeclaration } from "io-ts-codegen";
+import { ParsedBody } from "../parser/body";
 import { ParsedItem } from "../parser/common";
 import { ParsedParameter } from "../parser/parameter";
 import { ParsedResponse } from "../parser/response";
+import { generateRequestBody } from "./body";
 import {
   generateSchemaIfDeclaration,
   getImports,
   PARAMETERS_PATH,
+  REQUEST_BODIES_PATH,
   RESPONSES_PATH,
   RUNTIME_PACKAGE,
   SCHEMAS_PATH,
@@ -27,7 +30,10 @@ export function generateComponents(): CodegenRTE<void> {
         RTE.chain(() =>
           generateParameters(Object.values(components.parameters))
         ),
-        RTE.chain(() => generateResponses(Object.values(components.responses)))
+        RTE.chain(() => generateResponses(Object.values(components.responses))),
+        RTE.chain(() =>
+          generateRequestBodies(Object.values(components.requestBodies))
+        )
       )
     )
   );
@@ -84,6 +90,31 @@ function writeResponseFile(
     RTE.map((def) => `export const ${response.name} = ${def};`),
     RTE.chain((content) =>
       writeGeneratedFile(RESPONSES_PATH, `${response.name}.ts`, content)
+    )
+  );
+}
+
+function generateRequestBodies(
+  bodies: ParsedItem<ParsedBody>[]
+): CodegenRTE<void> {
+  return writeComponentsFiles(
+    REQUEST_BODIES_PATH,
+    bodies,
+    writeRequestBodyFile
+  );
+}
+
+function writeRequestBodyFile(body: ParsedItem<ParsedBody>): CodegenRTE<void> {
+  return pipe(
+    generateRequestBody(body),
+    RTE.right,
+    RTE.map(
+      (def) => `import * as schemas from '../schemas';
+    
+    ${def}`
+    ),
+    RTE.chain((content) =>
+      writeGeneratedFile(REQUEST_BODIES_PATH, `${body.name}.ts`, content)
     )
   );
 }

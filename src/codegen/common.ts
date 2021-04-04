@@ -12,6 +12,7 @@ import { generateSchema } from "./schema";
 export const SCHEMAS_PATH = "components/schemas";
 export const PARAMETERS_PATH = "components/parameters";
 export const RESPONSES_PATH = "components/responses";
+export const REQUEST_BODIES_PATH = "components/requestBodies";
 export const OPERATIONS_PATH = "operations";
 export const SERVICES_PATH = "services";
 export const RUNTIME_PACKAGE = "openapi-io-ts/dist/runtime";

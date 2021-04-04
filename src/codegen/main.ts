@@ -5,6 +5,7 @@ import {
   OPERATIONS_PATH,
   SERVICES_PATH,
   RESPONSES_PATH,
+  REQUEST_BODIES_PATH,
 } from "./common";
 import { generateComponents } from "./components";
 import { CodegenRTE, CodegenContext } from "./context";
@@ -26,6 +27,7 @@ function createDirs(): CodegenRTE<void> {
     SCHEMAS_PATH,
     PARAMETERS_PATH,
     RESPONSES_PATH,
+    REQUEST_BODIES_PATH,
     OPERATIONS_PATH,
     SERVICES_PATH,
   ];

@@ -89,12 +89,22 @@ function parseOperation(
   method: OperationMethod,
   operation: OpenAPIV3.OperationObject
 ): ParserRTE<ParsedOperation> {
+  const { operationId } = operation;
+
+  if (operationId == null) {
+    return RTE.left(
+      new Error(`Missing operationId on path ${path}, method ${method}`)
+    );
+  }
+
   return pipe(
     RTE.Do,
     RTE.bind("parameters", () =>
       parseOperationParameters(operation.parameters)
     ),
-    RTE.bind("body", () => parseOperationBody(operation.requestBody)),
+    RTE.bind("body", () =>
+      parseOperationBody(operation.requestBody, operationId)
+    ),
     RTE.bind("responses", () => parseOperationResponses(operation.responses)),
     RTE.map(({ parameters, body, responses }) => {
       const operation: ParsedOperation = {
@@ -146,13 +156,19 @@ function parseOperationParameters(
 }
 
 function parseOperationBody(
-  requestBody?: OpenAPIV3.ReferenceObject | OpenAPIV3.RequestBodyObject
+  requestBody:
+    | OpenAPIV3.ReferenceObject
+    | OpenAPIV3.RequestBodyObject
+    | undefined,
+  operationId: string
 ): ParserRTE<O.Option<BodyItemOrRef>> {
   if (requestBody == null) {
     return RTE.right(O.none);
   }
 
-  return pipe(parseBody("Body", requestBody), RTE.map(O.some));
+  const name = `${toValidVariableName(operationId, "pascal")}RequestBody`;
+
+  return pipe(parseBody(name, requestBody), RTE.map(O.some));
 }
 
 function parseOperationResponses(

@@ -1,4 +1,4 @@
-import * as schemas from "../components/schemas";
+import * as requestBodies from "../components/requestBodies";
 import {
   RequestDefinition,
   HttpRequestAdapter,
@@ -6,8 +6,6 @@ import {
   request,
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
-
-export type UpdatePetRequestBody = schemas.Pet;
 
 export const updatePetRequestDefinition: RequestDefinition<string> = {
   path: "/pet",
@@ -18,6 +16,6 @@ export const updatePetRequestDefinition: RequestDefinition<string> = {
 };
 
 export const updatePet = (requestAdapter: HttpRequestAdapter) => (
-  body: UpdatePetRequestBody
+  body: requestBodies.Pet
 ): TaskEither<ApiError, string> =>
   request(updatePetRequestDefinition, {}, body, requestAdapter);

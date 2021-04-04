@@ -5,9 +5,9 @@ import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
 import * as gen from "io-ts-codegen";
 import { capitalize } from "../common/utils";
-import { BodyItemOrRef, ParsedBody } from "../parser/body";
+import { BodyItemOrRef } from "../parser/body";
 import { OperationResponses, ParsedOperation } from "../parser/operation";
-import { generateBodyType } from "./body";
+import { generateBodyType, generateRequestBody } from "./body";
 import {
   generateSchemaIfDeclaration,
   getParsedItem,
@@ -18,6 +18,8 @@ import {
   SCHEMAS_PATH,
   writeGeneratedFile,
   getItemOrRefPrefix,
+  REQUEST_BODIES_PATH,
+  RESPONSES_PATH,
 } from "./common";
 import { CodegenContext, CodegenRTE } from "./context";
 import { generateParameterDefinition } from "./parameter";
@@ -44,7 +46,8 @@ interface GeneratedOperationParameters {
 
 interface GeneratedBody {
   bodyType: string;
-  requestBody: string;
+  requestBody?: string;
+  requestBodyName: string;
 }
 
 interface GeneratedItems {
@@ -76,7 +79,7 @@ function generateItems(
     RTE.bind("parameters", () =>
       generateOperationParameters(operationId, operation.parameters)
     ),
-    RTE.bind("body", () => generateBody(operationId, operation.body)),
+    RTE.bind("body", () => generateBody(operation.body)),
     RTE.bind("successfulResponse", () =>
       generateResponseDefinition(operation.responses.success)
     ),
@@ -92,6 +95,8 @@ function generateFileContent(
   const content = `import * as t from "io-ts";
   import * as schemas from "../${SCHEMAS_PATH}";
   import * as parameters from "../${PARAMETERS_PATH}";
+  import * as responses from "../${RESPONSES_PATH}";
+  import * as requestBodies from "../${REQUEST_BODIES_PATH}";
   import { RequestDefinition, ParametersDefinitions, HttpRequestAdapter, ApiError, request } from "${RUNTIME_PACKAGE}";
   import { TaskEither } from "fp-ts/TaskEither";
 
@@ -102,7 +107,7 @@ function generateFileContent(
       : ""
   }
 
-  ${items.body ? items.body.requestBody : ""}
+  ${items.body?.requestBody ?? ""}
 
   ${generateRequestDefinition(operationId, operation, items)}
 
@@ -223,7 +228,6 @@ function generateRequestDefinition(
 }
 
 function generateBody(
-  operationId: string,
   itemOrRef: O.Option<BodyItemOrRef>
 ): CodegenRTE<GeneratedBody | undefined> {
   if (O.isNone(itemOrRef)) {
@@ -235,21 +239,15 @@ function generateBody(
     RTE.map((body) => {
       const res: GeneratedBody = {
         bodyType: generateBodyType(body.item),
-        requestBody: generateRequestBody(operationId, body.item),
+        requestBody: isParsedItem(itemOrRef.value)
+          ? generateRequestBody(body)
+          : undefined,
+        requestBodyName: `${getItemOrRefPrefix(itemOrRef.value)}${body.name}`,
       };
 
       return res;
     })
   );
-}
-
-function generateRequestBody(
-  operationId: string,
-  bodyObject: ParsedBody
-): string {
-  return `export type ${requestBodyName(operationId)} = ${
-    bodyObject._tag === "JsonBody" ? gen.printStatic(bodyObject.type) : "string"
-  }`;
 }
 
 function generateRequest(
@@ -266,7 +264,7 @@ function generateRequest(
   }
 
   if (generatedItems.body) {
-    args.push(`${BODY_ARG_NAME}: ${requestBodyName(operationId)}`);
+    args.push(`${BODY_ARG_NAME}: ${generatedItems.body.requestBodyName}`);
   }
 
   return `export const ${operationId} = (requestAdapter: HttpRequestAdapter) => (${args.join(
@@ -301,10 +299,6 @@ function getReturnType(responses: OperationResponses): CodegenRTE<string> {
 
 function requestParametersMapName(operationId: string): string {
   return `${capitalize(operationId, "pascal")}RequestParameters`;
-}
-
-function requestBodyName(operationId: string): string {
-  return `${capitalize(operationId, "pascal")}RequestBody`;
 }
 
 function requestDefinitionName(operationId: string): string {
