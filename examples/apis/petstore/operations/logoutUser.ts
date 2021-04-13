@@ -1,19 +1,21 @@
 import {
-  RequestDefinition,
+  Operation,
   HttpRequestAdapter,
   ApiError,
+  ApiResponse,
   request,
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
 
-export const logoutUserRequestDefinition: RequestDefinition<string> = {
+export const logoutUserOperation: Operation = {
   path: "/user/logout",
   method: "get",
-  successfulResponse: { _tag: "TextResponse" },
-  parametersDefinitions: {},
+  responses: { default: { _tag: "EmptyResponse" } },
+  parameters: [],
+  requestDefaultHeaders: {},
 };
 
 export const logoutUser = (
   requestAdapter: HttpRequestAdapter
-) => (): TaskEither<ApiError, string> =>
-  request(logoutUserRequestDefinition, {}, undefined, requestAdapter);
+) => (): TaskEither<ApiError, ApiResponse<void>> =>
+  request(logoutUserOperation, {}, undefined, requestAdapter);

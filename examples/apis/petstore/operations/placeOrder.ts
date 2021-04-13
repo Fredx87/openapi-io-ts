@@ -1,23 +1,30 @@
 import * as schemas from "../components/schemas";
 import {
-  RequestDefinition,
+  Operation,
   HttpRequestAdapter,
   ApiError,
+  ApiResponse,
   request,
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
 
-export type PlaceOrderRequestBody = schemas.Order;
+export type PlaceOrderRequestBodySchema = schemas.Order;
 
-export const placeOrderRequestDefinition: RequestDefinition<schemas.Order> = {
+export const placeOrderOperation: Operation = {
   path: "/store/order",
   method: "post",
-  successfulResponse: { _tag: "JsonResponse", decoder: schemas.Order },
-  parametersDefinitions: {},
-  bodyType: "json",
+  responses: {
+    "200": { _tag: "JsonResponse", decoder: schemas.Order },
+    "400": { _tag: "EmptyResponse" },
+  },
+  parameters: [],
+  requestDefaultHeaders: {},
+  body: {
+    _tag: "JsonBody",
+  },
 };
 
 export const placeOrder = (requestAdapter: HttpRequestAdapter) => (
-  body: PlaceOrderRequestBody
-): TaskEither<ApiError, schemas.Order> =>
-  request(placeOrderRequestDefinition, {}, body, requestAdapter);
+  body: PlaceOrderRequestBodySchema
+): TaskEither<ApiError, ApiResponse<schemas.Order>> =>
+  request(placeOrderOperation, {}, body, requestAdapter);

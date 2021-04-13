@@ -1,8 +1,9 @@
 import * as t from "io-ts";
 import {
-  RequestDefinition,
+  Operation,
   HttpRequestAdapter,
   ApiError,
+  ApiResponse,
   request,
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
@@ -12,21 +13,31 @@ export type LoginUserRequestParameters = {
   password: string;
 };
 
-export const loginUserRequestDefinition: RequestDefinition<string> = {
+export const loginUserOperation: Operation = {
   path: "/user/login",
   method: "get",
-  successfulResponse: { _tag: "JsonResponse", decoder: t.string },
-  parametersDefinitions: {
-    username: {
-      in: "query",
-    },
-    password: {
-      in: "query",
-    },
+  responses: {
+    "200": { _tag: "JsonResponse", decoder: t.string },
+    "400": { _tag: "EmptyResponse" },
   },
+  parameters: [
+    {
+      _tag: "FormParameter",
+      explode: true,
+      in: "query",
+      name: "username",
+    },
+    {
+      _tag: "FormParameter",
+      explode: true,
+      in: "query",
+      name: "password",
+    },
+  ],
+  requestDefaultHeaders: {},
 };
 
 export const loginUser = (requestAdapter: HttpRequestAdapter) => (
   params: LoginUserRequestParameters
-): TaskEither<ApiError, string> =>
-  request(loginUserRequestDefinition, params, undefined, requestAdapter);
+): TaskEither<ApiError, ApiResponse<string>> =>
+  request(loginUserOperation, params, undefined, requestAdapter);

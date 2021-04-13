@@ -1,21 +1,23 @@
 import * as requestBodies from "../components/requestBodies";
 import {
-  RequestDefinition,
+  Operation,
   HttpRequestAdapter,
   ApiError,
+  ApiResponse,
   request,
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
 
-export const addPetRequestDefinition: RequestDefinition<string> = {
+export const addPetOperation: Operation = {
   path: "/pet",
   method: "post",
-  successfulResponse: { _tag: "TextResponse" },
-  parametersDefinitions: {},
-  bodyType: "json",
+  responses: { "405": { _tag: "EmptyResponse" } },
+  parameters: [],
+  requestDefaultHeaders: {},
+  body: requestBodies.Pet,
 };
 
 export const addPet = (requestAdapter: HttpRequestAdapter) => (
-  body: requestBodies.Pet
-): TaskEither<ApiError, string> =>
-  request(addPetRequestDefinition, {}, body, requestAdapter);
+  body: requestBodies.PetSchema
+): TaskEither<ApiError, ApiResponse<void>> =>
+  request(addPetOperation, {}, body, requestAdapter);

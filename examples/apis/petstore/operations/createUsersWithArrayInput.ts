@@ -1,21 +1,25 @@
 import * as requestBodies from "../components/requestBodies";
 import {
-  RequestDefinition,
+  Operation,
   HttpRequestAdapter,
   ApiError,
+  ApiResponse,
   request,
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
 
-export const createUsersWithArrayInputRequestDefinition: RequestDefinition<string> = {
+export const createUsersWithArrayInputOperation: Operation = {
   path: "/user/createWithArray",
   method: "post",
-  successfulResponse: { _tag: "TextResponse" },
-  parametersDefinitions: {},
-  bodyType: "json",
+  responses: { default: { _tag: "EmptyResponse" } },
+  parameters: [],
+  requestDefaultHeaders: {},
+  body: requestBodies.UserArray,
 };
 
 export const createUsersWithArrayInput = (
   requestAdapter: HttpRequestAdapter
-) => (body: requestBodies.UserArray): TaskEither<ApiError, string> =>
-  request(createUsersWithArrayInputRequestDefinition, {}, body, requestAdapter);
+) => (
+  body: requestBodies.UserArraySchema
+): TaskEither<ApiError, ApiResponse<void>> =>
+  request(createUsersWithArrayInputOperation, {}, body, requestAdapter);

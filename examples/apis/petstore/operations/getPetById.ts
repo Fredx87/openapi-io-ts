@@ -1,8 +1,9 @@
 import * as schemas from "../components/schemas";
 import {
-  RequestDefinition,
+  Operation,
   HttpRequestAdapter,
   ApiError,
+  ApiResponse,
   request,
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
@@ -11,18 +12,26 @@ export type GetPetByIdRequestParameters = {
   petId: number;
 };
 
-export const getPetByIdRequestDefinition: RequestDefinition<schemas.Pet> = {
+export const getPetByIdOperation: Operation = {
   path: "/pet/{petId}",
   method: "get",
-  successfulResponse: { _tag: "JsonResponse", decoder: schemas.Pet },
-  parametersDefinitions: {
-    petId: {
-      in: "path",
-    },
+  responses: {
+    "200": { _tag: "JsonResponse", decoder: schemas.Pet },
+    "400": { _tag: "EmptyResponse" },
+    "404": { _tag: "EmptyResponse" },
   },
+  parameters: [
+    {
+      _tag: "FormParameter",
+      explode: false,
+      in: "path",
+      name: "petId",
+    },
+  ],
+  requestDefaultHeaders: {},
 };
 
 export const getPetById = (requestAdapter: HttpRequestAdapter) => (
   params: GetPetByIdRequestParameters
-): TaskEither<ApiError, schemas.Pet> =>
-  request(getPetByIdRequestDefinition, params, undefined, requestAdapter);
+): TaskEither<ApiError, ApiResponse<schemas.Pet>> =>
+  request(getPetByIdOperation, params, undefined, requestAdapter);

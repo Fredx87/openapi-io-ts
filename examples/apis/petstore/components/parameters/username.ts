@@ -1,5 +1,8 @@
-import { ParameterDefinition } from "openapi-io-ts/dist/runtime";
+import { OperationParameter } from "openapi-io-ts/dist/runtime";
 
-export const username: ParameterDefinition = {
+export const username: OperationParameter = {
+  _tag: "FormParameter",
+  explode: false,
   in: "path",
+  name: "username",
 };

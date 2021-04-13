@@ -1,7 +1,9 @@
+import * as schemas from "../components/schemas";
 import {
-  RequestDefinition,
+  Operation,
   HttpRequestAdapter,
   ApiError,
+  ApiResponse,
   request,
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
@@ -10,22 +12,28 @@ export type UpdatePetWithFormRequestParameters = {
   petId: number;
 };
 
-export type UpdatePetWithFormRequestBody = string;
+export type UpdatePetWithFormRequestBodySchema = schemas.Body;
 
-export const updatePetWithFormRequestDefinition: RequestDefinition<string> = {
+export const updatePetWithFormOperation: Operation = {
   path: "/pet/{petId}",
   method: "post",
-  successfulResponse: { _tag: "TextResponse" },
-  parametersDefinitions: {
-    petId: {
+  responses: { "405": { _tag: "EmptyResponse" } },
+  parameters: [
+    {
+      _tag: "FormParameter",
+      explode: false,
       in: "path",
+      name: "petId",
     },
+  ],
+  requestDefaultHeaders: {},
+  body: {
+    _tag: "FormBody",
   },
-  bodyType: "text",
 };
 
 export const updatePetWithForm = (requestAdapter: HttpRequestAdapter) => (
   params: UpdatePetWithFormRequestParameters,
-  body: UpdatePetWithFormRequestBody
-): TaskEither<ApiError, string> =>
-  request(updatePetWithFormRequestDefinition, params, body, requestAdapter);
+  body: UpdatePetWithFormRequestBodySchema
+): TaskEither<ApiError, ApiResponse<void>> =>
+  request(updatePetWithFormOperation, params, body, requestAdapter);

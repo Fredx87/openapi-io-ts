@@ -1,7 +1,8 @@
 import {
-  RequestDefinition,
+  Operation,
   HttpRequestAdapter,
   ApiError,
+  ApiResponse,
   request,
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
@@ -11,21 +12,31 @@ export type DeletePetRequestParameters = {
   petId: number;
 };
 
-export const deletePetRequestDefinition: RequestDefinition<string> = {
+export const deletePetOperation: Operation = {
   path: "/pet/{petId}",
   method: "delete",
-  successfulResponse: { _tag: "TextResponse" },
-  parametersDefinitions: {
-    api_key: {
-      in: "header",
-    },
-    petId: {
-      in: "path",
-    },
+  responses: {
+    "400": { _tag: "EmptyResponse" },
+    "404": { _tag: "EmptyResponse" },
   },
+  parameters: [
+    {
+      _tag: "FormParameter",
+      explode: false,
+      in: "header",
+      name: "api_key",
+    },
+    {
+      _tag: "FormParameter",
+      explode: false,
+      in: "path",
+      name: "petId",
+    },
+  ],
+  requestDefaultHeaders: {},
 };
 
 export const deletePet = (requestAdapter: HttpRequestAdapter) => (
   params: DeletePetRequestParameters
-): TaskEither<ApiError, string> =>
-  request(deletePetRequestDefinition, params, undefined, requestAdapter);
+): TaskEither<ApiError, ApiResponse<void>> =>
+  request(deletePetOperation, params, undefined, requestAdapter);

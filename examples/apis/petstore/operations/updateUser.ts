@@ -1,9 +1,10 @@
 import * as schemas from "../components/schemas";
 import * as parameters from "../components/parameters";
 import {
-  RequestDefinition,
+  Operation,
   HttpRequestAdapter,
   ApiError,
+  ApiResponse,
   request,
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
@@ -12,18 +13,24 @@ export type UpdateUserRequestParameters = {
   username: string;
 };
 
-export type UpdateUserRequestBody = schemas.User;
+export type UpdateUserRequestBodySchema = schemas.User;
 
-export const updateUserRequestDefinition: RequestDefinition<string> = {
+export const updateUserOperation: Operation = {
   path: "/user/{username}",
   method: "put",
-  successfulResponse: { _tag: "TextResponse" },
-  parametersDefinitions: { username: parameters.username },
-  bodyType: "json",
+  responses: {
+    "400": { _tag: "EmptyResponse" },
+    "404": { _tag: "EmptyResponse" },
+  },
+  parameters: [parameters.username],
+  requestDefaultHeaders: {},
+  body: {
+    _tag: "JsonBody",
+  },
 };
 
 export const updateUser = (requestAdapter: HttpRequestAdapter) => (
   params: UpdateUserRequestParameters,
-  body: UpdateUserRequestBody
-): TaskEither<ApiError, string> =>
-  request(updateUserRequestDefinition, params, body, requestAdapter);
+  body: UpdateUserRequestBodySchema
+): TaskEither<ApiError, ApiResponse<void>> =>
+  request(updateUserOperation, params, body, requestAdapter);

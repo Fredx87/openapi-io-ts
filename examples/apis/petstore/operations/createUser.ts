@@ -1,23 +1,27 @@
 import * as schemas from "../components/schemas";
 import {
-  RequestDefinition,
+  Operation,
   HttpRequestAdapter,
   ApiError,
+  ApiResponse,
   request,
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
 
-export type CreateUserRequestBody = schemas.User;
+export type CreateUserRequestBodySchema = schemas.User;
 
-export const createUserRequestDefinition: RequestDefinition<string> = {
+export const createUserOperation: Operation = {
   path: "/user",
   method: "post",
-  successfulResponse: { _tag: "TextResponse" },
-  parametersDefinitions: {},
-  bodyType: "json",
+  responses: { default: { _tag: "EmptyResponse" } },
+  parameters: [],
+  requestDefaultHeaders: {},
+  body: {
+    _tag: "JsonBody",
+  },
 };
 
 export const createUser = (requestAdapter: HttpRequestAdapter) => (
-  body: CreateUserRequestBody
-): TaskEither<ApiError, string> =>
-  request(createUserRequestDefinition, {}, body, requestAdapter);
+  body: CreateUserRequestBodySchema
+): TaskEither<ApiError, ApiResponse<void>> =>
+  request(createUserOperation, {}, body, requestAdapter);
