@@ -8,9 +8,9 @@ import {
   getOrCreateType,
   parsedItem,
   ParsedItem,
-  JSON_MEDIA_TYPE,
   ComponentRef,
 } from "./common";
+import { JSON_MEDIA_TYPE } from "../common/mediaTypes";
 import { ParserRTE } from "./context";
 
 export interface ParsedEmptyResponse {

@@ -34,7 +34,7 @@ export const loginUserOperation: Operation = {
       name: "password",
     },
   ],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: { Accept: "application/json" },
 };
 
 export const loginUser = (requestAdapter: HttpRequestAdapter) => (

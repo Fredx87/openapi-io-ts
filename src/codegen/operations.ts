@@ -26,6 +26,11 @@ import { ParameterItemOrRef } from "../parser/parameter";
 import { generateOperationResponses } from "./response";
 import { ResponseItemOrRef } from "../parser/response";
 import { generateOperationBody, generateOperationBodySchema } from "./body";
+import {
+  FORM_ENCODED_MEDIA_TYPE,
+  JSON_MEDIA_TYPE,
+  TEXT_PLAIN_MEDIA_TYPE,
+} from "../common/mediaTypes";
 
 export function generateOperations(): CodegenRTE<void> {
   return pipe(
@@ -55,6 +60,7 @@ interface GeneratedItems {
   parameters?: GeneratedOperationParameters;
   body?: GeneratedBody;
   successfulResponse: string;
+  defaultHeaders: string;
   returnType: string;
 }
 
@@ -84,7 +90,8 @@ function generateItems(
     RTE.bind("successfulResponse", () =>
       generateOperationResponses(operation.responses)
     ),
-    RTE.bind("returnType", () => getReturnType(operation.responses))
+    RTE.bind("returnType", () => getReturnType(operation.responses)),
+    RTE.bind("defaultHeaders", () => getDefaultHeaders(operation))
   );
 }
 
@@ -222,7 +229,7 @@ function generateRequestDefinition(
       method: "${method}",
       responses: ${generatedItems.successfulResponse},
       parameters: ${generatedItems.parameters?.definition ?? "[]"},
-      requestDefaultHeaders: {},
+      requestDefaultHeaders: ${generatedItems.defaultHeaders},
       ${generatedItems.body ? `body: ${generatedItems.body.bodyType}` : ""}
   }`;
 }
@@ -308,6 +315,78 @@ function getReturnType(
 
       return staticType;
     })
+  );
+}
+
+function getDefaultHeaders(operation: ParsedOperation): CodegenRTE<string> {
+  return pipe(
+    RTE.Do,
+    RTE.bind("contentType", () => getContentTypeHeader(operation)),
+    RTE.bind("accept", () => getAcceptHeader(operation)),
+    RTE.map(({ contentType, accept }) => {
+      const headers: Record<string, string> = {};
+
+      if (contentType) {
+        headers["Content-Type"] = contentType;
+      }
+
+      if (accept) {
+        headers["Accept"] = accept;
+      }
+
+      return JSON.stringify(headers);
+    })
+  );
+}
+
+function getContentTypeHeader(
+  operation: ParsedOperation
+): CodegenRTE<string | undefined> {
+  return pipe(
+    operation.body,
+    O.fold(
+      () => RTE.right(undefined),
+      (itemOrRef) =>
+        pipe(
+          getParsedItem(itemOrRef),
+          RTE.map((body) => {
+            switch (body.item._tag) {
+              case "ParsedBinaryBody": {
+                return body.item.mediaType;
+              }
+              case "ParsedFormBody": {
+                return FORM_ENCODED_MEDIA_TYPE;
+              }
+              case "ParsedMultipartBody": {
+                return undefined;
+              }
+              case "ParsedJsonBody": {
+                return JSON_MEDIA_TYPE;
+              }
+              case "ParsedTextBody": {
+                return TEXT_PLAIN_MEDIA_TYPE;
+              }
+            }
+          })
+        )
+    )
+  );
+}
+
+function getAcceptHeader(
+  operation: ParsedOperation
+): CodegenRTE<string | undefined> {
+  const successfulResponse = getSuccessfulResponse(operation.responses);
+
+  if (successfulResponse == null) {
+    return RTE.right(undefined);
+  }
+
+  return pipe(
+    getParsedItem(successfulResponse),
+    RTE.map((response) =>
+      response.item._tag === "ParsedJsonResponse" ? JSON_MEDIA_TYPE : undefined
+    )
   );
 }
 

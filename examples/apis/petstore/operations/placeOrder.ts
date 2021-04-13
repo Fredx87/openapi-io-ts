@@ -18,7 +18,10 @@ export const placeOrderOperation: Operation = {
     "400": { _tag: "EmptyResponse" },
   },
   parameters: [],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
   body: {
     _tag: "JsonBody",
   },

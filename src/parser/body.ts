@@ -8,12 +8,14 @@ import {
   getOrCreateType,
   parsedItem,
   ParsedItem,
-  JSON_MEDIA_TYPE,
   ComponentRef,
+} from "./common";
+import {
+  JSON_MEDIA_TYPE,
   TEXT_PLAIN_MEDIA_TYPE,
   FORM_ENCODED_MEDIA_TYPE,
   MULTIPART_FORM_MEDIA_TYPE,
-} from "./common";
+} from "../common/mediaTypes";
 import { ParserRTE } from "./context";
 
 interface BaseParsedBody {

@@ -28,7 +28,7 @@ export const getOrderByIdOperation: Operation = {
       name: "orderId",
     },
   ],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: { Accept: "application/json" },
 };
 
 export const getOrderById = (requestAdapter: HttpRequestAdapter) => (

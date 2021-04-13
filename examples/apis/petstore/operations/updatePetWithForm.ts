@@ -26,7 +26,9 @@ export const updatePetWithFormOperation: Operation = {
       name: "petId",
     },
   ],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: {
+    "Content-Type": "application/x-www-form-urlencoded",
+  },
   body: {
     _tag: "FormBody",
   },

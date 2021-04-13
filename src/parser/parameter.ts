@@ -8,10 +8,10 @@ import {
   ComponentRef,
   createComponentRef,
   getOrCreateType,
-  JSON_MEDIA_TYPE,
   parsedItem,
   ParsedItem,
 } from "./common";
+import { JSON_MEDIA_TYPE } from "../common/mediaTypes";
 import { ParserContext, ParserRTE } from "./context";
 
 export interface ParsedBaseParameter {

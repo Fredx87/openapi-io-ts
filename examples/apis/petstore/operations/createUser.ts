@@ -15,7 +15,7 @@ export const createUserOperation: Operation = {
   method: "post",
   responses: { default: { _tag: "EmptyResponse" } },
   parameters: [],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: { "Content-Type": "application/json" },
   body: {
     _tag: "JsonBody",
   },

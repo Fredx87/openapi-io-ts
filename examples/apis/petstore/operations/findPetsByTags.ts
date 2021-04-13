@@ -28,7 +28,7 @@ export const findPetsByTagsOperation: Operation = {
       name: "tags",
     },
   ],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: { Accept: "application/json" },
 };
 
 export const findPetsByTags = (requestAdapter: HttpRequestAdapter) => (

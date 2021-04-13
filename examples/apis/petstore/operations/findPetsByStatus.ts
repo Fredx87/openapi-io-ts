@@ -28,7 +28,7 @@ export const findPetsByStatusOperation: Operation = {
       name: "status",
     },
   ],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: { Accept: "application/json" },
 };
 
 export const findPetsByStatus = (requestAdapter: HttpRequestAdapter) => (

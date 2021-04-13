@@ -17,7 +17,7 @@ export const updatePetOperation: Operation = {
     "405": { _tag: "EmptyResponse" },
   },
   parameters: [],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: { "Content-Type": "application/json" },
   body: requestBodies.Pet,
 };
 

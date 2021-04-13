@@ -22,7 +22,7 @@ export const getUserByNameOperation: Operation = {
     "404": { _tag: "EmptyResponse" },
   },
   parameters: [parameters.username],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: { Accept: "application/json" },
 };
 
 export const getUserByName = (requestAdapter: HttpRequestAdapter) => (

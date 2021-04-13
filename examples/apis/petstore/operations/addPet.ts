@@ -13,7 +13,7 @@ export const addPetOperation: Operation = {
   method: "post",
   responses: { "405": { _tag: "EmptyResponse" } },
   parameters: [],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: { "Content-Type": "application/json" },
   body: requestBodies.Pet,
 };
 

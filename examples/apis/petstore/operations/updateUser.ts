@@ -23,7 +23,7 @@ export const updateUserOperation: Operation = {
     "404": { _tag: "EmptyResponse" },
   },
   parameters: [parameters.username],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: { "Content-Type": "application/json" },
   body: {
     _tag: "JsonBody",
   },

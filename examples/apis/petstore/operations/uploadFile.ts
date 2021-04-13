@@ -26,7 +26,10 @@ export const uploadFileOperation: Operation = {
       name: "petId",
     },
   ],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: {
+    "Content-Type": "application/octet-stream",
+    Accept: "application/json",
+  },
   body: {
     _tag: "BinaryBody",
     mediaType: "application/octet-stream",

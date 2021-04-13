@@ -13,7 +13,7 @@ export const getInventoryOperation: Operation = {
   method: "get",
   responses: { "200": { _tag: "JsonResponse", decoder: t.UnknownRecord } },
   parameters: [],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: { Accept: "application/json" },
 };
 
 export const getInventory = (

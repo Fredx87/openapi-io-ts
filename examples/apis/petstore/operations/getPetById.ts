@@ -28,7 +28,7 @@ export const getPetByIdOperation: Operation = {
       name: "petId",
     },
   ],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: { Accept: "application/json" },
 };
 
 export const getPetById = (requestAdapter: HttpRequestAdapter) => (

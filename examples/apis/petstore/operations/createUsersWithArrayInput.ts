@@ -13,7 +13,7 @@ export const createUsersWithArrayInputOperation: Operation = {
   method: "post",
   responses: { default: { _tag: "EmptyResponse" } },
   parameters: [],
-  requestDefaultHeaders: {},
+  requestDefaultHeaders: { "Content-Type": "application/json" },
   body: requestBodies.UserArray,
 };
 
