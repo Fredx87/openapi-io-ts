@@ -1,13 +1,25 @@
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
 import { ParsedParameter } from "../parser/parameter";
 
 export function generateParameterDefinition(
   parameter: ParsedParameter
 ): string {
-  const { in: paramIn, defaultValue } = parameter;
+  const baseParameter = `        in: "${parameter.in}",
+        name: "${parameter.name}"
+  `;
 
-  return `{
-        in: "${paramIn}",
-        ${defaultValue ? `defaultValue: ${defaultValue}` : ""}
-    }`;
+  switch (parameter._tag) {
+    case "ParsedJsonParameter": {
+      return `{
+        _tag: "JsonParameter",
+        ${baseParameter}
+      }`;
+    }
+    case "ParsedFormParameter": {
+      return ` {
+        _tag: "FormParameter",
+        explode: ${parameter.explode ? "true" : "false"},
+        ${baseParameter}
+      }`;
+    }
+  }
 }

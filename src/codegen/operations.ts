@@ -6,8 +6,7 @@ import * as R from "fp-ts/Record";
 import * as gen from "io-ts-codegen";
 import { capitalize } from "../common/utils";
 import { BodyItemOrRef } from "../parser/body";
-import { OperationResponses, ParsedOperation } from "../parser/operation";
-import { generateBodyType, generateRequestBody } from "./body";
+import { ParsedOperation } from "../parser/operation";
 import {
   generateSchemaIfDeclaration,
   getParsedItem,
@@ -24,7 +23,9 @@ import {
 import { CodegenContext, CodegenRTE } from "./context";
 import { generateParameterDefinition } from "./parameter";
 import { ParameterItemOrRef } from "../parser/parameter";
-import { generateResponseDefinition } from "./response";
+import { generateOperationResponses } from "./response";
+import { ResponseItemOrRef } from "../parser/response";
+import { generateOperationBody, generateOperationBodySchema } from "./body";
 
 export function generateOperations(): CodegenRTE<void> {
   return pipe(
@@ -81,7 +82,7 @@ function generateItems(
     ),
     RTE.bind("body", () => generateBody(operation.body)),
     RTE.bind("successfulResponse", () =>
-      generateResponseDefinition(operation.responses.success)
+      generateOperationResponses(operation.responses)
     ),
     RTE.bind("returnType", () => getReturnType(operation.responses))
   );
@@ -97,7 +98,7 @@ function generateFileContent(
   import * as parameters from "../${PARAMETERS_PATH}";
   import * as responses from "../${RESPONSES_PATH}";
   import * as requestBodies from "../${REQUEST_BODIES_PATH}";
-  import { RequestDefinition, ParametersDefinitions, HttpRequestAdapter, ApiError, request } from "${RUNTIME_PACKAGE}";
+  import { Operation, HttpRequestAdapter, ApiError, ApiResponse, request } from "${RUNTIME_PACKAGE}";
   import { TaskEither } from "fp-ts/TaskEither";
 
   ${
@@ -155,7 +156,7 @@ function generateOperationParametersDefinition(
   return pipe(
     parameters,
     RTE.traverseSeqArray(generateOperationParameterDefinition),
-    RTE.map((defs) => `{ ${defs.join(",")} }`)
+    RTE.map((defs) => `[ ${defs.join(",")} ]`)
   );
 }
 
@@ -166,9 +167,9 @@ function generateOperationParameterDefinition(
     getParsedItem(parameter),
     RTE.map((item) => {
       if (parameter._tag === "ComponentRef") {
-        return `${item.name}: ${parameter.componentType}.${item.name}`;
+        return `${parameter.componentType}.${item.name}`;
       } else {
-        return `${item.name}: ${generateParameterDefinition(item.item)}`;
+        return generateParameterDefinition(item.item);
       }
     })
   );
@@ -216,14 +217,13 @@ function generateRequestDefinition(
 ): string {
   const { path, method } = operation;
 
-  return `export const ${requestDefinitionName(
-    operationId
-  )}: RequestDefinition<${generatedItems.returnType}> = {
+  return `export const ${requestDefinitionName(operationId)}: Operation = {
       path: "${path}",
       method: "${method}",
-      successfulResponse: ${generatedItems.successfulResponse},
-      parametersDefinitions: ${generatedItems.parameters?.definition ?? "{}"},
-      ${generatedItems.body ? `bodyType: ${generatedItems.body.bodyType}` : ""}
+      responses: ${generatedItems.successfulResponse},
+      parameters: ${generatedItems.parameters?.definition ?? "[]"},
+      requestDefaultHeaders: {},
+      ${generatedItems.body ? `body: ${generatedItems.body.bodyType}` : ""}
   }`;
 }
 
@@ -238,11 +238,15 @@ function generateBody(
     getParsedItem(itemOrRef.value),
     RTE.map((body) => {
       const res: GeneratedBody = {
-        bodyType: generateBodyType(body.item),
+        bodyType: isParsedItem(itemOrRef.value)
+          ? generateOperationBody(body)
+          : `${getItemOrRefPrefix(itemOrRef.value)}${body.name}`,
         requestBody: isParsedItem(itemOrRef.value)
-          ? generateRequestBody(body)
+          ? generateOperationBodySchema(body.name, body.item)
           : undefined,
-        requestBodyName: `${getItemOrRefPrefix(itemOrRef.value)}${body.name}`,
+        requestBodyName: `${getItemOrRefPrefix(itemOrRef.value)}${
+          body.name
+        }Schema`,
       };
 
       return res;
@@ -269,20 +273,30 @@ function generateRequest(
 
   return `export const ${operationId} = (requestAdapter: HttpRequestAdapter) => (${args.join(
     ", "
-  )}): TaskEither<ApiError, ${generatedItems.returnType}> =>
+  )}): TaskEither<ApiError, ApiResponse<${generatedItems.returnType}>> =>
       request(${requestDefinitionName(operationId)}, ${
     generatedItems.parameters ? PARAM_ARG_NAME : "{}"
   }, ${generatedItems.body ? BODY_ARG_NAME : "undefined"}, requestAdapter);`;
 }
 
-function getReturnType(responses: OperationResponses): CodegenRTE<string> {
-  const { success } = responses;
+function getReturnType(
+  responses: Record<string, ResponseItemOrRef>
+): CodegenRTE<string> {
+  const successfulResponse = getSuccessfulResponse(responses);
+
+  if (successfulResponse == null) {
+    return RTE.right("void");
+  }
 
   return pipe(
-    getParsedItem(success),
+    getParsedItem(successfulResponse),
     RTE.map((response) => {
-      if (response.item._tag === "TextResponse") {
-        return "string";
+      if (response.item._tag === "ParsedEmptyResponse") {
+        return "void";
+      }
+
+      if (response.item._tag === "ParsedFileResponse") {
+        return "Blob";
       }
 
       const { type } = response.item;
@@ -297,10 +311,18 @@ function getReturnType(responses: OperationResponses): CodegenRTE<string> {
   );
 }
 
+function getSuccessfulResponse(
+  responses: Record<string, ResponseItemOrRef>
+): ResponseItemOrRef | undefined {
+  const successfulCode = Object.keys(responses).find((c) => c.startsWith("2"));
+
+  return successfulCode ? responses[successfulCode] : undefined;
+}
+
 function requestParametersMapName(operationId: string): string {
   return `${capitalize(operationId, "pascal")}RequestParameters`;
 }
 
 function requestDefinitionName(operationId: string): string {
-  return `${capitalize(operationId, "camel")}RequestDefinition`;
+  return `${capitalize(operationId, "camel")}Operation`;
 }

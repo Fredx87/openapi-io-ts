@@ -3,26 +3,21 @@ import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
 import { OpenAPIV3 } from "openapi-types";
+import { OperationMethod } from "../common/operation";
 import { toValidVariableName } from "../common/utils";
 import { BodyItemOrRef, parseBody } from "./body";
 import { parsedItem } from "./common";
 import { modifyParserOutput, ParserContext, ParserRTE } from "./context";
 import { ParameterItemOrRef, parseParameter } from "./parameter";
 import { parseResponse, ResponseItemOrRef } from "./response";
-
-type OperationMethod = "get" | "post" | "put" | "delete";
-
-export interface OperationResponses {
-  success: ResponseItemOrRef;
-  errors: Record<string, ResponseItemOrRef>;
-}
+import * as gen from "io-ts-codegen";
 
 export type ParsedOperation = {
   path: string;
   method: OperationMethod;
   parameters: ParameterItemOrRef[];
   body: O.Option<BodyItemOrRef>;
-  responses: OperationResponses;
+  responses: Record<string, ResponseItemOrRef>;
 };
 
 export function parseAllPaths(): ParserRTE<void> {
@@ -150,7 +145,7 @@ function parseOperationParameters(
 
   return pipe(
     params,
-    RTE.traverseSeqArray(parseParameter),
+    RTE.traverseSeqArray((p) => parseParameter("", p)),
     RTE.map((res) => res as ParameterItemOrRef[])
   );
 }
@@ -173,53 +168,16 @@ function parseOperationBody(
 
 function parseOperationResponses(
   responses?: OpenAPIV3.ResponsesObject
-): ParserRTE<OperationResponses> {
+): ParserRTE<Record<string, ResponseItemOrRef>> {
   if (responses == null) {
     return RTE.right({
-      success: parsedItem({ _tag: "TextResponse" }, "SuccessfulResponse"),
-      errors: {},
+      "2XX": parsedItem(
+        { _tag: "ParsedJsonResponse", type: gen.unknownType },
+        "SuccessfulResponse"
+      ),
     });
   }
 
-  const { left: errorResponses, right: successfulResponses } = pipe(
-    responses,
-    R.partitionWithIndex((code) => +code >= 200 && +code < 300)
-  );
-
-  return pipe(
-    parseSuccessfulResponses(successfulResponses),
-    RTE.bindTo("success"),
-    RTE.bind("errors", () => parseErrorResponses(errorResponses)),
-    RTE.map(({ success, errors }) => ({
-      success,
-      errors,
-    }))
-  );
-}
-
-function parseSuccessfulResponses(
-  responses: Record<
-    string,
-    OpenAPIV3.ReferenceObject | OpenAPIV3.ResponseObject
-  >
-): ParserRTE<ResponseItemOrRef> {
-  const values = Object.values(responses);
-
-  if (values.length === 0) {
-    return RTE.right(
-      parsedItem({ _tag: "TextResponse" }, "SuccessfulResponse")
-    );
-  }
-
-  return parseResponse("SuccessfulResponse", values[0]);
-}
-
-function parseErrorResponses(
-  responses: Record<
-    string,
-    OpenAPIV3.ReferenceObject | OpenAPIV3.ResponseObject
-  >
-): ParserRTE<OperationResponses["errors"]> {
   return pipe(
     responses,
     R.traverseWithIndex(RTE.readerTaskEitherSeq)((code, response) =>

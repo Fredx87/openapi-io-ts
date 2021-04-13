@@ -5,13 +5,13 @@ export interface BaseParameter {
   name: string;
 }
 
-export interface JsonStyleParameter extends BaseParameter {
-  style: "json";
+export interface JsonParameter extends BaseParameter {
+  _tag: "JsonParameter";
 }
 
-export interface FormStyleParameter extends BaseParameter {
-  style: "form";
+export interface FormParameter extends BaseParameter {
+  _tag: "FormParameter";
   explode: boolean;
 }
 
-export type OperationParameter = JsonStyleParameter | FormStyleParameter;
+export type OperationParameter = JsonParameter | FormParameter;

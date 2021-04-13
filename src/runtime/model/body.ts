@@ -15,4 +15,13 @@ export interface JsonBody {
   _tag: "JsonBody";
 }
 
-export type OperationBody = BinaryBody | FormBody | MultipartBody | JsonBody;
+export interface TextBody {
+  _tag: "TextBody";
+}
+
+export type OperationBody =
+  | BinaryBody
+  | FormBody
+  | MultipartBody
+  | JsonBody
+  | TextBody;

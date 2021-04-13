@@ -13,16 +13,23 @@ import {
 } from "./common";
 import { ParserRTE } from "./context";
 
-interface ParsedJsonResponse {
-  _tag: "JsonResponse";
+export interface ParsedEmptyResponse {
+  _tag: "ParsedEmptyResponse";
+}
+
+export interface ParsedFileResponse {
+  _tag: "ParsedFileResponse";
+}
+
+export interface ParsedJsonResponse {
+  _tag: "ParsedJsonResponse";
   type: gen.TypeDeclaration | gen.TypeReference;
 }
 
-interface ParsedTextResponse {
-  _tag: "TextResponse";
-}
-
-export type ParsedResponse = ParsedJsonResponse | ParsedTextResponse;
+export type ParsedResponse =
+  | ParsedEmptyResponse
+  | ParsedFileResponse
+  | ParsedJsonResponse;
 
 export type ResponseItemOrRef =
   | ParsedItem<ParsedResponse>
@@ -47,12 +54,31 @@ export function parseResponseObject(
 
   const jsonSchema = content?.[JSON_MEDIA_TYPE]?.schema;
 
-  if (jsonSchema == null) {
-    return RTE.right(parsedItem({ _tag: "TextResponse" }, name));
+  if (jsonSchema != null) {
+    return pipe(
+      getOrCreateType(name, jsonSchema),
+      RTE.map((type) => parsedItem({ _tag: "ParsedJsonResponse", type }, name))
+    );
+  }
+
+  const contents = content && Object.values(content);
+
+  if (contents == null || contents.length === 0 || contents[0].schema == null) {
+    return RTE.right(parsedItem({ _tag: "ParsedEmptyResponse" }, name));
+  }
+
+  const firstContentSchema = contents[0].schema;
+
+  if (
+    !JsonReference.is(firstContentSchema) &&
+    firstContentSchema.type === "string" &&
+    firstContentSchema.format === "binary"
+  ) {
+    return RTE.right(parsedItem({ _tag: "ParsedFileResponse" }, name));
   }
 
   return pipe(
-    getOrCreateType(name, jsonSchema),
-    RTE.map((type) => parsedItem({ _tag: "JsonResponse", type }, name))
+    getOrCreateType(name, firstContentSchema),
+    RTE.map((type) => parsedItem({ _tag: "ParsedJsonResponse", type }, name))
   );
 }

@@ -85,10 +85,10 @@ function encodeRequestParameter(
   parameter: OperationParameter,
   value: unknown
 ): Array<[name: string, value: string]> {
-  switch (parameter.style) {
-    case "json":
+  switch (parameter._tag) {
+    case "JsonParameter":
       return [[name, JSON.stringify(value)]];
-    case "form":
+    case "FormParameter":
       return encodeFormParameter(name, parameter.explode, value);
   }
 }
@@ -163,6 +163,9 @@ function prepareBody(
   }
 
   switch (body._tag) {
+    case "TextBody": {
+      return TE.right(requestBody as string);
+    }
     case "BinaryBody": {
       return TE.right(requestBody as Blob);
     }

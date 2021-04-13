@@ -120,7 +120,7 @@ function parseParameterComponent(
   const generatedName = toValidVariableName(name, "camel");
 
   return pipe(
-    parseParameterObject(parameter),
+    parseParameterObject(generatedName, parameter),
     RTE.map((res) => parsedItem(res.item, generatedName)),
     RTE.chain((item) =>
       modifyParserOutput((draft) => {

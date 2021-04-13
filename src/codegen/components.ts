@@ -5,7 +5,7 @@ import { ParsedBody } from "../parser/body";
 import { ParsedItem } from "../parser/common";
 import { ParsedParameter } from "../parser/parameter";
 import { ParsedResponse } from "../parser/response";
-import { generateRequestBody } from "./body";
+import { generateOperationBody, generateOperationBodySchema } from "./body";
 import {
   generateSchemaIfDeclaration,
   getImports,
@@ -18,7 +18,7 @@ import {
 } from "./common";
 import { CodegenContext, CodegenRTE } from "./context";
 import { generateParameterDefinition } from "./parameter";
-import { generateResponseDefinition } from "./response";
+import { generateOperationResponse } from "./response";
 import { generateSchema } from "./schema";
 
 export function generateComponents(): CodegenRTE<void> {
@@ -65,13 +65,13 @@ function writeParameterFile(
   parameter: ParsedItem<ParsedParameter>
 ): CodegenRTE<void> {
   const content = `${getImports()}
-    import { ParameterDefinition } from "${RUNTIME_PACKAGE}";
+    import { OperationParameter } from "${RUNTIME_PACKAGE}";
     
     ${generateSchemaIfDeclaration(parameter.item.type)}
     
     export const ${
       parameter.name
-    }: ParameterDefinition = ${generateParameterDefinition(parameter.item)}`;
+    }: OperationParameter = ${generateParameterDefinition(parameter.item)}`;
 
   return writeGeneratedFile(PARAMETERS_PATH, `${parameter.name}.ts`, content);
 }
@@ -86,7 +86,7 @@ function writeResponseFile(
   response: ParsedItem<ParsedResponse>
 ): CodegenRTE<void> {
   return pipe(
-    generateResponseDefinition(response),
+    generateOperationResponse(response),
     RTE.map((def) => `export const ${response.name} = ${def};`),
     RTE.chain((content) =>
       writeGeneratedFile(RESPONSES_PATH, `${response.name}.ts`, content)
@@ -104,17 +104,27 @@ function generateRequestBodies(
   );
 }
 
-function writeRequestBodyFile(body: ParsedItem<ParsedBody>): CodegenRTE<void> {
+function writeRequestBodyFile(
+  parsedBody: ParsedItem<ParsedBody>
+): CodegenRTE<void> {
   return pipe(
-    generateRequestBody(body),
-    RTE.right,
+    RTE.Do,
+    RTE.bind("schema", () =>
+      RTE.right(generateOperationBodySchema(parsedBody.name, parsedBody.item))
+    ),
+    RTE.bind("body", () => RTE.right(generateOperationBody(parsedBody))),
     RTE.map(
-      (def) => `import * as schemas from '../schemas';
-    
-    ${def}`
+      ({
+        schema,
+        body,
+      }) => `import { OperationBody } from "openapi-io-ts/dist/runtime";
+      import * as schemas from "../schemas";
+      ${schema}
+      
+      export const ${parsedBody.name}: OperationBody = ${body}`
     ),
     RTE.chain((content) =>
-      writeGeneratedFile(REQUEST_BODIES_PATH, `${body.name}.ts`, content)
+      writeGeneratedFile(REQUEST_BODIES_PATH, `${parsedBody.name}.ts`, content)
     )
   );
 }
