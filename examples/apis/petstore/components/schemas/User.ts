@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 
-export const User = t.type({
+export const User = t.partial({
   id: t.number,
   username: t.string,
   firstName: t.string,
@@ -12,12 +12,12 @@ export const User = t.type({
 });
 
 export interface User {
-  id: number;
-  username: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  phone: string;
-  userStatus: number;
+  id?: number;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  password?: string;
+  phone?: string;
+  userStatus?: number;
 }

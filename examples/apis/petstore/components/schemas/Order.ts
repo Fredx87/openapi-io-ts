@@ -1,7 +1,7 @@
 import * as t from "io-ts";
 import { DateFromISOString } from "io-ts-types/DateFromISOString";
 
-export const Order = t.type({
+export const Order = t.partial({
   id: t.number,
   petId: t.number,
   quantity: t.number,
@@ -15,10 +15,10 @@ export const Order = t.type({
 });
 
 export interface Order {
-  id: number;
-  petId: number;
-  quantity: number;
-  shipDate: Date;
-  status: "placed" | "approved" | "delivered";
-  complete: boolean;
+  id?: number;
+  petId?: number;
+  quantity?: number;
+  shipDate?: Date;
+  status?: "placed" | "approved" | "delivered";
+  complete?: boolean;
 }

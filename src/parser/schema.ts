@@ -140,7 +140,7 @@ function parseProperty(
       gen.property(
         name,
         t,
-        parentSchema.required && !parentSchema.required.includes(name)
+        parentSchema.required ? !parentSchema.required.includes(name) : true
       )
     )
   );
