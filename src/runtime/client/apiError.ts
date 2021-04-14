@@ -37,13 +37,13 @@ export function decodeError(errors: t.Errors): DecodeError {
 }
 
 export interface ContentParseError {
-  type: "ContentParseError";
+  _tag: "ContentParseError";
   error: Error;
 }
 
 export function contentParseError(error: Error): ContentParseError {
   return {
-    type: "ContentParseError",
+    _tag: "ContentParseError",
     error,
   };
 }

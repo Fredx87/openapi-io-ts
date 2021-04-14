@@ -1,1 +1,4 @@
-export type HttpRequestAdapter = (req: Request) => Promise<Response>;
+export type HttpRequestAdapter = (
+  url: string,
+  req: RequestInit
+) => Promise<Response>;

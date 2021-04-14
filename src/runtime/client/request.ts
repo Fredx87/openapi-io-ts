@@ -16,17 +16,18 @@ export function request<ReturnType>(
 ): TE.TaskEither<ApiError, ApiResponse<ReturnType>> {
   return pipe(
     prepareRequest(operation, requestParameters, requestBody),
-    TE.chain((args) => performRequest(args, requestAdapter)),
+    TE.chain(([url, init]) => performRequest(url, init, requestAdapter)),
     TE.chain((response) => parseResponse(response, operation.responses))
   );
 }
 
 function performRequest(
-  req: Request,
+  url: string,
+  init: RequestInit,
   requestAdapter: HttpRequestAdapter
 ): TE.TaskEither<ApiError, Response> {
   return TE.tryCatch(
-    () => requestAdapter(req),
+    () => requestAdapter(url, init),
     (e) => requestError(E.toError(e))
   );
 }

@@ -8,16 +8,21 @@ export function prepareRequest(
   operation: Operation,
   requestParameters: Record<string, unknown>,
   requestBody: unknown
-): TE.TaskEither<ApiError, Request> {
+): TE.TaskEither<ApiError, [url: string, init: RequestInit]> {
   return pipe(
     TE.Do,
     TE.bind("url", () => prepareUrl(operation, requestParameters)),
     TE.bind("headers", () => prepareHeaders(operation, requestParameters)),
     TE.bind("body", () => prepareBody(operation.body, requestBody)),
-    TE.map(
-      ({ url, headers, body }) =>
-        new Request(url, { body, headers, method: operation.method })
-    )
+    TE.map(({ url, headers, body }) => {
+      const init: RequestInit = {
+        method: operation.method,
+        body,
+        headers,
+      };
+
+      return [url, init];
+    })
   );
 }
 
@@ -40,7 +45,10 @@ function prepareUrl(
         requestParameters
       )
     ),
-    TE.map(({ path, queryString }) => `${path}${queryString}`)
+    TE.map(
+      ({ path, queryString }) =>
+        `${path}${queryString ? `?${queryString}` : ""}`
+    )
   );
 }
 
