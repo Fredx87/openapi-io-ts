@@ -12,8 +12,6 @@ export type UploadFileRequestParameters = {
   petId: number;
 };
 
-export type UploadFileRequestBodySchema = Blob;
-
 export const uploadFileOperation: Operation = {
   path: "/pet/{petId}/uploadImage",
   method: "post",
@@ -38,6 +36,6 @@ export const uploadFileOperation: Operation = {
 
 export const uploadFile = (requestAdapter: HttpRequestAdapter) => (
   params: UploadFileRequestParameters,
-  body: UploadFileRequestBodySchema
+  body: Blob
 ): TaskEither<ApiError, ApiResponse<schemas.ApiResponse>> =>
   request(uploadFileOperation, params, body, requestAdapter);

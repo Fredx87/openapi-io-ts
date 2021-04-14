@@ -12,8 +12,6 @@ export type UpdatePetWithFormRequestParameters = {
   petId: number;
 };
 
-export type UpdatePetWithFormRequestBodySchema = schemas.Body;
-
 export const updatePetWithFormOperation: Operation = {
   path: "/pet/{petId}",
   method: "post",
@@ -36,6 +34,6 @@ export const updatePetWithFormOperation: Operation = {
 
 export const updatePetWithForm = (requestAdapter: HttpRequestAdapter) => (
   params: UpdatePetWithFormRequestParameters,
-  body: UpdatePetWithFormRequestBodySchema
+  body: schemas.Body
 ): TaskEither<ApiError, ApiResponse<void>> =>
   request(updatePetWithFormOperation, params, body, requestAdapter);

@@ -1,6 +1,15 @@
-import { ParsedBody } from "../parser/body";
+import { BodyItemOrRef, ParsedBody } from "../parser/body";
 import { ParsedItem } from "../parser/common";
 import * as gen from "io-ts-codegen";
+import {
+  generateSchemaIfDeclaration,
+  getItemOrRefPrefix,
+  getParsedItem,
+  isParsedItem,
+} from "./common";
+import { CodegenRTE } from "./context";
+import * as RTE from "fp-ts/ReaderTaskEither";
+import { pipe } from "fp-ts/function";
 
 export function generateOperationBody(body: ParsedItem<ParsedBody>): string {
   switch (body.item._tag) {
@@ -33,33 +42,47 @@ export function generateOperationBody(body: ParsedItem<ParsedBody>): string {
   }
 }
 
-export function generateOperationBodySchema(
-  name: string,
-  body: ParsedBody
-): string {
-  if (body._tag === "ParsedTextBody") {
-    return `export type ${name}Schema = string;`;
+export function generateOperationBodySchema(body: ParsedBody): string {
+  if (body._tag === "ParsedBinaryBody" || body._tag === "ParsedTextBody") {
+    return "";
   }
 
-  if (body._tag === "ParsedBinaryBody") {
-    return `export type ${name}Schema = Blob;`;
-  }
-
-  return `export type ${name}Schema = ${getBodyStaticType(body)};`;
+  return generateSchemaIfDeclaration(body.type);
 }
 
-function getBodyStaticType(body: ParsedBody): string {
+export function getBodyOrRefStaticType(
+  itemOrRef: BodyItemOrRef
+): CodegenRTE<string> {
+  if (isParsedItem(itemOrRef)) {
+    return RTE.right(getBodyStaticType(itemOrRef.item));
+  }
+
+  return pipe(
+    getParsedItem(itemOrRef),
+    RTE.map((body) =>
+      getBodyStaticType(body.item, getItemOrRefPrefix(itemOrRef))
+    )
+  );
+}
+
+function getBodyStaticType(body: ParsedBody, prefix = ""): string {
   switch (body._tag) {
     case "ParsedBinaryBody": {
       return "Blob";
     }
+    case "ParsedTextBody": {
+      return "string";
+    }
     case "ParsedFormBody":
     case "ParsedMultipartBody":
     case "ParsedJsonBody": {
-      return gen.printStatic(body.type);
-    }
-    case "ParsedTextBody": {
-      return "string";
+      const { type } = body;
+
+      if (type.kind === "TypeDeclaration") {
+        return `${prefix}${type.name}`;
+      }
+
+      return gen.printStatic(type);
     }
   }
 }

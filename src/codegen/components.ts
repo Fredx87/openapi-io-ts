@@ -110,7 +110,7 @@ function writeRequestBodyFile(
   return pipe(
     RTE.Do,
     RTE.bind("schema", () =>
-      RTE.right(generateOperationBodySchema(parsedBody.name, parsedBody.item))
+      RTE.right(generateOperationBodySchema(parsedBody.item))
     ),
     RTE.bind("body", () => RTE.right(generateOperationBody(parsedBody))),
     RTE.map(

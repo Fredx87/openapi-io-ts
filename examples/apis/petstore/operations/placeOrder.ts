@@ -8,8 +8,6 @@ import {
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
 
-export type PlaceOrderRequestBodySchema = schemas.Order;
-
 export const placeOrderOperation: Operation = {
   path: "/store/order",
   method: "post",
@@ -28,6 +26,6 @@ export const placeOrderOperation: Operation = {
 };
 
 export const placeOrder = (requestAdapter: HttpRequestAdapter) => (
-  body: PlaceOrderRequestBodySchema
+  body: schemas.Order
 ): TaskEither<ApiError, ApiResponse<schemas.Order>> =>
   request(placeOrderOperation, {}, body, requestAdapter);

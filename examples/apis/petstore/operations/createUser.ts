@@ -8,8 +8,6 @@ import {
 } from "openapi-io-ts/dist/runtime";
 import { TaskEither } from "fp-ts/TaskEither";
 
-export type CreateUserRequestBodySchema = schemas.User;
-
 export const createUserOperation: Operation = {
   path: "/user",
   method: "post",
@@ -22,6 +20,6 @@ export const createUserOperation: Operation = {
 };
 
 export const createUser = (requestAdapter: HttpRequestAdapter) => (
-  body: CreateUserRequestBodySchema
+  body: schemas.User
 ): TaskEither<ApiError, ApiResponse<void>> =>
   request(createUserOperation, {}, body, requestAdapter);

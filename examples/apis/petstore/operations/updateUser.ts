@@ -13,8 +13,6 @@ export type UpdateUserRequestParameters = {
   username: string;
 };
 
-export type UpdateUserRequestBodySchema = schemas.User;
-
 export const updateUserOperation: Operation = {
   path: "/user/{username}",
   method: "put",
@@ -31,6 +29,6 @@ export const updateUserOperation: Operation = {
 
 export const updateUser = (requestAdapter: HttpRequestAdapter) => (
   params: UpdateUserRequestParameters,
-  body: UpdateUserRequestBodySchema
+  body: schemas.User
 ): TaskEither<ApiError, ApiResponse<void>> =>
   request(updateUserOperation, params, body, requestAdapter);

@@ -1,3 +1,4 @@
+import * as schemas from "../components/schemas";
 import * as requestBodies from "../components/requestBodies";
 import {
   Operation,
@@ -19,7 +20,5 @@ export const createUsersWithArrayInputOperation: Operation = {
 
 export const createUsersWithArrayInput = (
   requestAdapter: HttpRequestAdapter
-) => (
-  body: requestBodies.UserArraySchema
-): TaskEither<ApiError, ApiResponse<void>> =>
+) => (body: Array<schemas.User>): TaskEither<ApiError, ApiResponse<void>> =>
   request(createUsersWithArrayInputOperation, {}, body, requestAdapter);

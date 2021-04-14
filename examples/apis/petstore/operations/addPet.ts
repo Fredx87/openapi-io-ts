@@ -1,3 +1,4 @@
+import * as schemas from "../components/schemas";
 import * as requestBodies from "../components/requestBodies";
 import {
   Operation,
@@ -18,6 +19,6 @@ export const addPetOperation: Operation = {
 };
 
 export const addPet = (requestAdapter: HttpRequestAdapter) => (
-  body: requestBodies.PetSchema
+  body: schemas.Pet
 ): TaskEither<ApiError, ApiResponse<void>> =>
   request(addPetOperation, {}, body, requestAdapter);

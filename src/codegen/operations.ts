@@ -25,7 +25,11 @@ import { generateOperationParameter } from "./parameter";
 import { ParameterItemOrRef } from "../parser/parameter";
 import { generateOperationResponses } from "./response";
 import { ResponseItemOrRef } from "../parser/response";
-import { generateOperationBody, generateOperationBodySchema } from "./body";
+import {
+  generateOperationBody,
+  generateOperationBodySchema,
+  getBodyOrRefStaticType,
+} from "./body";
 import {
   FORM_ENCODED_MEDIA_TYPE,
   JSON_MEDIA_TYPE,
@@ -51,9 +55,9 @@ interface GeneratedOperationParameters {
 }
 
 interface GeneratedBody {
-  bodyType: string;
-  requestBody?: string;
-  requestBodyName: string;
+  operationBody: string;
+  requestBody: string;
+  schema?: string;
 }
 
 interface GeneratedItems {
@@ -115,7 +119,7 @@ function generateFileContent(
       : ""
   }
 
-  ${items.body?.requestBody ?? ""}
+  ${items.body?.schema ?? ""}
 
   ${generateOperationObject(operationId, operation, items)}
 
@@ -230,7 +234,7 @@ function generateOperationObject(
       responses: ${generatedItems.responses},
       parameters: ${generatedItems.parameters?.definition ?? "[]"},
       requestDefaultHeaders: ${generatedItems.defaultHeaders},
-      ${generatedItems.body ? `body: ${generatedItems.body.bodyType}` : ""}
+      ${generatedItems.body ? `body: ${generatedItems.body.operationBody}` : ""}
   }`;
 }
 
@@ -242,18 +246,18 @@ function generateBody(
   }
 
   return pipe(
-    getParsedItem(itemOrRef.value),
-    RTE.map((body) => {
+    RTE.Do,
+    RTE.bind("body", () => getParsedItem(itemOrRef.value)),
+    RTE.bind("requestBody", () => getBodyOrRefStaticType(itemOrRef.value)),
+    RTE.map(({ body, requestBody }) => {
       const res: GeneratedBody = {
-        bodyType: isParsedItem(itemOrRef.value)
+        operationBody: isParsedItem(itemOrRef.value)
           ? generateOperationBody(body)
           : `${getItemOrRefPrefix(itemOrRef.value)}${body.name}`,
-        requestBody: isParsedItem(itemOrRef.value)
-          ? generateOperationBodySchema(body.name, body.item)
+        requestBody,
+        schema: isParsedItem(itemOrRef.value)
+          ? generateOperationBodySchema(itemOrRef.value.item)
           : undefined,
-        requestBodyName: `${getItemOrRefPrefix(itemOrRef.value)}${
-          body.name
-        }Schema`,
       };
 
       return res;
@@ -275,7 +279,7 @@ function generateRequest(
   }
 
   if (generatedItems.body) {
-    args.push(`${BODY_ARG_NAME}: ${generatedItems.body.requestBodyName}`);
+    args.push(`${BODY_ARG_NAME}: ${generatedItems.body.requestBody}`);
   }
 
   return `export const ${operationId} = (requestAdapter: HttpRequestAdapter) => (${args.join(
