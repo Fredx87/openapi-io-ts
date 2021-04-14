@@ -12,13 +12,15 @@ import { CodegenRTE, CodegenContext } from "./context";
 import { generateOperations } from "./operations";
 import { generateServices } from "./services";
 import * as RTE from "fp-ts/ReaderTaskEither";
+import { generateServers } from "./servers";
 
 export function main(): CodegenRTE<void> {
   return pipe(
     createDirs(),
     RTE.chain(() => generateComponents()),
     RTE.chain(() => generateOperations()),
-    RTE.chain(() => generateServices())
+    RTE.chain(() => generateServices()),
+    RTE.chain(() => generateServers())
   );
 }
 
