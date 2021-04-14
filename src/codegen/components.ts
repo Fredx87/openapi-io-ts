@@ -17,7 +17,7 @@ import {
   writeGeneratedFile,
 } from "./common";
 import { CodegenContext, CodegenRTE } from "./context";
-import { generateParameterDefinition } from "./parameter";
+import { generateOperationParameter } from "./parameter";
 import { generateOperationResponse } from "./response";
 import { generateSchema } from "./schema";
 
@@ -71,7 +71,7 @@ function writeParameterFile(
     
     export const ${
       parameter.name
-    }: OperationParameter = ${generateParameterDefinition(parameter.item)}`;
+    }: OperationParameter = ${generateOperationParameter(parameter.item)}`;
 
   return writeGeneratedFile(PARAMETERS_PATH, `${parameter.name}.ts`, content);
 }

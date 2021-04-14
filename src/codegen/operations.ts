@@ -21,7 +21,7 @@ import {
   RESPONSES_PATH,
 } from "./common";
 import { CodegenContext, CodegenRTE } from "./context";
-import { generateParameterDefinition } from "./parameter";
+import { generateOperationParameter } from "./parameter";
 import { ParameterItemOrRef } from "../parser/parameter";
 import { generateOperationResponses } from "./response";
 import { ResponseItemOrRef } from "../parser/response";
@@ -59,7 +59,7 @@ interface GeneratedBody {
 interface GeneratedItems {
   parameters?: GeneratedOperationParameters;
   body?: GeneratedBody;
-  successfulResponse: string;
+  responses: string;
   defaultHeaders: string;
   returnType: string;
 }
@@ -87,7 +87,7 @@ function generateItems(
       generateOperationParameters(operationId, operation.parameters)
     ),
     RTE.bind("body", () => generateBody(operation.body)),
-    RTE.bind("successfulResponse", () =>
+    RTE.bind("responses", () =>
       generateOperationResponses(operation.responses)
     ),
     RTE.bind("returnType", () => getReturnType(operation.responses)),
@@ -117,7 +117,7 @@ function generateFileContent(
 
   ${items.body?.requestBody ?? ""}
 
-  ${generateRequestDefinition(operationId, operation, items)}
+  ${generateOperationObject(operationId, operation, items)}
 
   ${generateRequest(operationId, items)}
   `;
@@ -176,7 +176,7 @@ function generateOperationParameterDefinition(
       if (parameter._tag === "ComponentRef") {
         return `${parameter.componentType}.${item.name}`;
       } else {
-        return generateParameterDefinition(item.item);
+        return generateOperationParameter(item.item);
       }
     })
   );
@@ -217,17 +217,17 @@ function generateRequestParameter(
   );
 }
 
-function generateRequestDefinition(
+function generateOperationObject(
   operationId: string,
   operation: ParsedOperation,
   generatedItems: GeneratedItems
 ): string {
   const { path, method } = operation;
 
-  return `export const ${requestDefinitionName(operationId)}: Operation = {
+  return `export const ${operationName(operationId)}: Operation = {
       path: "${path}",
       method: "${method}",
-      responses: ${generatedItems.successfulResponse},
+      responses: ${generatedItems.responses},
       parameters: ${generatedItems.parameters?.definition ?? "[]"},
       requestDefaultHeaders: ${generatedItems.defaultHeaders},
       ${generatedItems.body ? `body: ${generatedItems.body.bodyType}` : ""}
@@ -281,7 +281,7 @@ function generateRequest(
   return `export const ${operationId} = (requestAdapter: HttpRequestAdapter) => (${args.join(
     ", "
   )}): TaskEither<ApiError, ApiResponse<${generatedItems.returnType}>> =>
-      request(${requestDefinitionName(operationId)}, ${
+      request(${operationName(operationId)}, ${
     generatedItems.parameters ? PARAM_ARG_NAME : "{}"
   }, ${generatedItems.body ? BODY_ARG_NAME : "undefined"}, requestAdapter);`;
 }
@@ -402,6 +402,6 @@ function requestParametersMapName(operationId: string): string {
   return `${capitalize(operationId, "pascal")}RequestParameters`;
 }
 
-function requestDefinitionName(operationId: string): string {
+function operationName(operationId: string): string {
   return `${capitalize(operationId, "camel")}Operation`;
 }
