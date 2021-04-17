@@ -91,6 +91,10 @@ function parseString(
 }
 
 function parseEnum(enums: string[]): E.Either<Error, gen.TypeReference> {
+  if (enums.length === 1) {
+    return E.right(gen.literalCombinator(enums[0]));
+  }
+
   const literals = enums.map((e) => gen.literalCombinator(e));
   return E.right(gen.unionCombinator(literals));
 }
