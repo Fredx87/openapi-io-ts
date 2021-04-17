@@ -100,7 +100,9 @@ function parseOperation(
     RTE.bind("body", () =>
       parseOperationBody(operation.requestBody, operationId)
     ),
-    RTE.bind("responses", () => parseOperationResponses(operation.responses)),
+    RTE.bind("responses", () =>
+      parseOperationResponses(operation.responses, operationId)
+    ),
     RTE.map(({ parameters, body, responses }) => {
       const operation: ParsedOperation = {
         path,
@@ -167,7 +169,8 @@ function parseOperationBody(
 }
 
 function parseOperationResponses(
-  responses?: OpenAPIV3.ResponsesObject
+  responses: OpenAPIV3.ResponsesObject | undefined,
+  operationId: string
 ): ParserRTE<Record<string, ResponseItemOrRef>> {
   if (responses == null) {
     return RTE.right({
@@ -181,7 +184,10 @@ function parseOperationResponses(
   return pipe(
     responses,
     R.traverseWithIndex(RTE.readerTaskEitherSeq)((code, response) =>
-      parseResponse(`Response${code}`, response)
+      parseResponse(
+        `${toValidVariableName(operationId, "pascal")}Response${code}`,
+        response
+      )
     )
   );
 }

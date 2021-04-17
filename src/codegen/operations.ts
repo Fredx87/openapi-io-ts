@@ -24,7 +24,7 @@ import { CodegenContext, CodegenRTE } from "./context";
 import { generateOperationParameter } from "./parameter";
 import { ParameterItemOrRef } from "../parser/parameter";
 import { generateOperationResponses } from "./response";
-import { ResponseItemOrRef } from "../parser/response";
+import { ParsedJsonResponse, ResponseItemOrRef } from "../parser/response";
 import {
   generateOperationBody,
   generateOperationBodySchema,
@@ -35,6 +35,7 @@ import {
   JSON_MEDIA_TYPE,
   TEXT_PLAIN_MEDIA_TYPE,
 } from "../common/mediaTypes";
+import { ParsedItem } from "../parser/common";
 
 export function generateOperations(): CodegenRTE<void> {
   return pipe(
@@ -60,10 +61,15 @@ interface GeneratedBody {
   schema?: string;
 }
 
+interface GeneratedResponses {
+  schemas: string;
+  operationResponses: string;
+}
+
 interface GeneratedItems {
   parameters?: GeneratedOperationParameters;
   body?: GeneratedBody;
-  responses: string;
+  responses: GeneratedResponses;
   defaultHeaders: string;
   returnType: string;
 }
@@ -91,9 +97,7 @@ function generateItems(
       generateOperationParameters(operationId, operation.parameters)
     ),
     RTE.bind("body", () => generateBody(operation.body)),
-    RTE.bind("responses", () =>
-      generateOperationResponses(operation.responses)
-    ),
+    RTE.bind("responses", () => generateResponses(operation.responses)),
     RTE.bind("returnType", () => getReturnType(operation.responses)),
     RTE.bind("defaultHeaders", () => getDefaultHeaders(operation))
   );
@@ -120,6 +124,8 @@ function generateFileContent(
   }
 
   ${items.body?.schema ?? ""}
+
+  ${items.responses.schemas}
 
   ${generateOperationObject(operationId, operation, items)}
 
@@ -231,7 +237,7 @@ function generateOperationObject(
   return `export const ${operationName(operationId)}: Operation = {
       path: "${path}",
       method: "${method}",
-      responses: ${generatedItems.responses},
+      responses: ${generatedItems.responses.operationResponses},
       parameters: ${generatedItems.parameters?.definition ?? "[]"},
       requestDefaultHeaders: ${generatedItems.defaultHeaders},
       ${generatedItems.body ? `body: ${generatedItems.body.operationBody}` : ""}
@@ -263,6 +269,33 @@ function generateBody(
       return res;
     })
   );
+}
+
+function generateResponses(
+  responses: Record<string, ResponseItemOrRef>
+): CodegenRTE<GeneratedResponses> {
+  return pipe(
+    RTE.Do,
+    RTE.bind("schemas", () => generateResponsesSchemas(responses)),
+    RTE.bind("operationResponses", () => generateOperationResponses(responses))
+  );
+}
+
+function generateResponsesSchemas(
+  responses: Record<string, ResponseItemOrRef>
+): CodegenRTE<string> {
+  return RTE.right(
+    Object.values(responses)
+      .filter(isParsedJsonResponse)
+      .map((r) => generateSchemaIfDeclaration(r.item.type))
+      .join("\n")
+  );
+}
+
+function isParsedJsonResponse(
+  response: ResponseItemOrRef
+): response is ParsedItem<ParsedJsonResponse> {
+  return isParsedItem(response) && response.item._tag === "ParsedJsonResponse";
 }
 
 function generateRequest(
