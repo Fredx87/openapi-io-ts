@@ -1,13 +1,13 @@
+import { TaskEither } from "fp-ts/TaskEither";
 import * as t from "io-ts";
-import * as schemas from "../components/schemas";
 import {
-  Operation,
-  HttpRequestAdapter,
   ApiError,
   ApiResponse,
+  HttpRequestAdapter,
+  Operation,
   request,
 } from "openapi-io-ts/dist/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
+import * as schemas from "../components/schemas";
 
 export type FindPetsByStatusRequestParameters = {
   status: Array<"available" | "pending" | "sold">;

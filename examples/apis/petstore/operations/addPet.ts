@@ -1,13 +1,13 @@
-import * as schemas from "../components/schemas";
-import * as requestBodies from "../components/requestBodies";
+import { TaskEither } from "fp-ts/TaskEither";
 import {
-  Operation,
-  HttpRequestAdapter,
   ApiError,
   ApiResponse,
+  HttpRequestAdapter,
+  Operation,
   request,
 } from "openapi-io-ts/dist/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
+import * as requestBodies from "../components/requestBodies";
+import * as schemas from "../components/schemas";
 
 export const addPetOperation: Operation = {
   path: "/pet",

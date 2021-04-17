@@ -1,12 +1,12 @@
+import { TaskEither } from "fp-ts/TaskEither";
 import * as t from "io-ts";
 import {
-  Operation,
-  HttpRequestAdapter,
   ApiError,
   ApiResponse,
+  HttpRequestAdapter,
+  Operation,
   request,
 } from "openapi-io-ts/dist/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
 
 export type LoginUserRequestParameters = {
   username: string;

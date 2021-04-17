@@ -1,13 +1,13 @@
-import * as schemas from "../components/schemas";
-import * as parameters from "../components/parameters";
+import { TaskEither } from "fp-ts/TaskEither";
 import {
-  Operation,
-  HttpRequestAdapter,
   ApiError,
   ApiResponse,
+  HttpRequestAdapter,
+  Operation,
   request,
 } from "openapi-io-ts/dist/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
+import * as parameters from "../components/parameters";
+import * as schemas from "../components/schemas";
 
 export type GetUserByNameRequestParameters = {
   username: string;

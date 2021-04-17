@@ -2,11 +2,11 @@ import { HttpRequestAdapter } from "openapi-io-ts/dist/runtime";
 import { createUser } from "../operations/createUser";
 import { createUsersWithArrayInput } from "../operations/createUsersWithArrayInput";
 import { createUsersWithListInput } from "../operations/createUsersWithListInput";
+import { deleteUser } from "../operations/deleteUser";
+import { getUserByName } from "../operations/getUserByName";
 import { loginUser } from "../operations/loginUser";
 import { logoutUser } from "../operations/logoutUser";
-import { getUserByName } from "../operations/getUserByName";
 import { updateUser } from "../operations/updateUser";
-import { deleteUser } from "../operations/deleteUser";
 
 export const userServiceBuilder = (requestAdapter: HttpRequestAdapter) => ({
   createUser: createUser(requestAdapter),

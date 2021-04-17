@@ -11,7 +11,7 @@
   },
   "preferGlobal": true,
   "scripts": {
-    "start": "ts-node src/bin.ts -i ./examples/petstore.json -o ./examples/apis/petstore && eslint ./examples/apis/petstore --ext .ts --fix",
+    "start": "ts-node src/bin.ts -i ./examples/petstore.json -o ./examples/apis/petstore && prettier --write ./examples/apis/petstore",
     "test": "jest",
     "test:watch": "jest --watch",
     "check-examples": "tsc -p ./examples/tsconfig.json",

@@ -1,7 +1,9 @@
 import * as TE from "fp-ts/TaskEither";
+import * as E from "fp-ts/Either";
 import * as fs from "fs";
 import { pipe } from "fp-ts/function";
 import * as util from "util";
+import { formatFile } from "./format";
 
 export function createDir(path: string): TE.TaskEither<Error, void> {
   return pipe(
@@ -17,11 +19,17 @@ export function writeFile(
   name: string,
   content: string
 ): TE.TaskEither<Error, void> {
+  const fileName = `${path}/${name}`;
+
   return pipe(
-    TE.tryCatch(
-      () => util.promisify(fs.writeFile)(`${path}/${name}`, content),
-      (e) =>
-        new Error(`Cannot save file "${path}/${name}". Error: ${String(e)}`)
+    formatFile(fileName, content),
+    E.getOrElse(() => content),
+    TE.right,
+    TE.chain((formattedContent) =>
+      TE.tryCatch(
+        () => util.promisify(fs.writeFile)(fileName, formattedContent),
+        (e) => new Error(`Cannot save file "${fileName}". Error: ${String(e)}`)
+      )
     )
   );
 }
