@@ -93,6 +93,10 @@ function encodeRequestParameter(
   parameter: OperationParameter,
   value: unknown
 ): Array<[name: string, value: string]> {
+  if (value == null) {
+    return [];
+  }
+
   switch (parameter._tag) {
     case "JsonParameter":
       return [[name, JSON.stringify(value)]];
