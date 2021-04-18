@@ -1,5 +1,6 @@
 import * as t from "io-ts";
-import * as schemas from "./";
+import { Category } from "./Category";
+import { Tag } from "./Tag";
 
 export const Pet = t.intersection([
   t.type({
@@ -8,8 +9,8 @@ export const Pet = t.intersection([
   }),
   t.partial({
     id: t.number,
-    category: schemas.Category,
-    tags: t.array(schemas.Tag),
+    category: Category,
+    tags: t.array(Tag),
     status: t.union([
       t.literal("available"),
       t.literal("pending"),
@@ -20,9 +21,9 @@ export const Pet = t.intersection([
 
 export interface Pet {
   id?: number;
-  category?: schemas.Category;
+  category?: Category;
   name: string;
   photoUrls: Array<string>;
-  tags?: Array<schemas.Tag>;
+  tags?: Array<Tag>;
   status?: "available" | "pending" | "sold";
 }

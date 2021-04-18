@@ -53,7 +53,7 @@ function parseJsonReference(
         jsonPointer.tokens[3],
         "pascal"
       )}`;
-      return gen.customCombinator(name, name);
+      return gen.customCombinator(name, name, [name]);
     })
   );
 }
@@ -84,7 +84,9 @@ function parseString(
   }
 
   if (schema.format === "date" || schema.format === "date-time") {
-    return E.right(gen.customCombinator("Date", "DateFromISOString"));
+    return E.right(
+      gen.customCombinator("Date", "DateFromISOString", ["DateFromISOString"])
+    );
   }
 
   return E.right(gen.stringType);

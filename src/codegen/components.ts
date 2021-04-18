@@ -20,6 +20,7 @@ import { CodegenContext, CodegenRTE } from "./context";
 import { generateOperationParameter } from "./parameter";
 import { generateOperationResponse } from "./response";
 import { generateSchema } from "./schema";
+import * as gen from "io-ts-codegen";
 
 export function generateComponents(): CodegenRTE<void> {
   return pipe(
@@ -48,11 +49,32 @@ function generateSchemas(
 function writeSchemaFile(
   declaration: ParsedItem<TypeDeclaration>
 ): CodegenRTE<void> {
-  const content = `${getImports()}
+  const content = `${getSchemaFileImports(declaration)}
 
-    ${generateSchema(declaration.item)}`;
+    ${generateSchema(declaration.item).replace(/schemas./g, "")}`;
 
   return writeGeneratedFile(SCHEMAS_PATH, `${declaration.name}.ts`, content);
+}
+
+function getSchemaFileImports(
+  declaration: ParsedItem<TypeDeclaration>
+): string {
+  const dependencies = gen.getNodeDependencies(declaration.item);
+  const imports = dependencies.map((d) => {
+    if (d.startsWith("schemas.")) {
+      const schemaName = d.replace("schemas.", "");
+      return `import { ${schemaName} } from "./${schemaName}"`;
+    }
+
+    if (d === "DateFromISOString") {
+      return `import { DateFromISOString } from "io-ts-types/DateFromISOString"`;
+    }
+
+    return "";
+  });
+
+  return `import * as t from "io-ts";
+  ${imports.join("\n")}`;
 }
 
 function generateParameters(
