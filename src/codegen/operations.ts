@@ -389,7 +389,7 @@ function getContentTypeHeader(
           RTE.map((body) => {
             switch (body.item._tag) {
               case "ParsedBinaryBody": {
-                return body.item.mediaType;
+                return undefined;
               }
               case "ParsedFormBody": {
                 return FORM_ENCODED_MEDIA_TYPE;
