@@ -1,5 +1,5 @@
 import { pipe } from "fp-ts/function";
-import * as RTE from "fp-ts/ReaderTaskEither";
+import * as R from "fp-ts/Reader";
 import { Environment, ProgramRTE } from "../environment";
 import { ParserOutput } from "../parser/parserOutput";
 import { CodegenContext } from "./context";
@@ -9,7 +9,7 @@ import { main } from "./main";
 export function codegen(parserOutput: ParserOutput): ProgramRTE<void> {
   return pipe(
     main(),
-    RTE.local(
+    R.local(
       (env: Environment): CodegenContext => ({
         ...env,
         writeFile,

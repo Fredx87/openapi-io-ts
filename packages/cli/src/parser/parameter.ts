@@ -2,8 +2,8 @@ import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { JsonReference } from "../common/JSONReference";
-import { OperationParameterIn } from "../common/operation";
+import { JsonReference } from "./JSONReference";
+import { OperationParameterIn, JSON_MEDIA_TYPE } from "@openapi-io-ts/core";
 import {
   ComponentRef,
   createComponentRef,
@@ -11,7 +11,6 @@ import {
   parsedItem,
   ParsedItem,
 } from "./common";
-import { JSON_MEDIA_TYPE } from "../common/mediaTypes";
 import { ParserContext, ParserRTE } from "./context";
 
 export interface ParsedBaseParameter {

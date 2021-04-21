@@ -1,4 +1,4 @@
-import { OperationParameterIn } from "../../common/operation";
+import { OperationParameterIn } from "@openapi-io-ts/core";
 
 export interface BaseParameter {
   in: OperationParameterIn;

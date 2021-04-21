@@ -1,37 +1,10 @@
 {
-  "name": "openapi-io-ts",
-  "version": "1.0.0-alpha.0",
-  "description": "",
-  "files": [
-    "dist"
+  "name": "@openapi-io-ts/root",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "examples/*"
   ],
-  "main": "dist/index.js",
-  "bin": {
-    "openapi-io-ts": "dist/bin.js"
-  },
-  "preferGlobal": true,
-  "scripts": {
-    "start": "ts-node src/bin.ts -i ./examples/petstore.json -o ./examples/apis/petstore && prettier --write ./examples/apis/petstore",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "check-examples": "tsc -p ./examples/tsconfig.json",
-    "build": "rm -rf ./dist && tsc",
-    "lint": "eslint . --ext .ts"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@apidevtools/swagger-parser": "^10.0.2",
-    "@types/yargs": "^16.0.0",
-    "fp-ts": "^2.9.5",
-    "immer": "^8.0.1",
-    "io-ts": "^2.2.14",
-    "io-ts-codegen": "^0.4.5",
-    "io-ts-types": "^0.5.14",
-    "openapi-types": "^7.2.3",
-    "typescript": "^4.1.5",
-    "yargs": "^16.2.0"
-  },
   "devDependencies": {
     "@types/jest": "^26.0.20",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
@@ -45,7 +18,8 @@
     "lint-staged": "^10.5.4",
     "prettier": "^2.2.1",
     "ts-jest": "^26.5.1",
-    "ts-node": "^9.1.1"
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.4"
   },
   "husky": {
     "hooks": {

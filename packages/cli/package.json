@@ -1,0 +1,34 @@
+{
+  "name": "@openapi-io-ts/cli",
+  "version": "0.1.0",
+  "source": "src/index.ts",
+  "main": "dist/index.js",
+  "bin": {
+    "openapi-io-ts-cli": "dist/bin.js"
+  },
+  "exports": "./dist/index.modern.js",
+  "module": "dist/index.module.js",
+  "unpkg": "dist/index.umd.js",
+  "scripts": {
+    "build": "microbundle --target node"
+  },
+  "dependencies": {
+    "@apidevtools/swagger-parser": "^10.0.2",
+    "@openapi-io-ts/core": "^0.1.0",
+    "@types/node": "^14.14.41",
+    "@types/yargs": "^16.0.0",
+    "fp-ts": "^2.10.4",
+    "immer": "^8.0.1",
+    "io-ts": "^2.2.16",
+    "io-ts-codegen": "^0.4.5",
+    "openapi-types": "^7.2.3",
+    "yargs": "^16.2.0"
+  },
+  "devDependencies": {
+    "microbundle": "^0.13.0",
+    "typescript": "^4.2.4"
+  },
+  "peerDependencies": {
+    "typescript": ">4.0.0"
+  }
+}

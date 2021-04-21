@@ -2,8 +2,8 @@ import * as E from "fp-ts/Either";
 import { pipe } from "fp-ts/function";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { createJsonPointer, JsonReference } from "../common/JSONReference";
-import { toValidVariableName } from "../common/utils";
+import { createJsonPointer, JsonReference } from "./JSONReference";
+import { toValidVariableName } from "../utils";
 import { checkValidReference } from "./common";
 
 export function parseSchema(

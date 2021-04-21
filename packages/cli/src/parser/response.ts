@@ -2,7 +2,7 @@ import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { JsonReference } from "../common/JSONReference";
+import { JsonReference } from "./JSONReference";
 import {
   createComponentRef,
   getOrCreateType,
@@ -10,7 +10,7 @@ import {
   ParsedItem,
   ComponentRef,
 } from "./common";
-import { JSON_MEDIA_TYPE } from "../common/mediaTypes";
+import { JSON_MEDIA_TYPE } from "@openapi-io-ts/core";
 import { ParserRTE } from "./context";
 
 export interface ParsedEmptyResponse {

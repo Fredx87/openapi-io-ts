@@ -3,11 +3,7 @@ import * as E from "fp-ts/Either";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import {
-  createJsonPointer,
-  JsonPointer,
-  JsonReference,
-} from "../common/JSONReference";
+import { createJsonPointer, JsonPointer, JsonReference } from "./JSONReference";
 import { ParsedBody } from "./body";
 import { ParserRTE, readParserOutput } from "./context";
 import { ParsedParameter } from "./parameter";

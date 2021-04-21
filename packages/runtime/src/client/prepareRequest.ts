@@ -2,7 +2,7 @@ import { Operation, OperationParameter, OperationBody } from "../model";
 import * as TE from "fp-ts/TaskEither";
 import { ApiError, requestError } from "./apiError";
 import { pipe } from "fp-ts/function";
-import { OperationParameterIn } from "../../common/operation";
+import { OperationParameterIn } from "@openapi-io-ts/core";
 
 export function prepareRequest(
   operation: Operation,

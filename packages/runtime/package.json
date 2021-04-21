@@ -1,0 +1,24 @@
+{
+  "name": "@openapi-io-ts/runtime",
+  "version": "0.1.0",
+  "source": "src/index.ts",
+  "main": "dist/index.js",
+  "exports": "./dist/index.modern.js",
+  "module": "dist/index.module.js",
+  "unpkg": "dist/index.umd.js",
+  "scripts": {
+    "build": "microbundle"
+  },
+  "dependencies": {
+    "@openapi-io-ts/core": "^0.1.0"
+  },
+  "peerDependencies": {
+    "fp-ts": "^2.5.0",
+    "io-ts": "^2.2.0"
+  },
+  "devDependencies": {
+    "fp-ts": "^2.10.4",
+    "io-ts": "^2.2.16",
+    "microbundle": "^0.13.0"
+  }
+}

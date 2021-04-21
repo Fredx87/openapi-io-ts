@@ -4,7 +4,7 @@ import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
 import * as gen from "io-ts-codegen";
-import { capitalize } from "../common/utils";
+import { capitalize } from "../utils";
 import { BodyItemOrRef } from "../parser/body";
 import { ParsedOperation } from "../parser/operation";
 import {
@@ -34,7 +34,7 @@ import {
   FORM_ENCODED_MEDIA_TYPE,
   JSON_MEDIA_TYPE,
   TEXT_PLAIN_MEDIA_TYPE,
-} from "../common/mediaTypes";
+} from "@openapi-io-ts/core";
 import { ParsedItem } from "../parser/common";
 
 export function generateOperations(): CodegenRTE<void> {

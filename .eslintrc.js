@@ -4,7 +4,7 @@ module.exports = {
   plugins: ["@typescript-eslint", "fp-ts", "prettier"],
   parserOptions: {
     tsconfigRootDir: __dirname,
-    project: ["./tsconfig.json", "./examples/tsconfig.json"],
+    project: ["./packages/*/tsconfig.json", "./examples/*/tsconfig.json"],
   },
   extends: [
     "eslint:recommended",

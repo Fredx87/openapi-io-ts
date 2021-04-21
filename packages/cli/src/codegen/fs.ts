@@ -10,7 +10,8 @@ export function createDir(path: string): TE.TaskEither<Error, void> {
     TE.tryCatch(
       () => util.promisify(fs.mkdir)(path, { recursive: true }),
       (e) => new Error(`Cannot create directory "${path}". Error: ${String(e)}`)
-    )
+    ),
+    TE.map(() => void 0)
   );
 }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as yargs from "yargs";
-import { main } from ".";
+import { main } from "./main";
 
 const argv = yargs
   .usage("Usage: $0 [options]")

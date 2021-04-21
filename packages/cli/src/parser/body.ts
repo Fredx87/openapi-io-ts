@@ -2,7 +2,7 @@ import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { JsonReference } from "../common/JSONReference";
+import { JsonReference } from "./JSONReference";
 import {
   createComponentRef,
   getOrCreateType,
@@ -15,7 +15,7 @@ import {
   TEXT_PLAIN_MEDIA_TYPE,
   FORM_ENCODED_MEDIA_TYPE,
   MULTIPART_FORM_MEDIA_TYPE,
-} from "../common/mediaTypes";
+} from "@openapi-io-ts/core";
 import { ParserRTE } from "./context";
 
 interface BaseParsedBody {

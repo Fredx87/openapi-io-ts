@@ -1,4 +1,4 @@
-import { OperationMethod } from "../../common/operation";
+import { OperationMethod } from "@openapi-io-ts/core";
 import { OperationBody } from "./body";
 import { OperationParameter } from "./parameters";
 import { OperationResponses } from "./responses";
