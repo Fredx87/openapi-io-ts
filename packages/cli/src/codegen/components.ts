@@ -136,10 +136,7 @@ function writeRequestBodyFile(
     ),
     RTE.bind("body", () => RTE.right(generateOperationBody(parsedBody))),
     RTE.map(
-      ({
-        schema,
-        body,
-      }) => `import { OperationBody } from "openapi-io-ts/dist/runtime";
+      ({ schema, body }) => `import { OperationBody } from "${RUNTIME_PACKAGE}";
       import * as schemas from "../schemas";
       ${schema}
       
