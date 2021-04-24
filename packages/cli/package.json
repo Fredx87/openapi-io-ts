@@ -6,9 +6,11 @@
   "bin": {
     "openapi-io-ts-cli": "dist/bin.js"
   },
-  "exports": "./dist/index.modern.js",
   "module": "dist/index.module.js",
-  "unpkg": "dist/index.umd.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "microbundle --target node"
   },
