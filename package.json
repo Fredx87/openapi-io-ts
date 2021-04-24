@@ -5,6 +5,11 @@
     "packages/*",
     "examples/*"
   ],
+  "scripts": {
+    "start": "node packages/cli/dist/index.js -i ./examples/petstore.json -o ./examples/apis/petstore && prettier --write ./examples/apis/petstore",
+    "build": "lerna run build",
+    "test": "jest"
+  },
   "devDependencies": {
     "@types/jest": "^26.0.20",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
