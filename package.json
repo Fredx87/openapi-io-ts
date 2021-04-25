@@ -6,7 +6,6 @@
     "examples/*"
   ],
   "scripts": {
-    "start": "node packages/cli/dist/index.js -i ./examples/petstore.json -o ./examples/apis/petstore && prettier --write ./examples/apis/petstore",
     "build": "lerna run build",
     "test": "jest"
   },

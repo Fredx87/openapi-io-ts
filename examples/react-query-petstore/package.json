@@ -1,0 +1,58 @@
+{
+  "name": "@openapi-io-ts/example-react-query-petstore",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@chakra-ui/icons": "^1.0.10",
+    "@chakra-ui/react": "^1.5.1",
+    "@emotion/react": "^11",
+    "@emotion/styled": "^11",
+    "@openapi-io-ts/cli": "^0.1.0",
+    "@openapi-io-ts/runtime": "^0.1.0",
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
+    "@types/jest": "^26.0.15",
+    "@types/node": "^12.0.0",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
+    "@types/react-router-dom": "^5.1.7",
+    "fp-ts": "^2.10.4",
+    "framer-motion": "^4",
+    "io-ts": "^2.2.16",
+    "io-ts-types": "^0.5.16",
+    "prettier": "^2.2.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-hook-form": "^7.1.1",
+    "react-query": "^3.13.8",
+    "react-router-dom": "^5.2.0",
+    "react-scripts": "4.0.3",
+    "typescript": "^4.1.2",
+    "web-vitals": "^1.0.1"
+  },
+  "scripts": {
+    "generate": "openapi-io-ts -i petstore.yaml -o src/api && prettier --write ./src/api",
+    "start": "react-scripts start",
+    "prebuild": "yarn generate",
+    "build": "react-scripts build"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
