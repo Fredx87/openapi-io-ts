@@ -1,15 +1,14 @@
 {
   "name": "@openapi-io-ts/cli",
   "version": "0.1.0",
-  "source": "src/index.ts",
   "main": "dist/index.js",
-  "bin": {
-    "openapi-io-ts": "dist/bin.js"
-  },
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
+  "bin": {
+    "openapi-io-ts": "dist/bin.js"
+  },
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "yarn clean",
