@@ -10,18 +10,20 @@
     "dist"
   ],
   "scripts": {
+    "clean": "rimraf dist",
+    "prebuild": "yarn clean",
     "build": "microbundle"
   },
   "dependencies": {
     "@openapi-io-ts/core": "^0.1.0"
   },
-  "peerDependencies": {
-    "fp-ts": "^2.5.0",
-    "io-ts": "^2.2.0"
-  },
   "devDependencies": {
     "fp-ts": "^2.10.4",
     "io-ts": "^2.2.16",
     "microbundle": "^0.13.0"
+  },
+  "peerDependencies": {
+    "fp-ts": "^2.5.0",
+    "io-ts": "^2.2.0"
   }
 }

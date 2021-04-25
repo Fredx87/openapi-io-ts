@@ -11,6 +11,8 @@
     "dist"
   ],
   "scripts": {
+    "clean": "rimraf dist",
+    "prebuild": "yarn clean",
     "build": "tsc -p ."
   },
   "dependencies": {
