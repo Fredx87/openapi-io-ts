@@ -10,7 +10,7 @@ import * as t from "io-ts";
 import * as schemas from "../components/schemas";
 
 export type FindPetsByTagsRequestParameters = {
-  tags: Array<string> | undefined;
+  tags?: Array<string>;
 };
 
 export const findPetsByTagsOperation: Operation = {

@@ -213,14 +213,14 @@ function generateRequestParameter(
   return pipe(
     getParsedItem(itemOrRef),
     RTE.map((parameter) => {
+      const modifier = parameter.item.required ? "" : "?";
+
       const staticType =
         parameter.item.type.kind === "TypeDeclaration"
           ? `${getItemOrRefPrefix(parameter)}${parameter.name}`
           : gen.printStatic(parameter.item.type);
 
-      return `${parameter.name}: ${staticType} ${
-        !parameter.item.required ? `| undefined` : ""
-      };`;
+      return `${parameter.name}${modifier}: ${staticType};`;
     })
   );
 }

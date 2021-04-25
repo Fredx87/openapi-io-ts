@@ -9,8 +9,8 @@ import { TaskEither } from "fp-ts/TaskEither";
 
 export type UpdatePetWithFormRequestParameters = {
   petId: number;
-  name: string | undefined;
-  status: string | undefined;
+  name?: string;
+  status?: string;
 };
 
 export const updatePetWithFormOperation: Operation = {

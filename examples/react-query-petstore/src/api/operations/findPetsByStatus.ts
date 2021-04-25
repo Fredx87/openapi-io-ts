@@ -10,7 +10,7 @@ import * as t from "io-ts";
 import * as schemas from "../components/schemas";
 
 export type FindPetsByStatusRequestParameters = {
-  status: ("available" | "pending" | "sold") | undefined;
+  status?: "available" | "pending" | "sold";
 };
 
 export const findPetsByStatusOperation: Operation = {

@@ -8,7 +8,7 @@ import {
 import { TaskEither } from "fp-ts/TaskEither";
 
 export type DeletePetRequestParameters = {
-  api_key: string | undefined;
+  api_key?: string;
   petId: number;
 };
 

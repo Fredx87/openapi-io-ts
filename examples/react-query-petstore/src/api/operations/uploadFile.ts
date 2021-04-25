@@ -10,7 +10,7 @@ import * as schemas from "../components/schemas";
 
 export type UploadFileRequestParameters = {
   petId: number;
-  additionalMetadata: string | undefined;
+  additionalMetadata?: string;
 };
 
 export const uploadFileOperation: Operation = {

@@ -9,8 +9,8 @@ import { TaskEither } from "fp-ts/TaskEither";
 import * as t from "io-ts";
 
 export type LoginUserRequestParameters = {
-  username: string | undefined;
-  password: string | undefined;
+  username?: string;
+  password?: string;
 };
 
 export const loginUserOperation: Operation = {
