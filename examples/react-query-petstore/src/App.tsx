@@ -7,6 +7,7 @@ import {
   Redirect,
 } from "react-router-dom";
 import { PetsIndex } from "./features/pet/PetsIndex";
+import React from "react";
 
 const queryClient = new QueryClient();
 

@@ -2,6 +2,7 @@ import { IconButton } from "@chakra-ui/button";
 import { EditIcon } from "@chakra-ui/icons";
 import { Spinner } from "@chakra-ui/spinner";
 import { Table, Tr, Td, Tbody, Thead, Th } from "@chakra-ui/table";
+import React from "react";
 import { useHistory } from "react-router";
 import { Pet } from "../../api/components/schemas/Pet";
 import { useOpenApiQuery } from "../../common/react-query";

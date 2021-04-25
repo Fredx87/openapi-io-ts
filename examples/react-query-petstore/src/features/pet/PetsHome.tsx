@@ -2,6 +2,7 @@ import { Flex, Heading, IconButton, Spacer, VStack } from "@chakra-ui/react";
 import { AddIcon } from "@chakra-ui/icons";
 import { useHistory, useRouteMatch } from "react-router-dom";
 import { PetsTable } from "./PetsTable";
+import React from "react";
 
 export function PetsHome(): JSX.Element {
   const { url } = useRouteMatch();

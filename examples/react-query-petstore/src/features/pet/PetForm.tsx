@@ -6,6 +6,7 @@ import {
   Input,
   VStack,
 } from "@chakra-ui/react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { useHistory } from "react-router-dom";
 import { Pet } from "../../api/components/schemas";
