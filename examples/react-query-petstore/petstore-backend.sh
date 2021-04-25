@@ -1,0 +1,1 @@
+docker run --rm --name swaggerapi-petstore3 -d -p 8080:8080 swaggerapi/petstore3:1.0.5
