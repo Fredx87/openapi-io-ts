@@ -183,7 +183,7 @@ function parseOperationResponses(
 
   return pipe(
     responses,
-    R.traverseWithIndex(RTE.readerTaskEitherSeq)((code, response) =>
+    R.traverseWithIndex(RTE.ApplicativeSeq)((code, response) =>
       parseResponse(
         `${toValidVariableName(operationId, "pascal")}Response${code}`,
         response

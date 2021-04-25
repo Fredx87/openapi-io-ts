@@ -11,7 +11,7 @@ export function generateOperationResponses(
 ): CodegenRTE<string> {
   return pipe(
     responses,
-    R.traverseWithIndex(RTE.readerTaskEitherSeq)((_, itemOrRef) =>
+    R.traverseWithIndex(RTE.ApplicativeSeq)((_, itemOrRef) =>
       generateOperationResponse(itemOrRef)
     ),
     RTE.map((responses) => {

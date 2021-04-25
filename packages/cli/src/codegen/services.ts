@@ -15,7 +15,7 @@ export function generateServices(): CodegenRTE<void> {
     RTE.chain((tags) =>
       pipe(
         tags,
-        R.traverseWithIndex(RTE.readerTaskEitherSeq)((tag, operationsIds) =>
+        R.traverseWithIndex(RTE.ApplicativeSeq)((tag, operationsIds) =>
           generateServiceFile(tag, operationsIds)
         )
       )

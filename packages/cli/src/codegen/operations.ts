@@ -41,9 +41,7 @@ export function generateOperations(): CodegenRTE<void> {
   return pipe(
     RTE.asks((context: CodegenContext) => context.parserOutput.operations),
     RTE.chain((operations) =>
-      R.traverseWithIndex(RTE.readerTaskEitherSeq)(generateOperation)(
-        operations
-      )
+      R.traverseWithIndex(RTE.ApplicativeSeq)(generateOperation)(operations)
     ),
     RTE.map(() => void 0)
   );
