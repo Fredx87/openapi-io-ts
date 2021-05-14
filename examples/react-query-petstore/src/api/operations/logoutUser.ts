@@ -15,7 +15,7 @@ export const logoutUserOperation: Operation = {
   requestDefaultHeaders: {},
 };
 
-export const logoutUser = (
+export const logoutUserBuilder = (
   requestAdapter: HttpRequestAdapter
 ) => (): TaskEither<ApiError, ApiResponse<void>> =>
   request(logoutUserOperation, {}, undefined, requestAdapter);

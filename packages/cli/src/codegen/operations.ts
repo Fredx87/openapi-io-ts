@@ -47,6 +47,10 @@ export function generateOperations(): CodegenRTE<void> {
   );
 }
 
+export function requestBuilderName(operationId: string): string {
+  return `${capitalize(operationId, "camel")}Builder`;
+}
+
 interface GeneratedOperationParameters {
   schemas: string;
   definition: string;
@@ -313,7 +317,9 @@ function generateRequest(
     args.push(`${BODY_ARG_NAME}: ${generatedItems.body.requestBody}`);
   }
 
-  return `export const ${operationId} = (requestAdapter: HttpRequestAdapter) => (${args.join(
+  return `export const ${requestBuilderName(
+    operationId
+  )} = (requestAdapter: HttpRequestAdapter) => (${args.join(
     ", "
   )}): TaskEither<ApiError, ApiResponse<${generatedItems.returnType}>> =>
       request(${operationName(operationId)}, ${

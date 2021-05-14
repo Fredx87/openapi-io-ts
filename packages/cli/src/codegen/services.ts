@@ -8,6 +8,7 @@ import {
   SERVICES_PATH,
   writeGeneratedFile,
 } from "./common";
+import { requestBuilderName } from "./operations";
 
 export function generateServices(): CodegenRTE<void> {
   return pipe(
@@ -30,11 +31,16 @@ function generateServiceFile(
 ): CodegenRTE<void> {
   const content = `import { HttpRequestAdapter } from "${RUNTIME_PACKAGE}";
   ${operationsIds
-    .map((o) => `import { ${o} } from '../${OPERATIONS_PATH}/${o}'`)
+    .map(
+      (o) =>
+        `import { ${requestBuilderName(o)} from '../${OPERATIONS_PATH}/${o}'`
+    )
     .join("\n")}
     
     export const ${tag}ServiceBuilder = (requestAdapter: HttpRequestAdapter) => ({
-        ${operationsIds.map((o) => `${o}: ${o}(requestAdapter)`).join(",\n")}
+        ${operationsIds
+          .map((o) => `${o}: ${requestBuilderName(o)}(requestAdapter)`)
+          .join(",\n")}
     })
     `;
 

@@ -25,7 +25,7 @@ export const placeOrderOperation: Operation = {
   },
 };
 
-export const placeOrder = (requestAdapter: HttpRequestAdapter) => (
+export const placeOrderBuilder = (requestAdapter: HttpRequestAdapter) => (
   body: schemas.Order
 ): TaskEither<ApiError, ApiResponse<schemas.Order>> =>
   request(placeOrderOperation, {}, body, requestAdapter);

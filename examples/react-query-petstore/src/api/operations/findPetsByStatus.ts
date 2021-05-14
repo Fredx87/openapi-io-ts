@@ -31,7 +31,7 @@ export const findPetsByStatusOperation: Operation = {
   requestDefaultHeaders: { Accept: "application/json" },
 };
 
-export const findPetsByStatus = (requestAdapter: HttpRequestAdapter) => (
+export const findPetsByStatusBuilder = (requestAdapter: HttpRequestAdapter) => (
   params: FindPetsByStatusRequestParameters
 ): TaskEither<ApiError, ApiResponse<Array<schemas.Pet>>> =>
   request(findPetsByStatusOperation, params, undefined, requestAdapter);

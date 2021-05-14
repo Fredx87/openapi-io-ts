@@ -29,7 +29,7 @@ export const deleteOrderOperation: Operation = {
   requestDefaultHeaders: {},
 };
 
-export const deleteOrder = (requestAdapter: HttpRequestAdapter) => (
+export const deleteOrderBuilder = (requestAdapter: HttpRequestAdapter) => (
   params: DeleteOrderRequestParameters
 ): TaskEither<ApiError, ApiResponse<void>> =>
   request(deleteOrderOperation, params, undefined, requestAdapter);

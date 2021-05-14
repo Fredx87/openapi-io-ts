@@ -19,7 +19,7 @@ export const createUserOperation: Operation = {
   },
 };
 
-export const createUser = (requestAdapter: HttpRequestAdapter) => (
+export const createUserBuilder = (requestAdapter: HttpRequestAdapter) => (
   body: schemas.User
 ): TaskEither<ApiError, ApiResponse<void>> =>
   request(createUserOperation, {}, body, requestAdapter);

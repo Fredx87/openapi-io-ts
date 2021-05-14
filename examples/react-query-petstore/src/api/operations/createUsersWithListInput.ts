@@ -25,7 +25,7 @@ export const createUsersWithListInputOperation: Operation = {
   },
 };
 
-export const createUsersWithListInput = (
+export const createUsersWithListInputBuilder = (
   requestAdapter: HttpRequestAdapter
 ) => (
   body: Array<schemas.User>

@@ -29,7 +29,7 @@ export const deleteUserOperation: Operation = {
   requestDefaultHeaders: {},
 };
 
-export const deleteUser = (requestAdapter: HttpRequestAdapter) => (
+export const deleteUserBuilder = (requestAdapter: HttpRequestAdapter) => (
   params: DeleteUserRequestParameters
 ): TaskEither<ApiError, ApiResponse<void>> =>
   request(deleteUserOperation, params, undefined, requestAdapter);

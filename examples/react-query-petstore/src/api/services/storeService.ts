@@ -1,12 +1,12 @@
 import { HttpRequestAdapter } from "@openapi-io-ts/runtime";
-import { deleteOrder } from "../operations/deleteOrder";
-import { getInventory } from "../operations/getInventory";
-import { getOrderById } from "../operations/getOrderById";
-import { placeOrder } from "../operations/placeOrder";
+import { deleteOrderBuilder } from "../operations/deleteOrder";
+import { getInventoryBuilder } from "../operations/getInventory";
+import { getOrderByIdBuilder } from "../operations/getOrderById";
+import { placeOrderBuilder } from "../operations/placeOrder";
 
 export const storeServiceBuilder = (requestAdapter: HttpRequestAdapter) => ({
-  getInventory: getInventory(requestAdapter),
-  placeOrder: placeOrder(requestAdapter),
-  getOrderById: getOrderById(requestAdapter),
-  deleteOrder: deleteOrder(requestAdapter),
+  getInventory: getInventoryBuilder(requestAdapter),
+  placeOrder: placeOrderBuilder(requestAdapter),
+  getOrderById: getOrderByIdBuilder(requestAdapter),
+  deleteOrder: deleteOrderBuilder(requestAdapter),
 });

@@ -27,7 +27,7 @@ export const updatePetOperation: Operation = {
   },
 };
 
-export const updatePet = (requestAdapter: HttpRequestAdapter) => (
+export const updatePetBuilder = (requestAdapter: HttpRequestAdapter) => (
   body: schemas.Pet
 ): TaskEither<ApiError, ApiResponse<schemas.Pet>> =>
   request(updatePetOperation, {}, body, requestAdapter);

@@ -31,7 +31,7 @@ export const getOrderByIdOperation: Operation = {
   requestDefaultHeaders: { Accept: "application/json" },
 };
 
-export const getOrderById = (requestAdapter: HttpRequestAdapter) => (
+export const getOrderByIdBuilder = (requestAdapter: HttpRequestAdapter) => (
   params: GetOrderByIdRequestParameters
 ): TaskEither<ApiError, ApiResponse<schemas.Order>> =>
   request(getOrderByIdOperation, params, undefined, requestAdapter);
