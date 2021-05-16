@@ -1,6 +1,22 @@
 {
   "name": "@openapi-io-ts/cli",
   "version": "0.1.0",
+  "description": "OpenAPI code generation tool with validation powered by io-ts",
+  "keywords": [
+    "openapi",
+    "io-ts",
+    "codegen",
+    "code generation",
+    "swagger",
+    "validation"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Fredx87/openapi-io-ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fredx87/openapi-io-ts.git",
+    "directory": "packages/cli"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

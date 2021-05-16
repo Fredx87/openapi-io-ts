@@ -1,6 +1,22 @@
 {
   "name": "@openapi-io-ts/core",
   "version": "0.1.0",
+  "description": "openapi-io-ts core package",
+  "keywords": [
+    "openapi",
+    "io-ts",
+    "codegen",
+    "code generation",
+    "swagger",
+    "validation"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Fredx87/openapi-io-ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fredx87/openapi-io-ts.git",
+    "directory": "packages/core"
+  },
   "source": "src/index.ts",
   "main": "dist/index.js",
   "module": "dist/index.module.js",

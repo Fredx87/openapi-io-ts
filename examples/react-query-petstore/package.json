@@ -1,6 +1,7 @@
 {
   "name": "@openapi-io-ts/example-react-query-petstore",
   "version": "0.1.0",
+  "license": "MIT",
   "private": true,
   "dependencies": {
     "@chakra-ui/icons": "^1.0.10",

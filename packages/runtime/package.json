@@ -1,11 +1,28 @@
 {
   "name": "@openapi-io-ts/runtime",
   "version": "0.1.0",
+  "description": "Runtime for openapi-io-ts",
+  "keywords": [
+    "openapi",
+    "io-ts",
+    "codegen",
+    "code generation",
+    "swagger",
+    "validation"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Fredx87/openapi-io-ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fredx87/openapi-io-ts.git",
+    "directory": "packages/runtime"
+  },
   "source": "src/index.ts",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
   "unpkg": "dist/index.umd.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
   "files": [
     "dist"
   ],
@@ -23,7 +40,7 @@
     "microbundle": "^0.13.0"
   },
   "peerDependencies": {
-    "fp-ts": "^2.5.0",
+    "fp-ts": "^2.10.0",
     "io-ts": "^2.2.0"
   }
 }
