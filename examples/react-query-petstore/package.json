@@ -23,7 +23,6 @@
     "react-router-dom": "^5.2.0"
   },
   "devDependencies": {
-    "@openapi-io-ts/cli": "^0.1.0",
     "parcel": "^2.0.0-beta.2"
   },
   "scripts": {

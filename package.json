@@ -6,8 +6,14 @@
     "examples/*"
   ],
   "scripts": {
-    "build": "lerna run build",
-    "test": "jest"
+    "build": "lerna run build && yarn fix-bin-permission",
+    "test": "jest",
+    "lint": "eslint",
+    "examples:generate": "lerna run generate --scope @openapi-io-ts/example*",
+    "examples:type-check": "lerna run type-check --scope @openapi-io-ts/example*",
+    "sanity-check": "yarn test && yarn build && yarn lint && yarn examples:generate && yarn examples:type-check",
+    "version": "lerna version --conventional-commits",
+    "fix-bin-permission": "chmod +x node_modules/.bin/openapi-io-ts"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
@@ -39,5 +45,6 @@
     "*.{js,css,json,md}": [
       "prettier --write"
     ]
-  }
+  },
+  "version": "0.1.0"
 }
