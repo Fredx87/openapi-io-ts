@@ -192,6 +192,14 @@ updateUser({ username: "johndoe" }, { email: "john.doe@example.com" })().then(
 );
 ```
 
+## Contributors
+
+<a href="https://github.com/Fredx87/openapi-io-ts/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Fredx87/openapi-io-ts" />
+</a>
+
+Made with [contributors-img](https://contrib.rocks).
+
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
