@@ -25,6 +25,9 @@
   "bin": {
     "openapi-io-ts": "dist/bin.js"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "yarn clean",
