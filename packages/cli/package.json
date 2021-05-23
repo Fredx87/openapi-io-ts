@@ -31,7 +31,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "yarn clean",
-    "build": "tsc -p .",
+    "build": "tsc -p . && chmod +x dist/bin.js",
     "start": "ts-node ./src/bin.ts -i ../../examples/react-query-petstore/petstore.yaml"
   },
   "dependencies": {

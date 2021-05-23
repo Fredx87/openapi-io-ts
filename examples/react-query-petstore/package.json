@@ -23,7 +23,8 @@
     "react-router-dom": "^5.2.0"
   },
   "devDependencies": {
-    "parcel": "^2.0.0-beta.2"
+    "parcel": "^2.0.0-beta.2",
+    "@openapi-io-ts/cli": "^0.1.0"
   },
   "scripts": {
     "generate": "openapi-io-ts -i petstore.yaml -o src/api && prettier --write ./src/api",
