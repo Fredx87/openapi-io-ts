@@ -240,7 +240,7 @@ function prepareMultipartBody(
 
 function filterParametersByType(
   type: OperationParameterIn,
-  parameters: OperationParameter[]
+  parameters: readonly OperationParameter[]
 ): OperationParameter[] {
   return parameters.filter((p) => p.in === type);
 }

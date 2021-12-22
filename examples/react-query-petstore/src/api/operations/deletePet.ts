@@ -1,18 +1,11 @@
-import {
-  ApiError,
-  ApiResponse,
-  HttpRequestAdapter,
-  Operation,
-  request,
-} from "@openapi-io-ts/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
+import { OperationArgs } from "@openapi-io-ts/runtime";
 
 export type DeletePetRequestParameters = {
   api_key?: string;
   petId: number;
 };
 
-export const deletePetOperation: Operation = {
+export const deletePetOperation = {
   path: "/pet/{petId}",
   method: "delete",
   responses: { "400": { _tag: "EmptyResponse" } },
@@ -31,11 +24,8 @@ export const deletePetOperation: Operation = {
     },
   ],
   requestDefaultHeaders: {},
-};
+} as const;
 
-export const deletePetBuilder =
-  (requestAdapter: HttpRequestAdapter) =>
-  (
-    params: DeletePetRequestParameters
-  ): TaskEither<ApiError, ApiResponse<void>> =>
-    request(deletePetOperation, params, undefined, requestAdapter);
+export interface DeletePetOperationArgs extends OperationArgs {
+  requestParameters: DeletePetRequestParameters;
+}
