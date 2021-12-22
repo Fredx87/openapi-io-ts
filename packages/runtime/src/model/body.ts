@@ -1,3 +1,5 @@
+import { Decoder } from "io-ts";
+
 export interface BinaryBody {
   _tag: "BinaryBody";
   mediaType: string;
@@ -13,6 +15,7 @@ export interface MultipartBody {
 
 export interface JsonBody {
   _tag: "JsonBody";
+  decoder: Decoder<unknown, unknown>;
 }
 
 export interface TextBody {

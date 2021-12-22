@@ -1,4 +1,5 @@
 import { OperationParameterIn } from "@openapi-io-ts/core";
+import { Decoder } from "io-ts";
 
 export interface BaseParameter {
   in: OperationParameterIn;
@@ -7,6 +8,7 @@ export interface BaseParameter {
 
 export interface JsonParameter extends BaseParameter {
   _tag: "JsonParameter";
+  decoder: Decoder<unknown, unknown>;
 }
 
 export interface FormParameter extends BaseParameter {
