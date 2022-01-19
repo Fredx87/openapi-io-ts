@@ -37,7 +37,7 @@ function parseSuccessfulResponse<ReturnType>(
     return TE.right({ data: undefined as unknown as ReturnType, response });
   }
 
-  switch (operationResponse?._tag) {
+  switch (operationResponse._tag) {
     case "EmptyResponse": {
       return TE.right({ data: undefined as unknown as ReturnType, response });
     }
@@ -109,7 +109,7 @@ function parseJson(
 
 function parseBlobResponse<ReturnType>(
   response: Response
-): TE.TaskEither<DecodeError | ContentParseError, ApiResponse<ReturnType>> {
+): TE.TaskEither<ContentParseError, ApiResponse<ReturnType>> {
   return pipe(
     TE.tryCatch(
       () => response.blob(),

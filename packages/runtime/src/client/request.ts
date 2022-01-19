@@ -21,7 +21,7 @@ export function request<ReturnType>({
 }: RequestArgs): TE.TaskEither<ApiError, ApiResponse<ReturnType>> {
   return pipe(
     prepareRequest(operation, requestParameters, requestBody),
-    TE.chain(([url, init]) => performRequest(url, init, requestAdapter)),
+    TE.chain(({ url, init }) => performRequest(url, init, requestAdapter)),
     TE.chain((response) => parseResponse(response, operation.responses))
   );
 }

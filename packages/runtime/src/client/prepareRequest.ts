@@ -4,11 +4,16 @@ import { ApiError, requestError } from "./apiError";
 import { pipe } from "fp-ts/function";
 import { OperationParameterIn } from "@openapi-io-ts/core";
 
+interface PrepareRequestResult {
+  url: string;
+  init: RequestInit;
+}
+
 export function prepareRequest(
   operation: Operation,
   requestParameters: Record<string, unknown>,
   requestBody: unknown
-): TE.TaskEither<ApiError, [url: string, init: RequestInit]> {
+): TE.TaskEither<ApiError, PrepareRequestResult> {
   return pipe(
     TE.Do,
     TE.bind("url", () => prepareUrl(operation, requestParameters)),
@@ -21,7 +26,7 @@ export function prepareRequest(
         headers,
       };
 
-      return [url, init];
+      return { url, init };
     })
   );
 }
