@@ -1,4 +1,4 @@
-import { OperationArgs } from "@openapi-io-ts/runtime";
+import type { OperationTypes } from "@openapi-io-ts/runtime";
 
 export type DeletePetRequestParameters = {
   api_key?: string;
@@ -26,6 +26,8 @@ export const deletePetOperation = {
   requestDefaultHeaders: {},
 } as const;
 
-export interface DeletePetOperationArgs extends OperationArgs {
-  requestParameters: DeletePetRequestParameters;
-}
+export type DeletePetOperationTypes = OperationTypes<
+  DeletePetRequestParameters,
+  undefined,
+  void
+>;

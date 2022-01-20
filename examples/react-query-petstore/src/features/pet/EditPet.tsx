@@ -10,7 +10,7 @@ export function EditPet(): JSX.Element {
 
   const { isLoading, error, data } = useOpenApiQuery(
     ["pets", { id: petId }],
-    petService.getPetById({ petId: +petId })
+    petService.getPetById({ params: { petId: +petId } })
   );
 
   if (isLoading) {

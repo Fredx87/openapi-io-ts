@@ -44,15 +44,20 @@ export function generateOperations(): CodegenRTE<void> {
     RTE.chainFirst(({ operations }) =>
       R.traverseWithIndex(RTE.ApplicativeSeq)(generateOperation)(operations)
     ),
-    RTE.chainFirst(({ operations }) =>
-      generateOperationsIndex(Object.keys(operations))
-    ),
     RTE.map(() => void 0)
   );
 }
 
 export function requestBuilderName(operationId: string): string {
   return `${capitalize(operationId, "camel")}Builder`;
+}
+
+export function operationTypesName(operationId: string): string {
+  return capitalize(`${operationName(operationId)}Types`, "pascal");
+}
+
+export function operationName(operationId: string): string {
+  return `${capitalize(operationId, "camel")}Operation`;
 }
 
 interface GeneratedOperationParameters {
@@ -115,11 +120,11 @@ function generateFileContent(
   items: GeneratedItems
 ): CodegenRTE<string> {
   const content = `import * as t from "io-ts";
+  import type { OperationTypes } from "${RUNTIME_PACKAGE}";
   import * as schemas from "../${SCHEMAS_PATH}";
   import * as parameters from "../${PARAMETERS_PATH}";
   import * as responses from "../${RESPONSES_PATH}";
   import * as requestBodies from "../${REQUEST_BODIES_PATH}";
-  import { OperationArgs } from "${RUNTIME_PACKAGE}";
 
   ${
     items.parameters
@@ -134,7 +139,7 @@ function generateFileContent(
 
   ${generateOperationObject(operationId, operation, items)}
 
-  ${generateOperationArgs(operationId, items)}
+  ${generateOperationTypes(operationId, items)}
   `;
 
   return RTE.right(content);
@@ -303,30 +308,23 @@ function isParsedJsonResponse(
   return isParsedItem(response) && response.item._tag === "ParsedJsonResponse";
 }
 
-function generateOperationArgs(
+function generateOperationTypes(
   operationId: string,
   generatedItems: GeneratedItems
 ): string {
   const { parameters, body } = generatedItems;
 
-  let interfaceContent = "";
+  const requestParametersType = parameters
+    ? requestParametersMapName(operationId)
+    : "undefined";
 
-  if (parameters != null) {
-    interfaceContent += `requestParameters: ${requestParametersMapName(
-      operationId
-    )};
-    `;
-  }
+  const requestBodyType = body ? body.requestBody : "undefined";
 
-  if (body != null) {
-    interfaceContent += `requestBody: ${body.requestBody}
-    `;
-  }
-
-  return `export interface ${operationArgsName(
+  return `export type ${operationTypesName(
     operationId
-  )} extends OperationArgs {
-    ${interfaceContent}}`;
+  )} = OperationTypes<${requestParametersType}, ${requestBodyType}, ${
+    generatedItems.returnType
+  }>;`;
 }
 
 function getReturnType(
@@ -441,62 +439,6 @@ function getSuccessfulResponse(
   return successfulCode ? responses[successfulCode] : undefined;
 }
 
-function generateOperationsIndex(operationIds: string[]): CodegenRTE<void> {
-  const operationImports = pipe(
-    operationIds,
-    A.map(
-      (operationId) =>
-        `import { ${operationName(operationId)}, ${operationArgsName(
-          operationId
-        )} } from "./${operationId}"`
-    )
-  );
-
-  const operationsKeyValues = pipe(
-    operationIds,
-    A.map((operationId) => `${operationId}: ${operationName(operationId)},`)
-  );
-
-  const operationsArgsKeyValues = pipe(
-    operationIds,
-    A.map((operationId) => `${operationId}: ${operationArgsName(operationId)};`)
-  );
-
-  const indexContent = `import { HttpRequestAdapter, Operation, request } from "@openapi-io-ts/runtime";
-  import * as R from "fp-ts/Record";
-  import { pipe } from "fp-ts/function";
-  ${operationImports.join("\n")}
-  
-  export const operations = {
-    ${operationsKeyValues.join("\n")}
-  } as const;
-  
-  export interface OperationArgs {
-    ${operationsArgsKeyValues.join("\n")}
-  }
-  
-  export function requestsBuilder(requestAdapter: HttpRequestAdapter) {
-    return pipe(operations, R.map(requestBuilder(requestAdapter)));
-  }
-  
-  function requestBuilder(requestAdapter: HttpRequestAdapter) {
-    return <Name extends keyof typeof operations>(operation: Operation) => (
-      args: OperationArgs[Name]
-    ) => request({ requestAdapter, operation, ...args });
-  }
-  `;
-
-  return writeGeneratedFile(OPERATIONS_PATH, `index.ts`, indexContent);
-}
-
 function requestParametersMapName(operationId: string): string {
   return `${capitalize(operationId, "pascal")}RequestParameters`;
-}
-
-function operationArgsName(operationId: string): string {
-  return `${operationName(operationId)}Args`;
-}
-
-function operationName(operationId: string): string {
-  return `${capitalize(operationId, "camel")}Operation`;
 }

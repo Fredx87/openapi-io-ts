@@ -1,17 +1,10 @@
-import {
-  ApiError,
-  ApiResponse,
-  HttpRequestAdapter,
-  Operation,
-  request,
-} from "@openapi-io-ts/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
+import type { OperationTypes } from "@openapi-io-ts/runtime";
 
 export type DeleteOrderRequestParameters = {
   orderId: number;
 };
 
-export const deleteOrderOperation: Operation = {
+export const deleteOrderOperation = {
   path: "/store/order/{orderId}",
   method: "delete",
   responses: {
@@ -27,11 +20,10 @@ export const deleteOrderOperation: Operation = {
     },
   ],
   requestDefaultHeaders: {},
-};
+} as const;
 
-export const deleteOrderBuilder =
-  (requestAdapter: HttpRequestAdapter) =>
-  (
-    params: DeleteOrderRequestParameters
-  ): TaskEither<ApiError, ApiResponse<void>> =>
-    request(deleteOrderOperation, params, undefined, requestAdapter);
+export type DeleteOrderOperationTypes = OperationTypes<
+  DeleteOrderRequestParameters,
+  undefined,
+  void
+>;

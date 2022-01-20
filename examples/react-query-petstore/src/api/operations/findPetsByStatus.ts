@@ -1,11 +1,4 @@
-import {
-  ApiError,
-  ApiResponse,
-  HttpRequestAdapter,
-  Operation,
-  request,
-} from "@openapi-io-ts/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
+import type { OperationTypes } from "@openapi-io-ts/runtime";
 import * as t from "io-ts";
 import * as schemas from "../components/schemas";
 
@@ -13,7 +6,7 @@ export type FindPetsByStatusRequestParameters = {
   status?: "available" | "pending" | "sold";
 };
 
-export const findPetsByStatusOperation: Operation = {
+export const findPetsByStatusOperation = {
   path: "/pet/findByStatus",
   method: "get",
   responses: {
@@ -29,11 +22,10 @@ export const findPetsByStatusOperation: Operation = {
     },
   ],
   requestDefaultHeaders: { Accept: "application/json" },
-};
+} as const;
 
-export const findPetsByStatusBuilder =
-  (requestAdapter: HttpRequestAdapter) =>
-  (
-    params: FindPetsByStatusRequestParameters
-  ): TaskEither<ApiError, ApiResponse<Array<schemas.Pet>>> =>
-    request(findPetsByStatusOperation, params, undefined, requestAdapter);
+export type FindPetsByStatusOperationTypes = OperationTypes<
+  FindPetsByStatusRequestParameters,
+  undefined,
+  Array<schemas.Pet>
+>;

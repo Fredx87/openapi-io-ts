@@ -28,8 +28,8 @@ export function PetForm({ pet, operation }: PetFormProps): JSX.Element {
   const mutation = useOpenApiMutation(
     (pet: Pet) =>
       operation === "update"
-        ? petService.updatePet(pet)
-        : petService.addPet(pet),
+        ? petService.updatePet({ body: pet })
+        : petService.addPet({ body: pet }),
     {
       onSuccess: () => {
         history.push("/pets");

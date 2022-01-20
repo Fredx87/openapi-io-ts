@@ -1,21 +1,15 @@
-import {
-  ApiError,
-  ApiResponse,
-  HttpRequestAdapter,
-  Operation,
-  request,
-} from "@openapi-io-ts/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
+import type { OperationTypes } from "@openapi-io-ts/runtime";
 
-export const logoutUserOperation: Operation = {
+export const logoutUserOperation = {
   path: "/user/logout",
   method: "get",
   responses: { default: { _tag: "EmptyResponse" } },
   parameters: [],
   requestDefaultHeaders: {},
-};
+} as const;
 
-export const logoutUserBuilder =
-  (requestAdapter: HttpRequestAdapter) =>
-  (): TaskEither<ApiError, ApiResponse<void>> =>
-    request(logoutUserOperation, {}, undefined, requestAdapter);
+export type LogoutUserOperationTypes = OperationTypes<
+  undefined,
+  undefined,
+  void
+>;

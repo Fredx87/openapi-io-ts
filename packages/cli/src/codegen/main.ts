@@ -1,4 +1,5 @@
 import { pipe } from "fp-ts/function";
+import * as RTE from "fp-ts/ReaderTaskEither";
 import {
   SCHEMAS_PATH,
   PARAMETERS_PATH,
@@ -10,16 +11,15 @@ import {
 import { generateComponents } from "./components";
 import { CodegenRTE, CodegenContext } from "./context";
 import { generateOperations } from "./operations";
-import { generateServices } from "./services";
-import * as RTE from "fp-ts/ReaderTaskEither";
 import { generateServers } from "./servers";
+import { generateOperationsIndex } from "./operationsIndex";
 
 export function main(): CodegenRTE<void> {
   return pipe(
     createDirs(),
     RTE.chain(() => generateComponents()),
     RTE.chain(() => generateOperations()),
-    RTE.chain(() => generateServices()),
+    RTE.chain(() => generateOperationsIndex()),
     RTE.chain(() => generateServers())
   );
 }
