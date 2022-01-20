@@ -4,10 +4,7 @@ type OperationArgsParams<
   ? { params?: undefined }
   : { params: RequestParameters };
 
-type OperationArgsBody<
-  RequestBody
-  // eslint-disable-next-line @typescript-eslint/ban-types
-> = RequestBody extends undefined
+type OperationArgsBody<RequestBody> = RequestBody extends undefined
   ? { body?: undefined }
   : { body: RequestBody };
 
