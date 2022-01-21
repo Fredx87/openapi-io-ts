@@ -31,7 +31,6 @@
   },
   "scripts": {
     "build": "tsup src/index.ts src/bin.ts --format esm,cjs --dts --clean --sourcemap --legacy-output",
-    "type-check": "tsc -p .",
     "start": "ts-node ./src/bin.ts -i ../../examples/react-query-petstore/petstore.yaml"
   },
   "dependencies": {

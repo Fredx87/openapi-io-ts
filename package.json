@@ -6,10 +6,9 @@
     "build": "pnpm run build -r",
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx",
-    "type-check": "pnpm run type-check -r --filter ./packages",
     "examples:generate": "pnpm run generate --filter ./examples",
     "examples:type-check": "pnpm run type-check --filter ./examples",
-    "sanity-check": "pnpm type-check && pnpm lint && pnpm test && pnpm build && pnpm examples:generate && pnpm examples:type-check",
+    "sanity-check": "pnpm build && pnpm lint && pnpm test && pnpm examples:generate && pnpm examples:type-check",
     "release": "pnpm build && changeset publish"
   },
   "devDependencies": {

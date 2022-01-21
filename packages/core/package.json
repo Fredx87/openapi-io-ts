@@ -27,7 +27,6 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --clean --sourcemap --legacy-output",
-    "type-check": "tsc -p ."
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --sourcemap --legacy-output"
   }
 }
