@@ -31,7 +31,9 @@ export const getUserByNameOperation: Operation = {
   requestDefaultHeaders: { Accept: "application/json" },
 };
 
-export const getUserByNameBuilder = (requestAdapter: HttpRequestAdapter) => (
-  params: GetUserByNameRequestParameters
-): TaskEither<ApiError, ApiResponse<schemas.User>> =>
-  request(getUserByNameOperation, params, undefined, requestAdapter);
+export const getUserByNameBuilder =
+  (requestAdapter: HttpRequestAdapter) =>
+  (
+    params: GetUserByNameRequestParameters
+  ): TaskEither<ApiError, ApiResponse<schemas.User>> =>
+    request(getUserByNameOperation, params, undefined, requestAdapter);

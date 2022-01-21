@@ -40,9 +40,9 @@ export const updatePetWithFormOperation: Operation = {
   requestDefaultHeaders: {},
 };
 
-export const updatePetWithFormBuilder = (
-  requestAdapter: HttpRequestAdapter
-) => (
-  params: UpdatePetWithFormRequestParameters
-): TaskEither<ApiError, ApiResponse<void>> =>
-  request(updatePetWithFormOperation, params, undefined, requestAdapter);
+export const updatePetWithFormBuilder =
+  (requestAdapter: HttpRequestAdapter) =>
+  (
+    params: UpdatePetWithFormRequestParameters
+  ): TaskEither<ApiError, ApiResponse<void>> =>
+    request(updatePetWithFormOperation, params, undefined, requestAdapter);

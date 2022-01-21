@@ -31,7 +31,9 @@ export const findPetsByTagsOperation: Operation = {
   requestDefaultHeaders: { Accept: "application/json" },
 };
 
-export const findPetsByTagsBuilder = (requestAdapter: HttpRequestAdapter) => (
-  params: FindPetsByTagsRequestParameters
-): TaskEither<ApiError, ApiResponse<Array<schemas.Pet>>> =>
-  request(findPetsByTagsOperation, params, undefined, requestAdapter);
+export const findPetsByTagsBuilder =
+  (requestAdapter: HttpRequestAdapter) =>
+  (
+    params: FindPetsByTagsRequestParameters
+  ): TaskEither<ApiError, ApiResponse<Array<schemas.Pet>>> =>
+    request(findPetsByTagsOperation, params, undefined, requestAdapter);

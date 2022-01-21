@@ -50,9 +50,8 @@ function componentRef<T extends ComponentType>(
   };
 }
 
-export type ComponentRefItemType<
-  C extends ComponentType
-> = ParsedComponents[C][string];
+export type ComponentRefItemType<C extends ComponentType> =
+  ParsedComponents[C][string];
 
 export type ItemOrRef<C extends ComponentType> =
   | ComponentRefItemType<C>

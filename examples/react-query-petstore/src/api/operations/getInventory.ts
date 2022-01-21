@@ -16,7 +16,7 @@ export const getInventoryOperation: Operation = {
   requestDefaultHeaders: { Accept: "application/json" },
 };
 
-export const getInventoryBuilder = (
-  requestAdapter: HttpRequestAdapter
-) => (): TaskEither<ApiError, ApiResponse<Record<string, unknown>>> =>
-  request(getInventoryOperation, {}, undefined, requestAdapter);
+export const getInventoryBuilder =
+  (requestAdapter: HttpRequestAdapter) =>
+  (): TaskEither<ApiError, ApiResponse<Record<string, unknown>>> =>
+    request(getInventoryOperation, {}, undefined, requestAdapter);

@@ -25,9 +25,9 @@ export const createUsersWithListInputOperation: Operation = {
   },
 };
 
-export const createUsersWithListInputBuilder = (
-  requestAdapter: HttpRequestAdapter
-) => (
-  body: Array<schemas.User>
-): TaskEither<ApiError, ApiResponse<schemas.User>> =>
-  request(createUsersWithListInputOperation, {}, body, requestAdapter);
+export const createUsersWithListInputBuilder =
+  (requestAdapter: HttpRequestAdapter) =>
+  (
+    body: Array<schemas.User>
+  ): TaskEither<ApiError, ApiResponse<schemas.User>> =>
+    request(createUsersWithListInputOperation, {}, body, requestAdapter);
