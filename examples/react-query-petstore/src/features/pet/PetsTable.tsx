@@ -1,7 +1,14 @@
-import { IconButton } from "@chakra-ui/button";
 import { EditIcon } from "@chakra-ui/icons";
-import { Spinner } from "@chakra-ui/spinner";
-import { Table, Tr, Td, Tbody, Thead, Th } from "@chakra-ui/table";
+import {
+  Table,
+  Tr,
+  Td,
+  Tbody,
+  Thead,
+  Th,
+  Spinner,
+  IconButton,
+} from "@chakra-ui/react";
 import React from "react";
 import { useHistory } from "react-router";
 import { Pet } from "../../api/components/schemas/Pet";
