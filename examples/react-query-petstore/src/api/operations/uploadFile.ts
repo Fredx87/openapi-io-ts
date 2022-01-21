@@ -38,8 +38,10 @@ export const uploadFileOperation: Operation = {
   },
 };
 
-export const uploadFileBuilder = (requestAdapter: HttpRequestAdapter) => (
-  params: UploadFileRequestParameters,
-  body: Blob
-): TaskEither<ApiError, ApiResponse<schemas.ApiResponse>> =>
-  request(uploadFileOperation, params, body, requestAdapter);
+export const uploadFileBuilder =
+  (requestAdapter: HttpRequestAdapter) =>
+  (
+    params: UploadFileRequestParameters,
+    body: Blob
+  ): TaskEither<ApiError, ApiResponse<schemas.ApiResponse>> =>
+    request(uploadFileOperation, params, body, requestAdapter);

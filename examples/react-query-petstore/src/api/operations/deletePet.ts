@@ -33,7 +33,9 @@ export const deletePetOperation: Operation = {
   requestDefaultHeaders: {},
 };
 
-export const deletePetBuilder = (requestAdapter: HttpRequestAdapter) => (
-  params: DeletePetRequestParameters
-): TaskEither<ApiError, ApiResponse<void>> =>
-  request(deletePetOperation, params, undefined, requestAdapter);
+export const deletePetBuilder =
+  (requestAdapter: HttpRequestAdapter) =>
+  (
+    params: DeletePetRequestParameters
+  ): TaskEither<ApiError, ApiResponse<void>> =>
+    request(deletePetOperation, params, undefined, requestAdapter);

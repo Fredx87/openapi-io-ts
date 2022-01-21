@@ -37,7 +37,9 @@ export const loginUserOperation: Operation = {
   requestDefaultHeaders: { Accept: "application/json" },
 };
 
-export const loginUserBuilder = (requestAdapter: HttpRequestAdapter) => (
-  params: LoginUserRequestParameters
-): TaskEither<ApiError, ApiResponse<string>> =>
-  request(loginUserOperation, params, undefined, requestAdapter);
+export const loginUserBuilder =
+  (requestAdapter: HttpRequestAdapter) =>
+  (
+    params: LoginUserRequestParameters
+  ): TaskEither<ApiError, ApiResponse<string>> =>
+    request(loginUserOperation, params, undefined, requestAdapter);

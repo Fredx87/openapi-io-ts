@@ -80,7 +80,7 @@ function parseString(
   schema: OpenAPIV3.SchemaObject
 ): E.Either<Error, gen.TypeReference> {
   if (schema.enum) {
-    return parseEnum(schema.enum);
+    return parseEnum(schema.enum as string[]);
   }
 
   if (schema.format === "date" || schema.format === "date-time") {

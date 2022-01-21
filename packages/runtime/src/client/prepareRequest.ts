@@ -222,6 +222,7 @@ function prepareMultipartBody(
     const formData = new FormData();
 
     for (const [name, value] of Object.entries(requestBody)) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       formData.append(name, value);
     }
 

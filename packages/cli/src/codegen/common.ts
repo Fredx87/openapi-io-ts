@@ -2,6 +2,7 @@ import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import { TypeDeclaration, TypeReference } from "io-ts-codegen";
 import {
+  ComponentRef,
   ComponentRefItemType,
   ComponentType,
   ItemOrRef,
@@ -69,8 +70,14 @@ export function isParsedItem<C extends ComponentType>(
   return itemOrRef._tag === "ParsedItem";
 }
 
+export function isComponentRef<C extends ComponentType>(
+  itemOrRef: ItemOrRef<C>
+): itemOrRef is ComponentRef<C> {
+  return itemOrRef._tag === "ComponentRef";
+}
+
 export function getItemOrRefPrefix<C extends ComponentType>(
   itemOrRef: ItemOrRef<C>
 ): string {
-  return isParsedItem(itemOrRef) ? "" : `${itemOrRef.componentType}.`;
+  return isComponentRef(itemOrRef) ? `${itemOrRef.componentType}.` : "";
 }

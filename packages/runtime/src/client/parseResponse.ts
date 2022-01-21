@@ -34,12 +34,12 @@ function parseSuccessfulResponse<ReturnType>(
   );
 
   if (operationResponse == null) {
-    return TE.right({ data: (undefined as unknown) as ReturnType, response });
+    return TE.right({ data: undefined as unknown as ReturnType, response });
   }
 
   switch (operationResponse?._tag) {
     case "EmptyResponse": {
-      return TE.right({ data: (undefined as unknown) as ReturnType, response });
+      return TE.right({ data: undefined as unknown as ReturnType, response });
     }
     case "FileResponse": {
       return parseBlobResponse(response);
@@ -116,7 +116,7 @@ function parseBlobResponse<ReturnType>(
       (e) => contentParseError(E.toError(e))
     ),
     TE.map((blob) => ({
-      data: (blob as unknown) as ReturnType,
+      data: blob as unknown as ReturnType,
       response,
     }))
   );

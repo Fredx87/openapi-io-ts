@@ -18,6 +18,7 @@
     "directory": "packages/cli"
   },
   "main": "dist/index.js",
+  "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
@@ -29,25 +30,20 @@
     "access": "public"
   },
   "scripts": {
-    "clean": "rimraf dist",
-    "prebuild": "yarn clean",
-    "build": "tsc -p . && chmod +x dist/bin.js",
+    "build": "tsup src/index.ts src/bin.ts --format esm,cjs --dts --clean --sourcemap --legacy-output",
     "start": "ts-node ./src/bin.ts -i ../../examples/react-query-petstore/petstore.yaml"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.0.2",
-    "@openapi-io-ts/core": "^0.1.0",
-    "@types/node": "^14.14.41",
+    "@openapi-io-ts/core": "workspace:*",
+    "@types/node": "^17.0.10",
     "@types/yargs": "^16.0.0",
-    "fp-ts": "^2.10.4",
-    "immer": "^8.0.1",
-    "io-ts": "^2.2.16",
+    "fp-ts": "^2.11.0",
+    "immer": "^9.0.12",
+    "io-ts": "^2.2.0",
     "io-ts-codegen": "^0.4.5",
     "openapi-types": "^7.2.3",
     "yargs": "^16.2.0"
-  },
-  "devDependencies": {
-    "typescript": "^4.2.4"
   },
   "peerDependencies": {
     "typescript": ">4.0.0"

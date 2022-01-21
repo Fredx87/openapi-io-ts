@@ -17,10 +17,8 @@
     "url": "https://github.com/Fredx87/openapi-io-ts.git",
     "directory": "packages/runtime"
   },
-  "source": "src/index.ts",
   "main": "dist/index.js",
-  "module": "dist/index.module.js",
-  "unpkg": "dist/index.umd.js",
+  "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "files": [
@@ -30,20 +28,13 @@
     "access": "public"
   },
   "scripts": {
-    "clean": "rimraf dist",
-    "prebuild": "yarn clean",
-    "build": "microbundle"
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --sourcemap --legacy-output"
   },
   "dependencies": {
-    "@openapi-io-ts/core": "^0.1.0"
-  },
-  "devDependencies": {
-    "fp-ts": "^2.10.4",
-    "io-ts": "^2.2.16",
-    "microbundle": "^0.13.0"
+    "@openapi-io-ts/core": "workspace:*"
   },
   "peerDependencies": {
-    "fp-ts": "^2.10.0",
+    "fp-ts": "^2.11.0",
     "io-ts": "^2.2.0"
   }
 }

@@ -30,8 +30,10 @@ export const updateUserOperation: Operation = {
   },
 };
 
-export const updateUserBuilder = (requestAdapter: HttpRequestAdapter) => (
-  params: UpdateUserRequestParameters,
-  body: schemas.User
-): TaskEither<ApiError, ApiResponse<void>> =>
-  request(updateUserOperation, params, body, requestAdapter);
+export const updateUserBuilder =
+  (requestAdapter: HttpRequestAdapter) =>
+  (
+    params: UpdateUserRequestParameters,
+    body: schemas.User
+  ): TaskEither<ApiError, ApiResponse<void>> =>
+    request(updateUserOperation, params, body, requestAdapter);

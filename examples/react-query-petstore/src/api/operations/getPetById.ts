@@ -31,7 +31,9 @@ export const getPetByIdOperation: Operation = {
   requestDefaultHeaders: { Accept: "application/json" },
 };
 
-export const getPetByIdBuilder = (requestAdapter: HttpRequestAdapter) => (
-  params: GetPetByIdRequestParameters
-): TaskEither<ApiError, ApiResponse<schemas.Pet>> =>
-  request(getPetByIdOperation, params, undefined, requestAdapter);
+export const getPetByIdBuilder =
+  (requestAdapter: HttpRequestAdapter) =>
+  (
+    params: GetPetByIdRequestParameters
+  ): TaskEither<ApiError, ApiResponse<schemas.Pet>> =>
+    request(getPetByIdOperation, params, undefined, requestAdapter);
