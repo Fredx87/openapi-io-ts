@@ -2,6 +2,7 @@
   "name": "@openapi-io-ts/root",
   "private": true,
   "scripts": {
+    "preinstall": "npx -y only-allow pnpm",
     "build": "pnpm run build -r",
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx",
