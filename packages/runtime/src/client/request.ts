@@ -12,21 +12,19 @@ export type RequestFunction<RequestParameters, RequestBody, ReturnType> = (
   args: OperationArgs<RequestParameters, RequestBody>
 ) => TE.TaskEither<ApiError, ApiResponse<ReturnType>>;
 
-export type MappedOperationRequestFunction<
-  Operations,
-  OperationsTypesMap
-> = OperationsTypesMap extends Record<
-  keyof Operations,
-  OperationTypes<infer _A, infer _B, infer _C>
->
-  ? {
-      [Name in keyof Operations]: RequestFunction<
-        OperationsTypesMap[Name]["args"]["params"],
-        OperationsTypesMap[Name]["args"]["body"],
-        OperationsTypesMap[Name]["returnType"]
-      >;
-    }
-  : never;
+export type MappedOperationRequestFunction<Operations, OperationsTypesMap> =
+  OperationsTypesMap extends Record<
+    keyof Operations,
+    OperationTypes<infer _A, infer _B, infer _C>
+  >
+    ? {
+        [Name in keyof Operations]: RequestFunction<
+          OperationsTypesMap[Name]["args"]["params"],
+          OperationsTypesMap[Name]["args"]["body"],
+          OperationsTypesMap[Name]["returnType"]
+        >;
+      }
+    : never;
 
 export function request<RequestParameters, RequestBody, ReturnType>(
   operation: Operation,
