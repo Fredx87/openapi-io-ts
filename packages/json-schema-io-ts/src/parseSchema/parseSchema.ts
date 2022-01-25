@@ -3,14 +3,19 @@ import * as A from "fp-ts/Array";
 import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
+import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 import { createJsonPointer, JsonReference } from "../JsonReference";
-import { ArraySchemaObject, SchemaOrRef, SchemaObject } from "../types";
+import {
+  ArraySchemaObject,
+  SchemaOrRef,
+  SchemaObject,
+  NonArraySchemaObject,
+  SchemaType,
+} from "../types";
 import { parseJsonReference } from "./parseJsonReference";
 import { ParseSchemaRTE } from "./ParseSchemaRTE";
 import { resolveSchema } from "./resolveSchema";
 import { addModelToResultIfNeeded } from "./addModelToResult";
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
-import { NonArraySchemaObject, SchemaType } from "..";
 
 export function parseSchema(
   pointer: string,
