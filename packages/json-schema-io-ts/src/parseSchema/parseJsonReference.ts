@@ -43,7 +43,7 @@ function getParsedReference(
 function parseNewReference(pointer: string): ParseSchemaRTE {
   return pipe(
     RTE.Do,
-    RTE.bind("parsedSchema", () => parseSchema(pointer)),
+    RTE.bind("parsedSchema", () => parseSchema(pointer, true)),
     RTE.bindW("reference", () => getParsedReference(pointer)),
     RTE.map(({ parsedSchema, reference }) =>
       pipe(

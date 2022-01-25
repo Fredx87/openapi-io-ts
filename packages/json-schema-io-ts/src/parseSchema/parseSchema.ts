@@ -12,7 +12,10 @@ import { addModelToResultIfNeeded } from "./addModelToResult";
 import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 import { NonArraySchemaObject, SchemaType } from "..";
 
-export function parseSchema(pointer: string): ParseSchemaRTE {
+export function parseSchema(
+  pointer: string,
+  generateModel = false
+): ParseSchemaRTE {
   return pipe(
     RTE.Do,
     RTE.bind("jsonPointer", () =>
@@ -20,7 +23,11 @@ export function parseSchema(pointer: string): ParseSchemaRTE {
     ),
     RTE.bind("schema", ({ jsonPointer }) => resolveSchema(jsonPointer)),
     RTE.bind("type", ({ schema }) => parseResolvedSchema(schema)),
-    RTE.chainFirst(({ type }) => addModelToResultIfNeeded(pointer, type)),
+    RTE.chainFirst(({ type }) =>
+      generateModel
+        ? addModelToResultIfNeeded(pointer, type)
+        : RTE.right(undefined)
+    ),
     RTE.map(({ type }) => type)
   );
 }

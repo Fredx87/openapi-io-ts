@@ -252,6 +252,8 @@ describe("parseSchema", () => {
       gen.property("name", gen.stringType, true),
       gen.property("address", gen.stringType, true),
     ]);
+
+    expect(Object.keys(generatedModels.modelNameTypeMap)).toHaveLength(1);
     expect(generatedModels.modelNameTypeMap["Bar"]).toEqual(expectedBarModel);
   });
 });
