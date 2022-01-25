@@ -1,14 +1,17 @@
 import * as gen from "io-ts-codegen";
 import * as E from "fp-ts/Either";
-import { createSchemaContext } from "../ParseSchemaContext";
-import { ParsableDocument } from "../types";
+import {
+  createSchemaContext,
+  ParseSchemaDocuments,
+  ParseSchemaContext,
+} from "../ParseSchemaContext";
+import { ParsableDocument, NonArraySchemaObject } from "../types";
 import { parseSchema } from "./parseSchema";
-import { NonArraySchemaObject } from "..";
 
 describe("parseSchema", () => {
   it("should parse an empty schema", async () => {
     const document: ParsableDocument = {};
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.unknownType;
@@ -18,7 +21,7 @@ describe("parseSchema", () => {
 
   it("should parse a basic string schema", async () => {
     const document: ParsableDocument = { type: "string" };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.stringType;
@@ -28,7 +31,7 @@ describe("parseSchema", () => {
 
   it("should parse a basic number schema", async () => {
     const document: ParsableDocument = { type: "number" };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.numberType;
@@ -38,7 +41,7 @@ describe("parseSchema", () => {
 
   it("should parse a basic integer schema", async () => {
     const document: ParsableDocument = { type: "integer" };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.numberType;
@@ -48,7 +51,7 @@ describe("parseSchema", () => {
 
   it("should parse a basic boolean schema", async () => {
     const document: ParsableDocument = { type: "boolean" };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.booleanType;
@@ -58,7 +61,7 @@ describe("parseSchema", () => {
 
   it("should parse an empty array schema", async () => {
     const document: ParsableDocument = { type: "array", items: {} };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.arrayCombinator(gen.unknownType);
@@ -71,7 +74,7 @@ describe("parseSchema", () => {
       type: "array",
       items: { type: "string" },
     };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.arrayCombinator(gen.stringType);
@@ -81,7 +84,7 @@ describe("parseSchema", () => {
 
   it("should parse an empty object schema", async () => {
     const document: ParsableDocument = { type: "object" };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.unknownRecordType;
@@ -102,7 +105,7 @@ describe("parseSchema", () => {
       },
       required: ["name"],
     };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.typeCombinator([
@@ -115,7 +118,7 @@ describe("parseSchema", () => {
 
   it("should parse a string schema with date format", async () => {
     const document: ParsableDocument = { type: "string", format: "date" };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.customCombinator("Date", "tTypes.DateFromISOString");
@@ -125,7 +128,7 @@ describe("parseSchema", () => {
 
   it("should parse a string schema with date-time format", async () => {
     const document: ParsableDocument = { type: "string", format: "date-time" };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.customCombinator("Date", "tTypes.DateFromISOString");
@@ -135,7 +138,7 @@ describe("parseSchema", () => {
 
   it("should parse a string schema with single enum", async () => {
     const document: ParsableDocument = { type: "string", enum: ["foo"] };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.literalCombinator("foo");
@@ -148,7 +151,7 @@ describe("parseSchema", () => {
       type: "string",
       enum: ["foo", "bar", "baz"],
     };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.unionCombinator([
@@ -164,7 +167,7 @@ describe("parseSchema", () => {
     const document: ParsableDocument = {
       allOf: [{ type: "string" }, { type: "number" }],
     };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.intersectionCombinator([
@@ -179,7 +182,7 @@ describe("parseSchema", () => {
     const document: ParsableDocument = {
       oneOf: [{ type: "string" }, { type: "number" }],
     };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.unionCombinator([gen.stringType, gen.numberType]);
@@ -191,7 +194,7 @@ describe("parseSchema", () => {
     const document: ParsableDocument = {
       anyOf: [{ type: "string" }, { type: "number" }],
     };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.unionCombinator([gen.stringType, gen.numberType]);
@@ -203,7 +206,7 @@ describe("parseSchema", () => {
     const document: ParsableDocument = {
       type: ["string", "number", "null"],
     };
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.unionCombinator([
@@ -237,7 +240,7 @@ describe("parseSchema", () => {
         },
       },
     } as NonArraySchemaObject;
-    const context = createSchemaContext(document)();
+    const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
     const expected = gen.typeCombinator([
@@ -257,3 +260,14 @@ describe("parseSchema", () => {
     expect(generatedModels.modelNameTypeMap["Bar"]).toEqual(expectedBarModel);
   });
 });
+
+function createContextFromSingleDocument(
+  document: ParsableDocument
+): ParseSchemaContext {
+  const dummyUri = "/tmp/dummy-schema.json";
+  const documents: ParseSchemaDocuments = {
+    rootDocumentUri: dummyUri,
+    uriDocumentMap: { [dummyUri]: document },
+  };
+  return createSchemaContext(documents)();
+}

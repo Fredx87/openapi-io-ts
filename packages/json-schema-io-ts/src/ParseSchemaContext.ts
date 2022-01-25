@@ -8,6 +8,13 @@ import { JsonPointer } from "./JsonReference";
 import { GeneratedModels } from "./GeneratedModels";
 import { ParsableDocument } from "./types";
 
+export type UriDocumentMap = Record<string, ParsableDocument>;
+
+export interface ParseSchemaDocuments {
+  rootDocumentUri: string;
+  uriDocumentMap: UriDocumentMap;
+}
+
 export interface ModelGenerationInfo {
   name: string;
   importData?: {
@@ -21,7 +28,7 @@ export type ModelGenerationInfoFn = (
 ) => ModelGenerationInfo;
 
 export interface ParseSchemaContext {
-  document: ParsableDocument;
+  documents: ParseSchemaDocuments;
   generatedModelsRef: IORef.IORef<GeneratedModels>;
   modelGenerationInfoFn: ModelGenerationInfoFn;
 }
@@ -40,13 +47,13 @@ const emptyParseSchemaResult: GeneratedModels = {
 };
 
 export function createSchemaContext(
-  document: ParsableDocument,
+  documents: ParseSchemaDocuments,
   modelGenerationInfoFn = defaultModelGenerationInfo
 ): IO.IO<ParseSchemaContext> {
   return pipe(
     IORef.newIORef(emptyParseSchemaResult),
     IO.map((generatedModelsRef) => ({
-      document,
+      documents,
       generatedModelsRef,
       modelGenerationInfoFn,
     }))
