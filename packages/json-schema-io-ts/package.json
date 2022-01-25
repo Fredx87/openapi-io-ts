@@ -1,0 +1,41 @@
+{
+  "name": "json-schema-io-ts",
+  "version": "0.0.0",
+  "description": "Generate io-ts codecs from an OpenAPI Schema or a JSON Schema",
+  "keywords": [
+    "openapi",
+    "json-schema",
+    "io-ts",
+    "codegen",
+    "code generation",
+    "swagger",
+    "validation"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Fredx87/openapi-io-ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fredx87/openapi-io-ts.git",
+    "directory": "packages/json-schema-io-ts"
+  },
+  "main": "dist/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --sourcemap --legacy-output"
+  },
+  "dependencies": {
+    "@types/lodash": "^4.14.178",
+    "fp-ts": "^2.11.0",
+    "immer": "^9.0.12",
+    "io-ts-codegen": "^0.4.0",
+    "lodash": "^4.17.21",
+    "openapi-types": "^10.0.0"
+  }
+}

@@ -41,8 +41,8 @@
     "fp-ts": "^2.11.0",
     "immer": "^9.0.12",
     "io-ts": "^2.2.0",
-    "io-ts-codegen": "^0.4.5",
-    "openapi-types": "^7.2.3",
+    "io-ts-codegen": "^0.4.0",
+    "openapi-types": "^10.0.0",
     "yargs": "^16.2.0"
   },
   "peerDependencies": {
