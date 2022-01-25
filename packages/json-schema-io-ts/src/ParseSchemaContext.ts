@@ -1,7 +1,12 @@
+import { pipe } from "fp-ts/function";
+import * as IO from "fp-ts/IO";
 import * as IORef from "fp-ts/IORef";
+import * as RNEA from "fp-ts/ReadonlyNonEmptyArray";
+import camelCase from "lodash/camelCase";
+import upperFirst from "lodash/upperFirst";
 import { JsonPointer } from "./JsonReference";
-import { ParseSchemaResult } from "./ParseSchemaResult";
-import { OpenApiDocument } from "./types";
+import { GeneratedModels } from "./GeneratedModels";
+import { ParsableDocument } from "./types";
 
 export interface ModelGenerationInfo {
   name: string;
@@ -11,8 +16,39 @@ export interface ModelGenerationInfo {
   };
 }
 
+export type ModelGenerationInfoFn = (
+  pointer: JsonPointer
+) => ModelGenerationInfo;
+
 export interface ParseSchemaContext {
-  document: OpenApiDocument;
-  resultRef: IORef.IORef<ParseSchemaResult>;
-  getModelGenerationInfo: (pointer: JsonPointer) => ModelGenerationInfo;
+  document: ParsableDocument;
+  generatedModelsRef: IORef.IORef<GeneratedModels>;
+  modelGenerationInfoFn: ModelGenerationInfoFn;
+}
+
+const defaultModelGenerationInfo: ModelGenerationInfoFn = (pointer) =>
+  pipe(pointer.tokens, RNEA.last, (lastToken) => ({
+    name: upperFirst(camelCase(lastToken)),
+  }));
+
+const emptyParseSchemaResult: GeneratedModels = {
+  modelNameTypeMap: {},
+  pointerModelNameMap: {},
+  prefixImportPathMap: {
+    tTypes: "io-ts-types",
+  },
+};
+
+export function createSchemaContext(
+  document: ParsableDocument,
+  modelGenerationInfoFn = defaultModelGenerationInfo
+): IO.IO<ParseSchemaContext> {
+  return pipe(
+    IORef.newIORef(emptyParseSchemaResult),
+    IO.map((generatedModelsRef) => ({
+      document,
+      generatedModelsRef,
+      modelGenerationInfoFn,
+    }))
+  );
 }

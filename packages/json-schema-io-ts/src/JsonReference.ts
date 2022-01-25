@@ -4,7 +4,7 @@ import * as O from "fp-ts/Option";
 import * as RNEA from "fp-ts/ReadonlyNonEmptyArray";
 import * as t from "io-ts";
 import get from "lodash/get";
-import { OpenApiDocument } from "./types";
+import { ParsableDocument } from "./types";
 
 export class JsonPointer {
   constructor(public tokens: RNEA.ReadonlyNonEmptyArray<string>) {}
@@ -38,7 +38,7 @@ export function createJsonPointer(
 }
 
 export function resolvePointer<T>(
-  document: OpenApiDocument,
+  document: ParsableDocument,
   jsonPointer: JsonPointer
 ): O.Option<T> {
   return pipe(

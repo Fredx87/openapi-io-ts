@@ -10,13 +10,17 @@ export function resolveSchema(
 ): ParseSchemaRTE<SchemaOrRef> {
   return pipe(
     RTE.asks((r: ParseSchemaContext) => r.document),
-    RTE.chainW((document) =>
-      pipe(
+    RTE.chainW((document) => {
+      if (jsonPointer.tokens.length === 1 && jsonPointer.tokens[0] === "#") {
+        return RTE.right(document);
+      }
+
+      return pipe(
         resolvePointer<SchemaOrRef>(document, jsonPointer),
         RTE.fromOption(
           () => new Error(`Cannot resolve pointer ${jsonPointer.toString()}`)
         )
-      )
-    )
+      );
+    })
   );
 }

@@ -113,10 +113,15 @@ function parseSchemaByType(
     case "integer":
     case "number":
       return RTE.right(O.some(gen.numberType));
+    case "null":
+      return RTE.right(O.some(gen.nullType));
     case "string":
       return pipe(parseString(schema), RTE.map(O.some));
     case "array":
-      return pipe(parseArray(schema), RTE.map(O.some));
+      return pipe(
+        parseArray((schema as ArraySchemaObject).items),
+        RTE.map(O.some)
+      );
     case "object":
       return pipe(parseObject(schema as NonArraySchemaObject), RTE.map(O.some));
     default:
@@ -130,9 +135,7 @@ function parseString(schema: SchemaObject): ParseSchemaRTE {
   }
 
   if (schema.format === "date" || schema.format === "date-time") {
-    return RTE.right(
-      gen.customCombinator("Date", "tTypes.DateFromISOString", ["tTypes"])
-    );
+    return RTE.right(gen.customCombinator("Date", "tTypes.DateFromISOString"));
   }
 
   return RTE.right(gen.stringType);

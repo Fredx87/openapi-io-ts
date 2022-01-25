@@ -1,6 +1,6 @@
 import * as gen from "io-ts-codegen";
 
-export interface ParseSchemaResult {
+export interface GeneratedModels {
   modelNameTypeMap: Record<string, gen.TypeReference>;
   pointerModelNameMap: Record<string, string>;
   prefixImportPathMap: Record<string, string>;

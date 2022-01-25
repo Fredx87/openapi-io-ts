@@ -1,6 +1,9 @@
 import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 
-export type OpenApiDocument = OpenAPIV3_1.Document | OpenAPIV3.Document;
+export type ParsableDocument =
+  | OpenAPIV3_1.Document
+  | OpenAPIV3.Document
+  | SchemaObject;
 
 export type SchemaObject = OpenAPIV3_1.SchemaObject;
 

@@ -5,7 +5,7 @@ import * as gen from "io-ts-codegen";
 import { createJsonPointer, JsonPointer } from "../JsonReference";
 import { ModelGenerationInfo, ParseSchemaContext } from "../ParseSchemaContext";
 import { ParseSchemaRTE } from "./ParseSchemaRTE";
-import { modifyResultRef } from "./resultRef";
+import { modifyGeneratedModelsRef } from "./generatedModels";
 
 export function addModelToResultIfNeeded(
   pointer: string,
@@ -24,7 +24,7 @@ export function addModelToResultIfNeeded(
       getModelGenerationInfo(jsonPointer)
     ),
     RTE.chainFirst(({ jsonPointer, generationInfo }) =>
-      addPointerAndModelNameToContext(jsonPointer, generationInfo)
+      addModelToContext(jsonPointer, generationInfo, type)
     ),
     RTE.map(() => undefined)
   );
@@ -34,19 +34,23 @@ function getModelGenerationInfo(
   pointer: JsonPointer
 ): ParseSchemaRTE<ModelGenerationInfo> {
   return pipe(
-    RTE.asks((context: ParseSchemaContext) => context.getModelGenerationInfo),
+    RTE.asks((context: ParseSchemaContext) => context.modelGenerationInfoFn),
     RTE.map((getModelGenerationInfo) => getModelGenerationInfo(pointer))
   );
 }
 
-function addPointerAndModelNameToContext(
+function addModelToContext(
   pointer: JsonPointer,
-  generationInfo: ModelGenerationInfo
+  generationInfo: ModelGenerationInfo,
+  type: gen.TypeReference
 ): ParseSchemaRTE<void> {
-  return modifyResultRef(
+  return modifyGeneratedModelsRef(
     produce((draft) => {
-      draft.pointerModelNameMap[pointer.toString()] =
-        getModelNameFromGenerationInfo(generationInfo);
+      const generatedName = getModelNameFromGenerationInfo(generationInfo);
+
+      draft.modelNameTypeMap[generatedName] = type;
+
+      draft.pointerModelNameMap[pointer.toString()] = generatedName;
 
       if (generationInfo.importData != null) {
         const { path, prefix } = generationInfo.importData;
