@@ -6,6 +6,7 @@ import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import camelCase from "lodash/camelCase";
 import upperFirst from "lodash/upperFirst";
+import { basename, extname } from "path";
 import { JsonReference } from "./jsonReference";
 import { GeneratedModels } from "./GeneratedModels";
 import { ParsableDocument } from "./types";
@@ -41,7 +42,11 @@ const defaultModelGenerationInfo: ModelGenerationInfoFn = ({
     jsonPointer,
     RA.last,
     O.fold(
-      (): ModelGenerationInfo => ({ name: upperFirst(camelCase(uri)) }),
+      (): ModelGenerationInfo => {
+        const ext = extname(uri);
+        const fileName = basename(uri, ext);
+        return { name: upperFirst(camelCase(fileName)) };
+      },
       (token): ModelGenerationInfo => ({ name: upperFirst(camelCase(token)) })
     )
   );

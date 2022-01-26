@@ -259,9 +259,7 @@ describe("parseSchema", () => {
 
     expect(Object.keys(generatedModels.modelNameTypeMap)).toHaveLength(2);
     expect(generatedModels.modelNameTypeMap["Bar"]).toEqual(expectedBarModel);
-    expect(generatedModels.modelNameTypeMap["TmpCannedSchemaJson"]).toEqual(
-      expected
-    );
+    expect(generatedModels.modelNameTypeMap["CannedSchema"]).toEqual(expected);
   });
 
   it("should parse an OpenAPI 3.0 schema with nullable", async () => {
@@ -331,7 +329,7 @@ describe("parseSchema", () => {
 
     const result = await parseSchema("#/components/schemas/Foo")(context)();
     const expected = gen.typeCombinator([
-      gen.property("Bar", gen.identifier("TmpJsonSchemaYml"), true),
+      gen.property("Bar", gen.identifier("JsonSchema"), true),
       gen.property(
         "NullableString",
         gen.unionCombinator([gen.stringType, gen.nullType]),
@@ -353,7 +351,7 @@ describe("parseSchema", () => {
 
     expect(Object.keys(generatedModels.modelNameTypeMap)).toHaveLength(2);
     expect(generatedModels.modelNameTypeMap["Foo"]).toEqual(expected);
-    expect(generatedModels.modelNameTypeMap["TmpJsonSchemaYml"]).toEqual(
+    expect(generatedModels.modelNameTypeMap["JsonSchema"]).toEqual(
       expectedExternalModel
     );
 
@@ -365,7 +363,7 @@ describe("parseSchema", () => {
     ).toEqual("Foo");
     expect(
       generatedModels.referenceModelNameMap[`/tmp/${externalDocumentName}`]
-    ).toEqual("TmpJsonSchemaYml");
+    ).toEqual("JsonSchema");
   });
 });
 
