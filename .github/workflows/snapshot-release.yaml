@@ -1,0 +1,20 @@
+name: Snapshot Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: "./.github/actions/setup"
+
+      - name: Build
+        run: pnpm build
+
+      - name: Publish
+        run: |
+          pnpm changeset version --snapshot
+          pnpm changeset publish --no-git-tag --snapshot --tag next
