@@ -21,12 +21,14 @@ export const initialGeneratedModels: GeneratedModels = {
   },
 };
 
+export interface ModelGenerationImportData {
+  prefix: string;
+  path: string;
+}
+
 export interface ModelGenerationInfo {
   name: string;
-  importData?: {
-    prefix: string;
-    path: string;
-  };
+  importData?: ModelGenerationImportData;
 }
 
 export type ModelGenerationInfoFn = (
@@ -44,8 +46,12 @@ export const defaultModelGenerationInfo: ModelGenerationInfoFn = ({
       (): ModelGenerationInfo => {
         const ext = extname(uri);
         const fileName = basename(uri, ext);
-        return { name: upperFirst(camelCase(fileName)) };
+        return { name: pascalCase(fileName) };
       },
-      (token): ModelGenerationInfo => ({ name: upperFirst(camelCase(token)) })
+      (token): ModelGenerationInfo => ({ name: pascalCase(token) })
     )
   );
+
+export function pascalCase(input: string): string {
+  return upperFirst(camelCase(input));
+}

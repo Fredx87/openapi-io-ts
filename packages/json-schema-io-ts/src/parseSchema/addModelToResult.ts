@@ -1,4 +1,5 @@
 import { pipe } from "fp-ts/function";
+import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import produce from "immer";
 import * as gen from "io-ts-codegen";
@@ -11,18 +12,18 @@ import { ParseSchemaRTE } from "./types";
 export function addModelToResultIfNeeded(
   reference: JsonReference,
   type: gen.TypeReference
-): ParseSchemaRTE<void> {
+): ParseSchemaRTE<O.Option<string>> {
   if (!shouldGenerateModel(type)) {
-    return RTE.right(undefined);
+    return RTE.right(O.none);
   }
 
   return pipe(
     RTE.Do,
     RTE.bind("generationInfo", () => getModelGenerationInfo(reference)),
-    RTE.chainFirst(({ generationInfo }) =>
+    RTE.bind("generatedModelName", ({ generationInfo }) =>
       addModelToContext(reference, generationInfo, type)
     ),
-    RTE.map(() => undefined)
+    RTE.map(({ generatedModelName }) => O.some(generatedModelName))
   );
 }
 
@@ -39,21 +40,24 @@ function addModelToContext(
   reference: JsonReference,
   generationInfo: ModelGenerationInfo,
   type: gen.TypeReference
-): ParseSchemaRTE<void> {
-  return modifyGeneratedModelsRef(
-    produce((draft) => {
-      const generatedName = getModelNameFromGenerationInfo(generationInfo);
+): ParseSchemaRTE<string> {
+  const generatedName = getModelNameFromGenerationInfo(generationInfo);
 
-      draft.modelNameTypeMap[generatedName] = type;
+  return pipe(
+    modifyGeneratedModelsRef(
+      produce((draft) => {
+        draft.modelNameTypeMap[generatedName] = type;
 
-      draft.referenceModelNameMap[jsonReferenceToString(reference)] =
-        generatedName;
+        draft.referenceModelNameMap[jsonReferenceToString(reference)] =
+          generatedName;
 
-      if (generationInfo.importData != null) {
-        const { path, prefix } = generationInfo.importData;
-        draft.prefixImportPathMap[prefix] = path;
-      }
-    })
+        if (generationInfo.importData != null) {
+          const { path, prefix } = generationInfo.importData;
+          draft.prefixImportPathMap[prefix] = path;
+        }
+      })
+    ),
+    RTE.map(() => generatedName)
   );
 }
 

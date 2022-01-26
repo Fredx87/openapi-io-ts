@@ -1,5 +1,5 @@
-import * as gen from "io-ts-codegen";
 import * as E from "fp-ts/Either";
+import * as gen from "io-ts-codegen";
 import {
   createSchemaContext,
   ParseSchemaContext,
@@ -8,6 +8,10 @@ import {
 import { ParsableDocument, NonArraySchemaObject } from "./types";
 import { parseSchema } from "./parseSchema";
 import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import {
+  initialGeneratedModels,
+  ModelGenerationInfoFn,
+} from "./modelGeneration";
 
 describe("parseSchema", () => {
   it("should parse an empty schema", async () => {
@@ -109,12 +113,20 @@ describe("parseSchema", () => {
     const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
-    const expected = gen.typeCombinator([
+    const { modelNameTypeMap } = context.generatedModelsRef.read();
+
+    const expectedResult = gen.identifier("CannedSchema");
+
+    const expectedSchema = gen.typeCombinator([
       gen.property("name", gen.stringType, false),
       gen.property("age", gen.numberType, true),
     ]);
+    const expectedModelNameTypeMap = {
+      CannedSchema: expectedSchema,
+    };
 
-    expect(result).toEqual(E.right(expected));
+    expect(result).toEqual(E.right(expectedResult));
+    expect(modelNameTypeMap).toEqual(expectedModelNameTypeMap);
   });
 
   it("should parse a string schema with date format", async () => {
@@ -244,22 +256,25 @@ describe("parseSchema", () => {
     const context = createContextFromSingleDocument(document);
 
     const result = await parseSchema("#")(context)();
-    const expected = gen.typeCombinator([
+    const { modelNameTypeMap } = context.generatedModelsRef.read();
+
+    const expectedResult = gen.identifier("CannedSchema");
+
+    const expectedSchemaModel = gen.typeCombinator([
       gen.property("Foo", gen.arrayCombinator(gen.stringType), false),
       gen.property("Bar", gen.identifier("Bar"), true),
     ]);
-
-    expect(result).toEqual(E.right(expected));
-
-    const generatedModels = context.generatedModelsRef.read();
     const expectedBarModel = gen.typeCombinator([
       gen.property("name", gen.stringType, true),
       gen.property("address", gen.stringType, true),
     ]);
+    const expectedModelNameTypeMap = {
+      CannedSchema: expectedSchemaModel,
+      Bar: expectedBarModel,
+    };
 
-    expect(Object.keys(generatedModels.modelNameTypeMap)).toHaveLength(2);
-    expect(generatedModels.modelNameTypeMap["Bar"]).toEqual(expectedBarModel);
-    expect(generatedModels.modelNameTypeMap["CannedSchema"]).toEqual(expected);
+    expect(result).toEqual(E.right(expectedResult));
+    expect(modelNameTypeMap).toEqual(expectedModelNameTypeMap);
   });
 
   it("should parse an OpenAPI 3.0 schema with nullable", async () => {
@@ -328,7 +343,12 @@ describe("parseSchema", () => {
     const context = createSchemaContext(rootDocumentUri, uriDocumentMap)();
 
     const result = await parseSchema("#/components/schemas/Foo")(context)();
-    const expected = gen.typeCombinator([
+    const { modelNameTypeMap, referenceModelNameMap } =
+      context.generatedModelsRef.read();
+
+    const expectedResult = gen.identifier("Foo");
+
+    const expectedFoo = gen.typeCombinator([
       gen.property("Bar", gen.identifier("JsonSchema"), true),
       gen.property(
         "NullableString",
@@ -336,10 +356,6 @@ describe("parseSchema", () => {
         true
       ),
     ]);
-
-    expect(result).toEqual(E.right(expected));
-
-    const generatedModels = context.generatedModelsRef.read();
     const expectedExternalModel = gen.typeCombinator([
       gen.property("A", gen.stringType, true),
       gen.property(
@@ -349,30 +365,132 @@ describe("parseSchema", () => {
       ),
     ]);
 
-    expect(Object.keys(generatedModels.modelNameTypeMap)).toHaveLength(2);
-    expect(generatedModels.modelNameTypeMap["Foo"]).toEqual(expected);
-    expect(generatedModels.modelNameTypeMap["JsonSchema"]).toEqual(
-      expectedExternalModel
+    const expectedModelNameTypeMap = {
+      Foo: expectedFoo,
+      JsonSchema: expectedExternalModel,
+    };
+
+    const expectedReferenceModelNameMap = {
+      [`${rootDocumentUri}#/components/schemas/Foo`]: "Foo",
+      [`/tmp/${externalDocumentName}`]: "JsonSchema",
+    };
+
+    expect(result).toEqual(E.right(expectedResult));
+    expect(modelNameTypeMap).toEqual(expectedModelNameTypeMap);
+    expect(referenceModelNameMap).toEqual(expectedReferenceModelNameMap);
+  });
+
+  it("should generate models using ModelGenerationInfoFn", async () => {
+    const modelGenerationInfoFn: ModelGenerationInfoFn = ({ jsonPointer }) => {
+      if (jsonPointer.length >= 3) {
+        return {
+          name: jsonPointer[2],
+          importData: {
+            prefix: jsonPointer[1],
+            path: `${jsonPointer[0]}/${jsonPointer[1]}`,
+          },
+        };
+      }
+
+      return {
+        name: "Unknown",
+      };
+    };
+
+    const document: OpenAPIV3.Document = {
+      openapi: "3.0",
+      info: { title: "dummy document", version: "1" },
+      paths: {},
+      components: {
+        schemas: {
+          Foo: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/Bar",
+            },
+          },
+          Bar: {
+            type: "object",
+            properties: {
+              A: {
+                type: "string",
+              },
+              B: {
+                type: "number",
+              },
+            },
+          },
+        },
+        requestBodies: {
+          Body: {
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    x: { $ref: "#/components/schemas/Bar" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const context = createContextFromSingleDocument(
+      document,
+      modelGenerationInfoFn
     );
 
-    expect(Object.keys(generatedModels.referenceModelNameMap)).toHaveLength(2);
-    expect(
-      generatedModels.referenceModelNameMap[
-        `${rootDocumentUri}#/components/schemas/Foo`
-      ]
-    ).toEqual("Foo");
-    expect(
-      generatedModels.referenceModelNameMap[`/tmp/${externalDocumentName}`]
-    ).toEqual("JsonSchema");
+    const resultFoo = await parseSchema("#/components/schemas/Foo")(context)();
+    const resultBar = await parseSchema("#/components/schemas/Bar")(context)();
+    const resultBody = await parseSchema(
+      "#/components/requestBodies/Body/content/application~1json/schema"
+    )(context)();
+    const { modelNameTypeMap, prefixImportPathMap } =
+      context.generatedModelsRef.read();
+
+    const expectedParsedFoo = gen.arrayCombinator(
+      gen.identifier("schemas.Bar")
+    );
+    const expectedParsedBar = gen.identifier("schemas.Bar");
+    const expectedParsedBody = gen.identifier("requestBodies.Body");
+
+    const expectedGeneratedBar = gen.typeCombinator([
+      gen.property("A", gen.stringType, true),
+      gen.property("B", gen.numberType, true),
+    ]);
+    const expectedGeneratedBody = gen.typeCombinator([
+      gen.property("x", gen.identifier("schemas.Bar"), true),
+    ]);
+
+    const expectedModelNameTypeMap = {
+      "schemas.Bar": expectedGeneratedBar,
+      "requestBodies.Body": expectedGeneratedBody,
+    };
+
+    const expectedPrefixImportPathMap = {
+      ...initialGeneratedModels.prefixImportPathMap,
+      schemas: "components/schemas",
+      requestBodies: "components/requestBodies",
+    };
+
+    expect(resultFoo).toEqual(E.right(expectedParsedFoo));
+    expect(resultBar).toEqual(E.right(expectedParsedBar));
+    expect(resultBody).toEqual(E.right(expectedParsedBody));
+    expect(modelNameTypeMap).toEqual(expectedModelNameTypeMap);
+    expect(prefixImportPathMap).toEqual(expectedPrefixImportPathMap);
   });
 });
 
 function createContextFromSingleDocument(
-  document: ParsableDocument
+  document: ParsableDocument,
+  modelGenerationInfoFn?: ModelGenerationInfoFn
 ): ParseSchemaContext {
   const dummyUri = "/tmp/canned-schema.json";
   const uriDocumentMap: UriDocumentMap = {
     [dummyUri]: document,
   };
-  return createSchemaContext(dummyUri, uriDocumentMap)();
+  return createSchemaContext(dummyUri, uriDocumentMap, modelGenerationInfoFn)();
 }

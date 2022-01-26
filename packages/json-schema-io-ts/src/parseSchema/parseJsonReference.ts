@@ -1,9 +1,9 @@
-import { pipe, identity } from "fp-ts/function";
+import { pipe } from "fp-ts/function";
 import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { parseSchemaFromJsonReference } from "./parseSchema";
-import { JsonReference, jsonReferenceToString } from "../jsonReference";
+import { JsonReference } from "../jsonReference";
 import { resolveStringReference } from "./resolvers";
 import { ParseSchemaRTE } from "./types";
 import {
@@ -46,20 +46,7 @@ function parseNewReference(stringReference: string): ParseSchemaRTE {
     RTE.bind("parsedSchema", ({ jsonReference }) =>
       setCurrentDocumentUriAndParseSchema(jsonReference)
     ),
-    /* 
-      Try to get the model from the parsed references. 
-      If found, returns the identifier of the model.
-      If not found, no model was generated and the parsed type is returned
-     */
-    RTE.bindW("parsedReference", ({ jsonReference }) =>
-      getParsedReference(jsonReferenceToString(jsonReference))
-    ),
-    RTE.map(({ parsedSchema, parsedReference }) =>
-      pipe(
-        parsedReference,
-        O.fold(() => parsedSchema, identity)
-      )
-    )
+    RTE.map(({ parsedSchema }) => parsedSchema)
   );
 }
 

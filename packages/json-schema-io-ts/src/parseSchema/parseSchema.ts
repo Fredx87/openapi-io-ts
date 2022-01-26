@@ -34,7 +34,12 @@ export function parseSchemaFromJsonReference(
     RTE.bind("generatedModelName", ({ type }) =>
       addModelToResultIfNeeded(jsonReference, type)
     ),
-    RTE.map(({ type }) => type)
+    RTE.map(({ type, generatedModelName }) =>
+      pipe(
+        generatedModelName,
+        O.fold(() => type, gen.identifier)
+      )
+    )
   );
 }
 
