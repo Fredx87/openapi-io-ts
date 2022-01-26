@@ -1,7 +1,7 @@
 {
   "name": "json-schema-io-ts",
   "version": "0.0.0",
-  "description": "Generate io-ts codecs from an OpenAPI Schema or a JSON Schema",
+  "description": "Codegen tool for generating io-ts types from an OpenAPI schema or a JSON Schema",
   "keywords": [
     "openapi",
     "json-schema",

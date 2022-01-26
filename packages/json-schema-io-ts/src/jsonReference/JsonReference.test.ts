@@ -1,5 +1,8 @@
-import { jsonReferenceToString } from ".";
-import { createJsonReference, JsonReference } from "./JsonReference";
+import {
+  createJsonReference,
+  JsonReference,
+  jsonReferenceToString,
+} from "./JsonReference";
 
 const ROOT_URI = "/tmp/canned-root-url.json";
 const SECOND_DOCUMENT_NAME = "canned-second-document.json";
