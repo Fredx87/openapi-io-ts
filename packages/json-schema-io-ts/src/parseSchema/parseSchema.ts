@@ -4,7 +4,7 @@ import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
-import { JsonSchemaRef } from "../jsonReference";
+import { JsonSchemaRef, JsonReference } from "../jsonReference";
 import {
   ArraySchemaObject,
   SchemaOrRef,
@@ -16,39 +16,25 @@ import { parseJsonReference } from "./parseJsonReference";
 import { ParseSchemaRTE } from "./ParseSchemaRTE";
 import { resolveSchema, resolveStringReference } from "./resolvers";
 import { addModelToResultIfNeeded } from "./addModelToResult";
-import { JsonReference } from "..";
 
 export function parseSchema(reference: string): ParseSchemaRTE {
   return pipe(
     resolveStringReference(reference),
-    RTE.chain((jsonReference) =>
-      parseSchemaFromJsonReference(jsonReference, false)
-    )
+    RTE.chain((jsonReference) => parseSchemaFromJsonReference(jsonReference))
   );
 }
 
 export function parseSchemaFromJsonReference(
-  jsonReference: JsonReference,
-  generateModel: boolean
+  jsonReference: JsonReference
 ): ParseSchemaRTE {
   return pipe(
     RTE.Do,
     RTE.bind("schema", () => resolveSchema(jsonReference)),
     RTE.bind("type", ({ schema }) => parseResolvedSchema(schema)),
     RTE.bind("generatedModelName", ({ type }) =>
-      generateModel
-        ? addModelToResultIfNeeded(jsonReference, type)
-        : RTE.right(O.none)
+      addModelToResultIfNeeded(jsonReference, type)
     ),
-    RTE.map(({ type, generatedModelName }) =>
-      pipe(
-        generatedModelName,
-        O.fold(
-          () => type,
-          (name) => gen.identifier(name)
-        )
-      )
-    )
+    RTE.map(({ type }) => type)
   );
 }
 

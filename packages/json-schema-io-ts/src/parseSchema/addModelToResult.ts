@@ -1,5 +1,4 @@
 import { pipe } from "fp-ts/function";
-import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import produce from "immer";
 import * as gen from "io-ts-codegen";
@@ -12,9 +11,9 @@ import { jsonReferenceToString } from "..";
 export function addModelToResultIfNeeded(
   reference: JsonReference,
   type: gen.TypeReference
-): ParseSchemaRTE<O.Option<string>> {
+): ParseSchemaRTE<void> {
   if (!shouldGenerateModel(type)) {
-    return RTE.right(O.none);
+    return RTE.right(undefined);
   }
 
   return pipe(
@@ -23,7 +22,7 @@ export function addModelToResultIfNeeded(
     RTE.chainFirst(({ generationInfo }) =>
       addModelToContext(reference, generationInfo, type)
     ),
-    RTE.map(({ generationInfo }) => O.some(generationInfo.name))
+    RTE.map(() => undefined)
   );
 }
 

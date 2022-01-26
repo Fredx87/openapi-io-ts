@@ -257,8 +257,11 @@ describe("parseSchema", () => {
       gen.property("address", gen.stringType, true),
     ]);
 
-    expect(Object.keys(generatedModels.modelNameTypeMap)).toHaveLength(1);
+    expect(Object.keys(generatedModels.modelNameTypeMap)).toHaveLength(2);
     expect(generatedModels.modelNameTypeMap["Bar"]).toEqual(expectedBarModel);
+    expect(generatedModels.modelNameTypeMap["TmpCannedSchemaJson"]).toEqual(
+      expected
+    );
   });
 
   it("should parse an OpenAPI 3.0 schema with nullable", async () => {
@@ -337,13 +340,39 @@ describe("parseSchema", () => {
     ]);
 
     expect(result).toEqual(E.right(expected));
+
+    const generatedModels = context.generatedModelsRef.read();
+    const expectedExternalModel = gen.typeCombinator([
+      gen.property("A", gen.stringType, true),
+      gen.property(
+        "B",
+        gen.unionCombinator([gen.stringType, gen.nullType]),
+        true
+      ),
+    ]);
+
+    expect(Object.keys(generatedModels.modelNameTypeMap)).toHaveLength(2);
+    expect(generatedModels.modelNameTypeMap["Foo"]).toEqual(expected);
+    expect(generatedModels.modelNameTypeMap["TmpJsonSchemaYml"]).toEqual(
+      expectedExternalModel
+    );
+
+    expect(Object.keys(generatedModels.referenceModelNameMap)).toHaveLength(2);
+    expect(
+      generatedModels.referenceModelNameMap[
+        `${rootDocumentUri}#/components/schemas/Foo`
+      ]
+    ).toEqual("Foo");
+    expect(
+      generatedModels.referenceModelNameMap[`/tmp/${externalDocumentName}`]
+    ).toEqual("TmpJsonSchemaYml");
   });
 });
 
 function createContextFromSingleDocument(
   document: ParsableDocument
 ): ParseSchemaContext {
-  const dummyUri = "/tmp/dummy-schema.json";
+  const dummyUri = "/tmp/canned-schema.json";
   const uriDocumentMap: UriDocumentMap = {
     [dummyUri]: document,
   };

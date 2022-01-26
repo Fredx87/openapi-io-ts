@@ -1,4 +1,4 @@
-import { pipe } from "fp-ts/function";
+import { pipe, identity } from "fp-ts/function";
 import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
@@ -9,7 +9,7 @@ import {
   modifyCurrentDocumentUri,
   readCurrentDocumentUri,
 } from "../ParseSchemaContext";
-import { JsonReference } from "../jsonReference";
+import { JsonReference, jsonReferenceToString } from "../jsonReference";
 import { resolveStringReference } from "./resolvers";
 
 export function parseJsonReference(reference: string): ParseSchemaRTE {
@@ -39,44 +39,36 @@ function getParsedReference(
   );
 }
 
-/**
- * Parse a new ref. If the ref was added to generated model, returns the model name.
- * Otherwise it returns the parsed schema.
- *
- * @param stringReference JSON pointer of the reference to add
- * @returns the new parsed reference
- */
 function parseNewReference(stringReference: string): ParseSchemaRTE {
   return pipe(
     RTE.Do,
-    RTE.bind("parsedSchema", () =>
-      setCurrentDocumentUriAndParseSchema(stringReference)
+    RTE.bind("jsonReference", () => resolveStringReference(stringReference)),
+    RTE.bind("parsedSchema", ({ jsonReference }) =>
+      setCurrentDocumentUriAndParseSchema(jsonReference)
     ),
-    RTE.bindW("reference", () => getParsedReference(stringReference)),
-    RTE.map(({ parsedSchema, reference }) =>
+    /* 
+      Try to get the model from the parsed references. 
+      If found, returns the identifier of the model.
+      If not found, no model was generated and the parsed type is returned
+     */
+    RTE.bindW("parsedReference", ({ jsonReference }) =>
+      getParsedReference(jsonReferenceToString(jsonReference))
+    ),
+    RTE.map(({ parsedSchema, parsedReference }) =>
       pipe(
-        reference,
-        O.fold(
-          () => parsedSchema,
-          (ref) => ref
-        )
+        parsedReference,
+        O.fold(() => parsedSchema, identity)
       )
     )
   );
 }
 
 function setCurrentDocumentUriAndParseSchema(
-  stringReference: string
+  jsonReference: JsonReference
 ): ParseSchemaRTE {
   return pipe(
-    RTE.Do,
-    RTE.bind("jsonReference", () => resolveStringReference(stringReference)),
-    RTE.bind("documentUri", ({ jsonReference }) =>
-      setCurrentDocumentUri(jsonReference)
-    ),
-    RTE.chainW(({ jsonReference }) =>
-      parseSchemaFromJsonReference(jsonReference, true)
-    ),
+    setCurrentDocumentUri(jsonReference),
+    RTE.chainW(() => parseSchemaFromJsonReference(jsonReference)),
     RTE.chainFirstW(() => modifyCurrentDocumentUri(O.none))
   );
 }
