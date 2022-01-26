@@ -28,12 +28,20 @@ export function parseSchema(
     ),
     RTE.bind("schema", ({ jsonPointer }) => resolveSchema(jsonPointer)),
     RTE.bind("type", ({ schema }) => parseResolvedSchema(schema)),
-    RTE.chainFirst(({ type }) =>
+    RTE.bind("generatedModelName", ({ type }) =>
       generateModel
         ? addModelToResultIfNeeded(pointer, type)
-        : RTE.right(undefined)
+        : RTE.right(O.none)
     ),
-    RTE.map(({ type }) => type)
+    RTE.map(({ type, generatedModelName }) =>
+      pipe(
+        generatedModelName,
+        O.fold(
+          () => type,
+          (name) => gen.identifier(name)
+        )
+      )
+    )
   );
 }
 
@@ -56,7 +64,7 @@ function parseResolvedSchema(schema: SchemaOrRef): ParseSchemaRTE {
     return parseOneOf(converted.anyOf);
   }
 
-  return parseSchemaByTypes(schema);
+  return parseSchemaByTypes(converted);
 }
 
 function convertSchemaToOpenApi3_1(
@@ -174,7 +182,7 @@ function parseSchemas(
 ): ParseSchemaRTE<gen.TypeReference[]> {
   return pipe(
     schemas,
-    RTE.traverseArray(parseResolvedSchema),
+    RTE.traverseSeqArray(parseResolvedSchema),
     RTE.map((res) => [...res])
   );
 }
@@ -183,7 +191,7 @@ function parseObject(schema: NonArraySchemaObject): ParseSchemaRTE {
   if (schema.properties) {
     return pipe(
       Object.entries(schema.properties),
-      RTE.traverseArray(([name, propSchema]) =>
+      RTE.traverseSeqArray(([name, propSchema]) =>
         parseProperty(name, propSchema, schema)
       ),
       RTE.map((props) => gen.typeCombinator([...props]))

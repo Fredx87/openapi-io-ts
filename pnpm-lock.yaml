@@ -94,14 +94,6 @@ importers:
       "@openapi-io-ts/cli": link:../../packages/cli
       parcel: 2.2.1
 
-  examples/remove-me:
-    specifiers:
-      "@apidevtools/swagger-parser": ^10.0.2
-      openapi-types: ^10.0.0
-    dependencies:
-      "@apidevtools/swagger-parser": 10.0.3_openapi-types@10.0.0
-      openapi-types: 10.0.0
-
   packages/cli:
     specifiers:
       "@apidevtools/swagger-parser": ^10.0.2
@@ -132,6 +124,7 @@ importers:
   packages/json-schema-io-ts:
     specifiers:
       "@types/lodash": ^4.14.178
+      "@types/node": ^16.0.0
       fp-ts: ^2.11.0
       immer: ^9.0.12
       io-ts-codegen: ^0.4.0
@@ -139,6 +132,7 @@ importers:
       openapi-types: ^10.0.0
     dependencies:
       "@types/lodash": 4.14.178
+      "@types/node": 16.11.21
       fp-ts: 2.11.8
       immer: 9.0.12
       io-ts-codegen: 0.4.5
@@ -4721,6 +4715,13 @@ packages:
         integrity: sha512-aI3/oo5DzyiI5R/xAhxxRzfZlWlsbbqdgxfTPkqu/Zt+23GXiJvMCyPJT4+xKSXOnLqoL8jJYMLTwvK2M3a5hw==,
       }
     dev: true
+
+  /@types/node/16.11.21:
+    resolution:
+      {
+        integrity: sha512-Pf8M1XD9i1ksZEcCP8vuSNwooJ/bZapNmIzpmsMaL+jMI+8mEYU3PKvs+xDNuQcJWF/x24WzY4qxLtB0zNow9A==,
+      }
+    dev: false
 
   /@types/node/17.0.10:
     resolution:

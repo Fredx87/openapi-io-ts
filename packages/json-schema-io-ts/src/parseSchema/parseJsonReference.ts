@@ -5,6 +5,11 @@ import * as gen from "io-ts-codegen";
 import { parseSchema } from "./parseSchema";
 import { ParseSchemaRTE } from "./ParseSchemaRTE";
 import { readGeneratedModelsRef } from "./generatedModels";
+import {
+  modifyCurrentDocumentUri,
+  readCurrentDocumentUri,
+} from "../ParseSchemaContext";
+import { getAbsoluteFileName } from "../JsonReference";
 
 export function parseJsonReference(pointer: string): ParseSchemaRTE {
   return pipe(
@@ -43,7 +48,12 @@ function getParsedReference(
 function parseNewReference(pointer: string): ParseSchemaRTE {
   return pipe(
     RTE.Do,
-    RTE.bind("parsedSchema", () => parseSchema(pointer, true)),
+    RTE.bind("resolvedPointerAndDocumentUri", () =>
+      getResolvedPointerAndDocumentUri(pointer)
+    ),
+    RTE.bind("parsedSchema", ({ resolvedPointerAndDocumentUri }) =>
+      setCurrentDocumentUriAndParseSchema(resolvedPointerAndDocumentUri)
+    ),
     RTE.bindW("reference", () => getParsedReference(pointer)),
     RTE.map(({ parsedSchema, reference }) =>
       pipe(
@@ -53,6 +63,59 @@ function parseNewReference(pointer: string): ParseSchemaRTE {
           (ref) => ref
         )
       )
+    )
+  );
+}
+
+interface ResolvedPointerAndDocumentUri {
+  resolvedPointer: string;
+  documentUri: O.Option<string>;
+}
+
+function setCurrentDocumentUriAndParseSchema({
+  resolvedPointer,
+  documentUri,
+}: ResolvedPointerAndDocumentUri): ParseSchemaRTE {
+  return pipe(
+    modifyCurrentDocumentUri(documentUri),
+    RTE.chainW(() => parseSchema(resolvedPointer, true)),
+    RTE.chainFirstW(() => modifyCurrentDocumentUri(O.none))
+  );
+}
+
+function getResolvedPointerAndDocumentUri(
+  pointer: string
+): ParseSchemaRTE<ResolvedPointerAndDocumentUri, never> {
+  if (pointer.startsWith("./")) {
+    const hashIndex = pointer.indexOf("#");
+    const fileName = pointer.substring(
+      0,
+      hashIndex === -1 ? undefined : hashIndex
+    );
+    const resolvedPointer =
+      hashIndex === -1 ? "#" : pointer.replace(fileName, "");
+
+    return pipe(
+      readCurrentDocumentUri(),
+      RTE.map((currentDocumentUri) => {
+        const res: ResolvedPointerAndDocumentUri = {
+          resolvedPointer,
+          documentUri: O.some(
+            getAbsoluteFileName(currentDocumentUri, `${fileName}`)
+          ),
+        };
+        return res;
+      })
+    );
+  }
+
+  return pipe(
+    readCurrentDocumentUri(),
+    RTE.map(
+      (documentUri): ResolvedPointerAndDocumentUri => ({
+        resolvedPointer: pointer,
+        documentUri: O.some(documentUri),
+      })
     )
   );
 }

@@ -4,6 +4,7 @@ import * as O from "fp-ts/Option";
 import * as RNEA from "fp-ts/ReadonlyNonEmptyArray";
 import * as t from "io-ts";
 import get from "lodash/get";
+import { dirname, resolve } from "path";
 import { UriDocumentMap } from "./ParseSchemaContext";
 
 export class JsonPointer {
@@ -26,14 +27,37 @@ export function createJsonPointer(
   pointer: string
 ): E.Either<Error, JsonPointer> {
   return pipe(
-    RNEA.fromArray(pointer.split("/")),
+    createPointerTokensFromString(pointer),
     E.fromOption(
       () => new Error(`Cannot create JsonPointer for pointer "${pointer}"`)
     ),
     E.map((tokens) => {
       const decoded = RNEA.map(jsonPointerTokenDecode)(tokens);
+
       return new JsonPointer(decoded);
     })
+  );
+}
+
+function createPointerTokensFromString(
+  pointer: string
+): O.Option<RNEA.ReadonlyNonEmptyArray<string>> {
+  return pipe(
+    pointer.split("/"),
+    (tokens) => {
+      /*
+      If the pointer starts with `./${string}` it means that it is a reference to a local file.
+      This changes the splitted array to have `./${string}` as first token
+
+      TODO: Do the same for URL or absolute references
+      */
+      const [first, second, ...rest] = tokens;
+      if (first === "." && second != null) {
+        return [`./${second}`, ...rest];
+      }
+      return tokens;
+    },
+    RNEA.fromArray
   );
 }
 
@@ -42,6 +66,14 @@ export function resolvePointer<T>(
   jsonPointer: JsonPointer
 ): O.Option<T> {
   return pipe(get(uriDocumentMap, jsonPointer.tokens) as T, O.fromNullable);
+}
+
+export function getAbsoluteFileName(
+  currentDocumentUri: string,
+  relativeFileName: string
+): string {
+  const rootDir = dirname(currentDocumentUri);
+  return resolve(rootDir, relativeFileName);
 }
 
 function jsonPointerTokenEncode(token: string): string {
