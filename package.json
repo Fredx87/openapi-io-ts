@@ -45,7 +45,7 @@
     "*.ts": [
       "eslint --fix"
     ],
-    "*.{js,css,json,md,yaml}": [
+    "*.{js,css,json,md,yml,yaml}": [
       "prettier --write"
     ]
   },
