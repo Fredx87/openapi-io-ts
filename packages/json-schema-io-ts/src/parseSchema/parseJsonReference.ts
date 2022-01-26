@@ -2,21 +2,22 @@ import { pipe } from "fp-ts/function";
 import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
-import { parseSchema } from "./parseSchema";
+import { parseSchemaFromJsonReference } from "./parseSchema";
 import { ParseSchemaRTE } from "./ParseSchemaRTE";
 import { readGeneratedModelsRef } from "./generatedModels";
 import {
   modifyCurrentDocumentUri,
   readCurrentDocumentUri,
 } from "../ParseSchemaContext";
-import { getAbsoluteFileName } from "../JsonReference";
+import { JsonReference } from "../jsonReference";
+import { resolveStringReference } from "./resolvers";
 
-export function parseJsonReference(pointer: string): ParseSchemaRTE {
+export function parseJsonReference(reference: string): ParseSchemaRTE {
   return pipe(
-    getParsedReference(pointer),
+    getParsedReference(reference),
     RTE.chainW(
       O.fold(
-        () => parseNewReference(pointer),
+        () => parseNewReference(reference),
         (r) => RTE.right(r)
       )
     )
@@ -24,13 +25,13 @@ export function parseJsonReference(pointer: string): ParseSchemaRTE {
 }
 
 function getParsedReference(
-  pointer: string
+  stringReference: string
 ): ParseSchemaRTE<O.Option<gen.TypeReference>, never> {
   return pipe(
     readGeneratedModelsRef(),
     RTE.map((currentRes) =>
       pipe(
-        currentRes.pointerModelNameMap[pointer],
+        currentRes.referenceModelNameMap[stringReference],
         O.fromNullable,
         O.map((name) => gen.identifier(name))
       )
@@ -42,19 +43,16 @@ function getParsedReference(
  * Parse a new ref. If the ref was added to generated model, returns the model name.
  * Otherwise it returns the parsed schema.
  *
- * @param pointer JSON pointer of the reference to add
+ * @param stringReference JSON pointer of the reference to add
  * @returns the new parsed reference
  */
-function parseNewReference(pointer: string): ParseSchemaRTE {
+function parseNewReference(stringReference: string): ParseSchemaRTE {
   return pipe(
     RTE.Do,
-    RTE.bind("resolvedPointerAndDocumentUri", () =>
-      getResolvedPointerAndDocumentUri(pointer)
+    RTE.bind("parsedSchema", () =>
+      setCurrentDocumentUriAndParseSchema(stringReference)
     ),
-    RTE.bind("parsedSchema", ({ resolvedPointerAndDocumentUri }) =>
-      setCurrentDocumentUriAndParseSchema(resolvedPointerAndDocumentUri)
-    ),
-    RTE.bindW("reference", () => getParsedReference(pointer)),
+    RTE.bindW("reference", () => getParsedReference(stringReference)),
     RTE.map(({ parsedSchema, reference }) =>
       pipe(
         reference,
@@ -67,55 +65,29 @@ function parseNewReference(pointer: string): ParseSchemaRTE {
   );
 }
 
-interface ResolvedPointerAndDocumentUri {
-  resolvedPointer: string;
-  documentUri: O.Option<string>;
-}
-
-function setCurrentDocumentUriAndParseSchema({
-  resolvedPointer,
-  documentUri,
-}: ResolvedPointerAndDocumentUri): ParseSchemaRTE {
+function setCurrentDocumentUriAndParseSchema(
+  stringReference: string
+): ParseSchemaRTE {
   return pipe(
-    modifyCurrentDocumentUri(documentUri),
-    RTE.chainW(() => parseSchema(resolvedPointer, true)),
+    RTE.Do,
+    RTE.bind("jsonReference", () => resolveStringReference(stringReference)),
+    RTE.bind("documentUri", ({ jsonReference }) =>
+      setCurrentDocumentUri(jsonReference)
+    ),
+    RTE.chainW(({ jsonReference }) =>
+      parseSchemaFromJsonReference(jsonReference, true)
+    ),
     RTE.chainFirstW(() => modifyCurrentDocumentUri(O.none))
   );
 }
 
-function getResolvedPointerAndDocumentUri(
-  pointer: string
-): ParseSchemaRTE<ResolvedPointerAndDocumentUri, never> {
-  if (pointer.startsWith("./")) {
-    const hashIndex = pointer.indexOf("#");
-    const fileName = pointer.substring(
-      0,
-      hashIndex === -1 ? undefined : hashIndex
-    );
-    const resolvedPointer =
-      hashIndex === -1 ? "#" : pointer.replace(fileName, "");
-
-    return pipe(
-      readCurrentDocumentUri(),
-      RTE.map((currentDocumentUri) => {
-        const res: ResolvedPointerAndDocumentUri = {
-          resolvedPointer,
-          documentUri: O.some(
-            getAbsoluteFileName(currentDocumentUri, `${fileName}`)
-          ),
-        };
-        return res;
-      })
-    );
-  }
-
+function setCurrentDocumentUri({ uri }: JsonReference): ParseSchemaRTE<void> {
   return pipe(
     readCurrentDocumentUri(),
-    RTE.map(
-      (documentUri): ResolvedPointerAndDocumentUri => ({
-        resolvedPointer: pointer,
-        documentUri: O.some(documentUri),
-      })
+    RTE.chain((currentDocumentUri) =>
+      uri !== currentDocumentUri
+        ? modifyCurrentDocumentUri(O.some(uri))
+        : RTE.right(undefined)
     )
   );
 }

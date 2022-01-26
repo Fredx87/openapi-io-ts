@@ -3,13 +3,14 @@ import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import produce from "immer";
 import * as gen from "io-ts-codegen";
-import { createJsonPointer, JsonPointer } from "../JsonReference";
+import { JsonReference } from "../jsonReference";
 import { ModelGenerationInfo, ParseSchemaContext } from "../ParseSchemaContext";
 import { ParseSchemaRTE } from "./ParseSchemaRTE";
 import { modifyGeneratedModelsRef } from "./generatedModels";
+import { jsonReferenceToString } from "..";
 
 export function addModelToResultIfNeeded(
-  pointer: string,
+  reference: JsonReference,
   type: gen.TypeReference
 ): ParseSchemaRTE<O.Option<string>> {
   if (!shouldGenerateModel(type)) {
@@ -18,30 +19,25 @@ export function addModelToResultIfNeeded(
 
   return pipe(
     RTE.Do,
-    RTE.bind("jsonPointer", () =>
-      pipe(createJsonPointer(pointer), RTE.fromEither)
-    ),
-    RTE.bind("generationInfo", ({ jsonPointer }) =>
-      getModelGenerationInfo(jsonPointer)
-    ),
-    RTE.chainFirst(({ jsonPointer, generationInfo }) =>
-      addModelToContext(jsonPointer, generationInfo, type)
+    RTE.bind("generationInfo", () => getModelGenerationInfo(reference)),
+    RTE.chainFirst(({ generationInfo }) =>
+      addModelToContext(reference, generationInfo, type)
     ),
     RTE.map(({ generationInfo }) => O.some(generationInfo.name))
   );
 }
 
 function getModelGenerationInfo(
-  pointer: JsonPointer
+  reference: JsonReference
 ): ParseSchemaRTE<ModelGenerationInfo> {
   return pipe(
     RTE.asks((context: ParseSchemaContext) => context.modelGenerationInfoFn),
-    RTE.map((getModelGenerationInfo) => getModelGenerationInfo(pointer))
+    RTE.map((getModelGenerationInfo) => getModelGenerationInfo(reference))
   );
 }
 
 function addModelToContext(
-  pointer: JsonPointer,
+  reference: JsonReference,
   generationInfo: ModelGenerationInfo,
   type: gen.TypeReference
 ): ParseSchemaRTE<void> {
@@ -51,7 +47,8 @@ function addModelToContext(
 
       draft.modelNameTypeMap[generatedName] = type;
 
-      draft.pointerModelNameMap[pointer.toString()] = generatedName;
+      draft.referenceModelNameMap[jsonReferenceToString(reference)] =
+        generatedName;
 
       if (generationInfo.importData != null) {
         const { path, prefix } = generationInfo.importData;

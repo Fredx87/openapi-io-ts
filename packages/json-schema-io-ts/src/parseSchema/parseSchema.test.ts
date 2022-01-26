@@ -2,11 +2,12 @@ import * as gen from "io-ts-codegen";
 import * as E from "fp-ts/Either";
 import {
   createSchemaContext,
-  ParseSchemaDocuments,
   ParseSchemaContext,
+  UriDocumentMap,
 } from "../ParseSchemaContext";
 import { ParsableDocument, NonArraySchemaObject } from "../types";
 import { parseSchema } from "./parseSchema";
+import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 
 describe("parseSchema", () => {
   it("should parse an empty schema", async () => {
@@ -259,15 +260,92 @@ describe("parseSchema", () => {
     expect(Object.keys(generatedModels.modelNameTypeMap)).toHaveLength(1);
     expect(generatedModels.modelNameTypeMap["Bar"]).toEqual(expectedBarModel);
   });
+
+  it("should parse an OpenAPI 3.0 schema with nullable", async () => {
+    const document: OpenAPIV3.Document = {
+      openapi: "3.0",
+      info: { title: "dummy document", version: "1" },
+      paths: {},
+      components: {
+        schemas: {
+          Foo: {
+            type: "string",
+            nullable: true,
+          },
+        },
+      },
+    };
+    const context = createContextFromSingleDocument(document);
+
+    const result = await parseSchema("#/components/schemas/Foo")(context)();
+    const expected = gen.unionCombinator([gen.stringType, gen.nullType]);
+
+    expect(result).toEqual(E.right(expected));
+  });
+
+  it("should parse external references", async () => {
+    const rootDocumentUri = "/tmp/openapi.yml";
+    const externalDocumentName = "json-schema.yml";
+
+    const rootDocument: OpenAPIV3_1.Document = {
+      openapi: "3.1",
+      info: { title: "dummy document", version: "1" },
+      components: {
+        schemas: {
+          Foo: {
+            type: "object",
+            properties: {
+              Bar: { $ref: `./${externalDocumentName}` },
+              NullableString: {
+                $ref: `./${externalDocumentName}#/$defs/NullableString`,
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const externalDocument = {
+      type: "object",
+      properties: {
+        A: {
+          type: "string",
+        },
+        B: { $ref: "#/$defs/NullableString" },
+      },
+      $defs: {
+        NullableString: {
+          type: ["string", "null"],
+        },
+      },
+    } as ParsableDocument;
+
+    const uriDocumentMap: UriDocumentMap = {
+      [rootDocumentUri]: rootDocument,
+      [`/tmp/${externalDocumentName}`]: externalDocument,
+    };
+    const context = createSchemaContext(rootDocumentUri, uriDocumentMap)();
+
+    const result = await parseSchema("#/components/schemas/Foo")(context)();
+    const expected = gen.typeCombinator([
+      gen.property("Bar", gen.identifier("TmpJsonSchemaYml"), true),
+      gen.property(
+        "NullableString",
+        gen.unionCombinator([gen.stringType, gen.nullType]),
+        true
+      ),
+    ]);
+
+    expect(result).toEqual(E.right(expected));
+  });
 });
 
 function createContextFromSingleDocument(
   document: ParsableDocument
 ): ParseSchemaContext {
   const dummyUri = "/tmp/dummy-schema.json";
-  const documents: ParseSchemaDocuments = {
-    rootDocumentUri: dummyUri,
-    uriDocumentMap: { [dummyUri]: document },
+  const uriDocumentMap: UriDocumentMap = {
+    [dummyUri]: document,
   };
-  return createSchemaContext(documents)();
+  return createSchemaContext(dummyUri, uriDocumentMap)();
 }
