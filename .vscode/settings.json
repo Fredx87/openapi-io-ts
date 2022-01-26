@@ -1,3 +1,4 @@
 {
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "jestrunner.jestPath": "${workspaceFolder}/node_modules/jest/bin/jest.js"
 }
