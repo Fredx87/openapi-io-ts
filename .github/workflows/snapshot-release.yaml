@@ -11,9 +11,6 @@ jobs:
 
       - uses: "./.github/actions/setup"
 
-      - name: Configure NPM token
-        run: npm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN }}
-
       - name: Build
         run: pnpm build
 
@@ -23,3 +20,4 @@ jobs:
           pnpm changeset publish --no-git-tag --snapshot --tag next
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
