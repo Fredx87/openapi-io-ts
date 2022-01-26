@@ -1,32 +1,44 @@
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
-import * as A from "fp-ts/Array";
 import { capitalize, CapitalizeCasing } from "../utils";
 import { OPERATIONS_PATH, RUNTIME_PACKAGE, writeGeneratedFile } from "./common";
 import { CodegenContext, CodegenRTE } from "./context";
 import { operationName, operationTypesName } from "./operations";
 
+const OPERATIONS_OBJECT_NAME = "operations";
+const OPERATIONS_TYPES_MAP_NAME = "OperationsTypesMap";
+const MAPPED_OPERATION_REQUEST_FUNCTION_TYPE = `MappedOperationRequestFunction<
+  typeof ${OPERATIONS_OBJECT_NAME},
+  ${OPERATIONS_TYPES_MAP_NAME}
+>`;
+
 export function generateOperationsIndex(): CodegenRTE<void> {
   return pipe(
-    RTE.asks((context: CodegenContext) => context.parserOutput.tags),
-    RTE.map(generateIndexContent),
+    RTE.asks((context: CodegenContext) => context.parserOutput),
+    RTE.map(({ operations, tags }) =>
+      generateIndexContent(Object.keys(operations), tags)
+    ),
     RTE.chain((content) =>
       writeGeneratedFile(OPERATIONS_PATH, `index.ts`, content)
     )
   );
 }
 
-function generateIndexContent(tags: Record<string, string[]>): string {
-  const imports = pipe(Object.values(tags), A.flatten, generateImports);
+function generateIndexContent(
+  operationIds: string[],
+  tags: Record<string, string[]>
+): string {
+  const imports = generateImports(operationIds);
+  const requestFunctionsBuilder = generateRequestFunctionsBuilder(operationIds);
   const tagsOperation = generateTagsOperations(tags);
-  const requestFunctionsBuilder = generateRequestFunctionsBuilder(
-    Object.keys(tags)
-  );
 
   return `${imports}
+
+  ${requestFunctionsBuilder}
+
   ${tagsOperation}
-  ${requestFunctionsBuilder}`;
+  `;
 }
 
 function generateImports(operationIds: string[]): string {
@@ -50,6 +62,28 @@ function generateImports(operationIds: string[]): string {
   ${operationsImport}`;
 }
 
+function generateRequestFunctionsBuilder(operationIds: string[]): string {
+  return `
+  export const ${OPERATIONS_OBJECT_NAME} = {
+    ${operationIds.map((id) => `${id}: ${operationName(id)}, `).join("\n")}
+   } as const;
+
+   export interface ${OPERATIONS_TYPES_MAP_NAME} {
+    ${operationIds.map((id) => `${id}: ${operationTypesName(id)}; `).join("\n")}
+   }
+
+  export const requestFunctionsBuilder = (
+    requestAdapter: HttpRequestAdapter
+  ): ${MAPPED_OPERATION_REQUEST_FUNCTION_TYPE} => ({
+    ${operationIds
+      .map(
+        (id) =>
+          `${id}: request(${OPERATIONS_OBJECT_NAME}.${id}, requestAdapter),`
+      )
+      .join("\n")}
+  })`;
+}
+
 function generateTagsOperations(tags: Record<string, string[]>): string {
   const generatedOperations = pipe(tags, R.mapWithIndex(generateTagOperations));
   return Object.values(generatedOperations).join("\n");
@@ -57,46 +91,12 @@ function generateTagsOperations(tags: Record<string, string[]>): string {
 
 function generateTagOperations(tag: string, operationIds: string[]): string {
   return `
-  export const ${tagOperationsName(tag)} = {
-    ${operationIds.map((id) => `${id}: ${operationName(id)}, `).join("\n")}
-   } as const;
-
-   export interface ${tagOperationsTypeMapName(tag)} {
-    ${operationIds.map((id) => `${id}: ${operationTypesName(id)}; `).join("\n")}
-   }
-
    export const ${tagServiceBuilderName(tag)} = (
-    requestAdapter: HttpRequestAdapter
-  ): MappedOperationRequestFunction<
-    typeof ${tagOperationsName(tag)},
-    ${tagOperationsTypeMapName(tag)}
-  > => ({
-    ${operationIds
-      .map(
-        (id) =>
-          `${id}: request(${tagOperationsName(tag)}.${id}, requestAdapter), `
-      )
-      .join("\n")}
+    requestFunctions: ${MAPPED_OPERATION_REQUEST_FUNCTION_TYPE}
+  ) => ({
+    ${operationIds.map((id) => `${id}: requestFunctions.${id},`).join("\n")}
   });
    `;
-}
-
-function generateRequestFunctionsBuilder(tags: string[]): string {
-  return `export const requestFunctionsBuilder = (
-    requestAdapter: HttpRequestAdapter
-  ) => ({
-    ${tags
-      .map((tag) => `...${tagServiceBuilderName(tag)}(requestAdapter), `)
-      .join("\n")}
-  }); `;
-}
-
-function tagOperationsName(tag: string): string {
-  return `${tagName(tag)}Operations`;
-}
-
-function tagOperationsTypeMapName(tag: string): string {
-  return `${tagName(tag, "pascal")}OperationsTypesMap`;
 }
 
 function tagServiceBuilderName(tag: string): string {

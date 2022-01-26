@@ -44,7 +44,7 @@ import {
 import { updateUserOperation, UpdateUserOperationTypes } from "./updateUser";
 import { uploadFileOperation, UploadFileOperationTypes } from "./uploadFile";
 
-export const petOperations = {
+export const operations = {
   addPet: addPetOperation,
   updatePet: updatePetOperation,
   findPetsByStatus: findPetsByStatusOperation,
@@ -53,62 +53,10 @@ export const petOperations = {
   updatePetWithForm: updatePetWithFormOperation,
   deletePet: deletePetOperation,
   uploadFile: uploadFileOperation,
-} as const;
-
-export interface PetOperationsTypesMap {
-  addPet: AddPetOperationTypes;
-  updatePet: UpdatePetOperationTypes;
-  findPetsByStatus: FindPetsByStatusOperationTypes;
-  findPetsByTags: FindPetsByTagsOperationTypes;
-  getPetById: GetPetByIdOperationTypes;
-  updatePetWithForm: UpdatePetWithFormOperationTypes;
-  deletePet: DeletePetOperationTypes;
-  uploadFile: UploadFileOperationTypes;
-}
-
-export const petServiceBuilder = (
-  requestAdapter: HttpRequestAdapter
-): MappedOperationRequestFunction<
-  typeof petOperations,
-  PetOperationsTypesMap
-> => ({
-  addPet: request(petOperations.addPet, requestAdapter),
-  updatePet: request(petOperations.updatePet, requestAdapter),
-  findPetsByStatus: request(petOperations.findPetsByStatus, requestAdapter),
-  findPetsByTags: request(petOperations.findPetsByTags, requestAdapter),
-  getPetById: request(petOperations.getPetById, requestAdapter),
-  updatePetWithForm: request(petOperations.updatePetWithForm, requestAdapter),
-  deletePet: request(petOperations.deletePet, requestAdapter),
-  uploadFile: request(petOperations.uploadFile, requestAdapter),
-});
-
-export const storeOperations = {
   getInventory: getInventoryOperation,
   placeOrder: placeOrderOperation,
   getOrderById: getOrderByIdOperation,
   deleteOrder: deleteOrderOperation,
-} as const;
-
-export interface StoreOperationsTypesMap {
-  getInventory: GetInventoryOperationTypes;
-  placeOrder: PlaceOrderOperationTypes;
-  getOrderById: GetOrderByIdOperationTypes;
-  deleteOrder: DeleteOrderOperationTypes;
-}
-
-export const storeServiceBuilder = (
-  requestAdapter: HttpRequestAdapter
-): MappedOperationRequestFunction<
-  typeof storeOperations,
-  StoreOperationsTypesMap
-> => ({
-  getInventory: request(storeOperations.getInventory, requestAdapter),
-  placeOrder: request(storeOperations.placeOrder, requestAdapter),
-  getOrderById: request(storeOperations.getOrderById, requestAdapter),
-  deleteOrder: request(storeOperations.deleteOrder, requestAdapter),
-});
-
-export const userOperations = {
   createUser: createUserOperation,
   createUsersWithListInput: createUsersWithListInputOperation,
   loginUser: loginUserOperation,
@@ -118,7 +66,19 @@ export const userOperations = {
   deleteUser: deleteUserOperation,
 } as const;
 
-export interface UserOperationsTypesMap {
+export interface OperationsTypesMap {
+  addPet: AddPetOperationTypes;
+  updatePet: UpdatePetOperationTypes;
+  findPetsByStatus: FindPetsByStatusOperationTypes;
+  findPetsByTags: FindPetsByTagsOperationTypes;
+  getPetById: GetPetByIdOperationTypes;
+  updatePetWithForm: UpdatePetWithFormOperationTypes;
+  deletePet: DeletePetOperationTypes;
+  uploadFile: UploadFileOperationTypes;
+  getInventory: GetInventoryOperationTypes;
+  placeOrder: PlaceOrderOperationTypes;
+  getOrderById: GetOrderByIdOperationTypes;
+  deleteOrder: DeleteOrderOperationTypes;
   createUser: CreateUserOperationTypes;
   createUsersWithListInput: CreateUsersWithListInputOperationTypes;
   loginUser: LoginUserOperationTypes;
@@ -128,28 +88,72 @@ export interface UserOperationsTypesMap {
   deleteUser: DeleteUserOperationTypes;
 }
 
-export const userServiceBuilder = (
-  requestAdapter: HttpRequestAdapter
-): MappedOperationRequestFunction<
-  typeof userOperations,
-  UserOperationsTypesMap
-> => ({
-  createUser: request(userOperations.createUser, requestAdapter),
-  createUsersWithListInput: request(
-    userOperations.createUsersWithListInput,
-    requestAdapter
-  ),
-  loginUser: request(userOperations.loginUser, requestAdapter),
-  logoutUser: request(userOperations.logoutUser, requestAdapter),
-  getUserByName: request(userOperations.getUserByName, requestAdapter),
-  updateUser: request(userOperations.updateUser, requestAdapter),
-  deleteUser: request(userOperations.deleteUser, requestAdapter),
-});
-
 export const requestFunctionsBuilder = (
   requestAdapter: HttpRequestAdapter
+): MappedOperationRequestFunction<typeof operations, OperationsTypesMap> => ({
+  addPet: request(operations.addPet, requestAdapter),
+  updatePet: request(operations.updatePet, requestAdapter),
+  findPetsByStatus: request(operations.findPetsByStatus, requestAdapter),
+  findPetsByTags: request(operations.findPetsByTags, requestAdapter),
+  getPetById: request(operations.getPetById, requestAdapter),
+  updatePetWithForm: request(operations.updatePetWithForm, requestAdapter),
+  deletePet: request(operations.deletePet, requestAdapter),
+  uploadFile: request(operations.uploadFile, requestAdapter),
+  getInventory: request(operations.getInventory, requestAdapter),
+  placeOrder: request(operations.placeOrder, requestAdapter),
+  getOrderById: request(operations.getOrderById, requestAdapter),
+  deleteOrder: request(operations.deleteOrder, requestAdapter),
+  createUser: request(operations.createUser, requestAdapter),
+  createUsersWithListInput: request(
+    operations.createUsersWithListInput,
+    requestAdapter
+  ),
+  loginUser: request(operations.loginUser, requestAdapter),
+  logoutUser: request(operations.logoutUser, requestAdapter),
+  getUserByName: request(operations.getUserByName, requestAdapter),
+  updateUser: request(operations.updateUser, requestAdapter),
+  deleteUser: request(operations.deleteUser, requestAdapter),
+});
+
+export const petServiceBuilder = (
+  requestFunctions: MappedOperationRequestFunction<
+    typeof operations,
+    OperationsTypesMap
+  >
 ) => ({
-  ...petServiceBuilder(requestAdapter),
-  ...storeServiceBuilder(requestAdapter),
-  ...userServiceBuilder(requestAdapter),
+  addPet: requestFunctions.addPet,
+  updatePet: requestFunctions.updatePet,
+  findPetsByStatus: requestFunctions.findPetsByStatus,
+  findPetsByTags: requestFunctions.findPetsByTags,
+  getPetById: requestFunctions.getPetById,
+  updatePetWithForm: requestFunctions.updatePetWithForm,
+  deletePet: requestFunctions.deletePet,
+  uploadFile: requestFunctions.uploadFile,
+});
+
+export const storeServiceBuilder = (
+  requestFunctions: MappedOperationRequestFunction<
+    typeof operations,
+    OperationsTypesMap
+  >
+) => ({
+  getInventory: requestFunctions.getInventory,
+  placeOrder: requestFunctions.placeOrder,
+  getOrderById: requestFunctions.getOrderById,
+  deleteOrder: requestFunctions.deleteOrder,
+});
+
+export const userServiceBuilder = (
+  requestFunctions: MappedOperationRequestFunction<
+    typeof operations,
+    OperationsTypesMap
+  >
+) => ({
+  createUser: requestFunctions.createUser,
+  createUsersWithListInput: requestFunctions.createUsersWithListInput,
+  loginUser: requestFunctions.loginUser,
+  logoutUser: requestFunctions.logoutUser,
+  getUserByName: requestFunctions.getUserByName,
+  updateUser: requestFunctions.updateUser,
+  deleteUser: requestFunctions.deleteUser,
 });
