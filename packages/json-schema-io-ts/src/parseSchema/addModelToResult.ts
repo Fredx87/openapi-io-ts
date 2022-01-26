@@ -2,11 +2,10 @@ import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import produce from "immer";
 import * as gen from "io-ts-codegen";
-import { JsonReference } from "../jsonReference";
+import { JsonReference, jsonReferenceToString } from "../jsonReference";
 import { ModelGenerationInfo, ParseSchemaContext } from "../ParseSchemaContext";
 import { ParseSchemaRTE } from "./ParseSchemaRTE";
 import { modifyGeneratedModelsRef } from "./generatedModels";
-import { jsonReferenceToString } from "..";
 
 export function addModelToResultIfNeeded(
   reference: JsonReference,
