@@ -7,7 +7,6 @@ import * as RNEA from "fp-ts/ReadonlyNonEmptyArray";
 import * as t from "io-ts";
 import get from "lodash/get";
 import { dirname, resolve } from "path";
-import { UriDocumentMap } from "../ParseSchemaContext";
 
 export const JsonSchemaRef = t.type({
   $ref: t.string,
@@ -54,7 +53,7 @@ export function jsonReferenceToString({
 }
 
 export function resolveReference<T>(
-  uriDocumentMap: UriDocumentMap,
+  uriDocumentMap: Record<string, unknown>,
   { uri, jsonPointer }: JsonReference
 ): O.Option<T> {
   return pipe(get(uriDocumentMap, [uri, ...jsonPointer]) as T, O.fromNullable);

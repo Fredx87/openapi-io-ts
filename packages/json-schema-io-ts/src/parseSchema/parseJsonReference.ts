@@ -3,14 +3,14 @@ import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { parseSchemaFromJsonReference } from "./parseSchema";
-import { ParseSchemaRTE } from "./ParseSchemaRTE";
-import { readGeneratedModelsRef } from "./generatedModels";
+import { JsonReference, jsonReferenceToString } from "../jsonReference";
+import { resolveStringReference } from "./resolvers";
+import { ParseSchemaRTE } from "./types";
 import {
   modifyCurrentDocumentUri,
   readCurrentDocumentUri,
-} from "../ParseSchemaContext";
-import { JsonReference, jsonReferenceToString } from "../jsonReference";
-import { resolveStringReference } from "./resolvers";
+  readGeneratedModelsRef,
+} from "./ioRefs";
 
 export function parseJsonReference(reference: string): ParseSchemaRTE {
   return pipe(

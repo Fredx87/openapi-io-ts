@@ -4,8 +4,8 @@ import {
   createSchemaContext,
   ParseSchemaContext,
   UriDocumentMap,
-} from "../ParseSchemaContext";
-import { ParsableDocument, NonArraySchemaObject } from "../types";
+} from "./ParseSchemaContext";
+import { ParsableDocument, NonArraySchemaObject } from "./types";
 import { parseSchema } from "./parseSchema";
 import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 

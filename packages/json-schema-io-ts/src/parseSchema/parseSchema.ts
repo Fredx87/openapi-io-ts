@@ -11,9 +11,9 @@ import {
   SchemaObject,
   NonArraySchemaObject,
   SchemaType,
-} from "../types";
+  ParseSchemaRTE,
+} from "./types";
 import { parseJsonReference } from "./parseJsonReference";
-import { ParseSchemaRTE } from "./ParseSchemaRTE";
 import { resolveSchema, resolveStringReference } from "./resolvers";
 import { addModelToResultIfNeeded } from "./addModelToResult";
 

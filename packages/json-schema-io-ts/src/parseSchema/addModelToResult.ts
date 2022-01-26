@@ -3,9 +3,10 @@ import * as RTE from "fp-ts/ReaderTaskEither";
 import produce from "immer";
 import * as gen from "io-ts-codegen";
 import { JsonReference, jsonReferenceToString } from "../jsonReference";
-import { ModelGenerationInfo, ParseSchemaContext } from "../ParseSchemaContext";
-import { ParseSchemaRTE } from "./ParseSchemaRTE";
-import { modifyGeneratedModelsRef } from "./generatedModels";
+import { modifyGeneratedModelsRef } from "./ioRefs";
+import { ModelGenerationInfo } from "./modelGeneration";
+import { ParseSchemaContext } from "./ParseSchemaContext";
+import { ParseSchemaRTE } from "./types";
 
 export function addModelToResultIfNeeded(
   reference: JsonReference,

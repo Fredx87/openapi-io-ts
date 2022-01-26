@@ -5,12 +5,8 @@ import {
   JsonReference,
   createJsonReference,
 } from "../jsonReference";
-import { SchemaOrRef } from "../types";
-import { ParseSchemaRTE } from "./ParseSchemaRTE";
-import {
-  readCurrentDocumentUri,
-  readUriDocumentMap,
-} from "../ParseSchemaContext";
+import { readCurrentDocumentUri, readUriDocumentMap } from "./ioRefs";
+import { ParseSchemaRTE, SchemaOrRef } from "./types";
 
 export function resolveStringReference(
   stringReference: string
