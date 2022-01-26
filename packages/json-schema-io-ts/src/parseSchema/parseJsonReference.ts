@@ -15,12 +15,7 @@ import {
 export function parseJsonReference(reference: string): ParseSchemaRTE {
   return pipe(
     getParsedReference(reference),
-    RTE.chainW(
-      O.fold(
-        () => parseNewReference(reference),
-        (r) => RTE.right(r)
-      )
-    )
+    RTE.chainW(O.fold(() => parseNewReference(reference), RTE.right))
   );
 }
 
@@ -33,7 +28,7 @@ function getParsedReference(
       pipe(
         currentRes.referenceModelNameMap[stringReference],
         O.fromNullable,
-        O.map((name) => gen.identifier(name))
+        O.map(gen.identifier)
       )
     )
   );
