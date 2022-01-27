@@ -8,10 +8,7 @@ import { operationName, operationTypesName } from "./operations";
 
 const OPERATIONS_OBJECT_NAME = "operations";
 const OPERATIONS_TYPES_MAP_NAME = "OperationsTypesMap";
-const MAPPED_OPERATION_REQUEST_FUNCTION_TYPE = `MappedOperationRequestFunction<
-  typeof ${OPERATIONS_OBJECT_NAME},
-  ${OPERATIONS_TYPES_MAP_NAME}
->`;
+const MAPPED_OPERATION_REQUEST_FUNCTION_TYPE = `RequestFunctionsMap<${OPERATIONS_TYPES_MAP_NAME}>`;
 
 export function generateOperationsIndex(): CodegenRTE<void> {
   return pipe(
@@ -45,8 +42,8 @@ function generateImports(operationIds: string[]): string {
   const runtimeImports = `
   import {
     HttpRequestAdapter,
-    MappedOperationRequestFunction,
-    request,
+    requestFunctionBuilder,
+    RequestFunctionsMap,
   } from "${RUNTIME_PACKAGE}";`;
 
   const operationsImport = operationIds
@@ -78,7 +75,7 @@ function generateRequestFunctionsBuilder(operationIds: string[]): string {
     ${operationIds
       .map(
         (id) =>
-          `${id}: request(${OPERATIONS_OBJECT_NAME}.${id}, requestAdapter),`
+          `${id}: requestFunctionBuilder(${OPERATIONS_OBJECT_NAME}.${id}, requestAdapter),`
       )
       .join("\n")}
   })`;

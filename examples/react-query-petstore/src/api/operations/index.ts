@@ -1,7 +1,7 @@
 import {
   HttpRequestAdapter,
-  MappedOperationRequestFunction,
-  request,
+  requestFunctionBuilder,
+  RequestFunctionsMap,
 } from "@openapi-io-ts/runtime";
 import { addPetOperation, AddPetOperationTypes } from "./addPet";
 import { createUserOperation, CreateUserOperationTypes } from "./createUser";
@@ -90,36 +90,45 @@ export interface OperationsTypesMap {
 
 export const requestFunctionsBuilder = (
   requestAdapter: HttpRequestAdapter
-): MappedOperationRequestFunction<typeof operations, OperationsTypesMap> => ({
-  addPet: request(operations.addPet, requestAdapter),
-  updatePet: request(operations.updatePet, requestAdapter),
-  findPetsByStatus: request(operations.findPetsByStatus, requestAdapter),
-  findPetsByTags: request(operations.findPetsByTags, requestAdapter),
-  getPetById: request(operations.getPetById, requestAdapter),
-  updatePetWithForm: request(operations.updatePetWithForm, requestAdapter),
-  deletePet: request(operations.deletePet, requestAdapter),
-  uploadFile: request(operations.uploadFile, requestAdapter),
-  getInventory: request(operations.getInventory, requestAdapter),
-  placeOrder: request(operations.placeOrder, requestAdapter),
-  getOrderById: request(operations.getOrderById, requestAdapter),
-  deleteOrder: request(operations.deleteOrder, requestAdapter),
-  createUser: request(operations.createUser, requestAdapter),
-  createUsersWithListInput: request(
+): RequestFunctionsMap<OperationsTypesMap> => ({
+  addPet: requestFunctionBuilder(operations.addPet, requestAdapter),
+  updatePet: requestFunctionBuilder(operations.updatePet, requestAdapter),
+  findPetsByStatus: requestFunctionBuilder(
+    operations.findPetsByStatus,
+    requestAdapter
+  ),
+  findPetsByTags: requestFunctionBuilder(
+    operations.findPetsByTags,
+    requestAdapter
+  ),
+  getPetById: requestFunctionBuilder(operations.getPetById, requestAdapter),
+  updatePetWithForm: requestFunctionBuilder(
+    operations.updatePetWithForm,
+    requestAdapter
+  ),
+  deletePet: requestFunctionBuilder(operations.deletePet, requestAdapter),
+  uploadFile: requestFunctionBuilder(operations.uploadFile, requestAdapter),
+  getInventory: requestFunctionBuilder(operations.getInventory, requestAdapter),
+  placeOrder: requestFunctionBuilder(operations.placeOrder, requestAdapter),
+  getOrderById: requestFunctionBuilder(operations.getOrderById, requestAdapter),
+  deleteOrder: requestFunctionBuilder(operations.deleteOrder, requestAdapter),
+  createUser: requestFunctionBuilder(operations.createUser, requestAdapter),
+  createUsersWithListInput: requestFunctionBuilder(
     operations.createUsersWithListInput,
     requestAdapter
   ),
-  loginUser: request(operations.loginUser, requestAdapter),
-  logoutUser: request(operations.logoutUser, requestAdapter),
-  getUserByName: request(operations.getUserByName, requestAdapter),
-  updateUser: request(operations.updateUser, requestAdapter),
-  deleteUser: request(operations.deleteUser, requestAdapter),
+  loginUser: requestFunctionBuilder(operations.loginUser, requestAdapter),
+  logoutUser: requestFunctionBuilder(operations.logoutUser, requestAdapter),
+  getUserByName: requestFunctionBuilder(
+    operations.getUserByName,
+    requestAdapter
+  ),
+  updateUser: requestFunctionBuilder(operations.updateUser, requestAdapter),
+  deleteUser: requestFunctionBuilder(operations.deleteUser, requestAdapter),
 });
 
 export const petServiceBuilder = (
-  requestFunctions: MappedOperationRequestFunction<
-    typeof operations,
-    OperationsTypesMap
-  >
+  requestFunctions: RequestFunctionsMap<OperationsTypesMap>
 ) => ({
   addPet: requestFunctions.addPet,
   updatePet: requestFunctions.updatePet,
@@ -132,10 +141,7 @@ export const petServiceBuilder = (
 });
 
 export const storeServiceBuilder = (
-  requestFunctions: MappedOperationRequestFunction<
-    typeof operations,
-    OperationsTypesMap
-  >
+  requestFunctions: RequestFunctionsMap<OperationsTypesMap>
 ) => ({
   getInventory: requestFunctions.getInventory,
   placeOrder: requestFunctions.placeOrder,
@@ -144,10 +150,7 @@ export const storeServiceBuilder = (
 });
 
 export const userServiceBuilder = (
-  requestFunctions: MappedOperationRequestFunction<
-    typeof operations,
-    OperationsTypesMap
-  >
+  requestFunctions: RequestFunctionsMap<OperationsTypesMap>
 ) => ({
   createUser: requestFunctions.createUser,
   createUsersWithListInput: requestFunctions.createUsersWithListInput,
