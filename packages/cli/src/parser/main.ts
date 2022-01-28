@@ -2,7 +2,7 @@ import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import { parseAllComponents } from "./components";
 import { ParserRTE, readParserOutput } from "./context";
-import { parseAllPaths } from "./operation";
+import { parseAllPaths } from "./operation/parseOperation";
 import { ParserOutput } from "./parserOutput";
 import { parseAllServers } from "./server";
 

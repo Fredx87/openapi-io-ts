@@ -1,8 +1,7 @@
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
-import { OpenAPIV3 } from "openapi-types";
-import { JsonReference } from "./JSONReference";
+import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 import { OperationParameterIn, JSON_MEDIA_TYPE } from "@openapi-io-ts/core";
 import {
   ComponentRef,
@@ -10,36 +9,15 @@ import {
   getOrCreateType,
   parsedItem,
   ParsedItem,
-} from "./common";
-import { ParserContext, ParserRTE } from "./context";
-
-export interface ParsedBaseParameter {
-  in: OperationParameterIn;
-  name: string;
-  type: gen.TypeDeclaration | gen.TypeReference;
-  required: boolean;
-  defaultValue?: unknown;
-}
-
-export interface ParsedJsonParameter extends ParsedBaseParameter {
-  _tag: "ParsedJsonParameter";
-}
-
-export interface ParsedFormParameter extends ParsedBaseParameter {
-  _tag: "ParsedFormParameter";
-  explode: boolean;
-}
-
-export type ParsedParameter = ParsedJsonParameter | ParsedFormParameter;
-
-export type ParameterItemOrRef =
-  | ParsedItem<ParsedParameter>
-  | ComponentRef<"parameters">;
+} from "../common";
+import { ParserContext, ParserRTE } from "../context";
+import { string } from "fp-ts";
+import { ParsedParameter } from "./ParsedParameter";
 
 export function parseParameter(
   name: string,
-  param: OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject
-): ParserRTE<ParameterItemOrRef> {
+  param: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.ParameterObject
+): ParserRTE<string | ParsedParameter> {
   if (JsonReference.is(param)) {
     return RTE.fromEither(createComponentRef("parameters", param.$ref));
   }

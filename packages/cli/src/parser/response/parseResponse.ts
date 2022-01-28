@@ -9,36 +9,15 @@ import {
   parsedItem,
   ParsedItem,
   ComponentRef,
-} from "./common";
+} from "../common";
 import { JSON_MEDIA_TYPE } from "@openapi-io-ts/core";
-import { ParserRTE } from "./context";
-
-export interface ParsedEmptyResponse {
-  _tag: "ParsedEmptyResponse";
-}
-
-export interface ParsedFileResponse {
-  _tag: "ParsedFileResponse";
-}
-
-export interface ParsedJsonResponse {
-  _tag: "ParsedJsonResponse";
-  type: gen.TypeDeclaration | gen.TypeReference;
-}
-
-export type ParsedResponse =
-  | ParsedEmptyResponse
-  | ParsedFileResponse
-  | ParsedJsonResponse;
-
-export type ResponseItemOrRef =
-  | ParsedItem<ParsedResponse>
-  | ComponentRef<"responses">;
+import { ParserRTE } from "../context";
+import { ParsedResponse } from "./ParsedResponse";
 
 export function parseResponse(
   name: string,
   response: OpenAPIV3.ReferenceObject | OpenAPIV3.ResponseObject
-): ParserRTE<ResponseItemOrRef> {
+): ParserRTE<string | ParsedResponse> {
   if (JsonReference.is(response)) {
     return RTE.fromEither(createComponentRef("responses", response.$ref));
   }

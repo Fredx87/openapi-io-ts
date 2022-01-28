@@ -2,12 +2,14 @@ import { IORef } from "fp-ts/IORef";
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import produce, { Draft } from "immer";
-import { OpenAPIV3 } from "openapi-types";
+import { OpenAPIV3_1 } from "openapi-types";
 import { ParserOutput } from "./parserOutput";
+import { ParseSchemaContext } from "json-schema-io-ts";
 
 export interface ParserContext {
-  document: OpenAPIV3.Document;
+  document: OpenAPIV3_1.Document;
   outputRef: IORef<ParserOutput>;
+  parseSchemaContext: ParseSchemaContext;
 }
 
 export type ParserRTE<A> = RTE.ReaderTaskEither<ParserContext, Error, A>;

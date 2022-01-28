@@ -2,15 +2,14 @@ import * as E from "fp-ts/Either";
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
-import { OpenAPIV3 } from "openapi-types";
-import { JsonPointer, JsonReference } from "./JSONReference";
-import { toValidVariableName } from "../utils";
-import { parseBodyObject } from "./body";
-import { parsedItem, ParsedItem } from "./common";
-import { modifyParserOutput, ParserContext, ParserRTE } from "./context";
-import { parseParameterObject } from "./parameter";
-import { parseResponseObject } from "./response";
-import { parseSchema } from "./schema";
+import { SchemaType } from "json-schema-io-ts";
+import { OpenAPIV3_1 } from "openapi-types";
+import { toValidVariableName } from "../../utils";
+import { parseBodyObject } from "../body";
+import { parsedItem, ParsedItem } from "../common";
+import { modifyParserOutput, ParserContext, ParserRTE } from "../context";
+import { parseParameterObject } from "../parameters/parseParameter";
+import { parseResponseObject } from "../response/parseResponse";
 
 export function parseAllComponents(): ParserRTE<void> {
   return pipe(
@@ -28,9 +27,9 @@ export function parseAllComponents(): ParserRTE<void> {
 }
 
 function createTasks(
-  components: OpenAPIV3.ComponentsObject
+  components: OpenAPIV3_1.ComponentsObject
 ): ParserRTE<void>[] {
-  const pointer = new JsonPointer(["#", "components"]);
+  const reference = "#/components";
 
   const tasks: ParserRTE<void>[] = [];
 
@@ -56,13 +55,13 @@ function createTasks(
 }
 
 function parseAllSchemas(
-  componentsPointer: JsonPointer,
-  schemas: Record<string, OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject>
+  componentsReference: string,
+  schemas: Record<string, SchemaType>
 ): ParserRTE<void> {
   return pipe(
     Object.entries(schemas),
     RTE.traverseSeqArray(([name, schema]) => {
-      const pointer = componentsPointer.concat(["schemas", name]);
+      const pointer = componentsReference.concat(`schema/${name}`);
       const generatedName = toValidVariableName(name, "pascal");
 
       return pipe(
@@ -81,7 +80,7 @@ function parseAllSchemas(
 
 function createSchemaComponent(
   name: string,
-  schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
+  schema: SchemaType
 ): E.Either<Error, ParsedItem<gen.TypeDeclaration>> {
   return pipe(
     parseSchema(schema),

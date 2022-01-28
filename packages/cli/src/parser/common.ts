@@ -3,80 +3,11 @@ import * as E from "fp-ts/Either";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
-import { createJsonPointer, JsonPointer, JsonReference } from "./JSONReference";
 import { ParsedBody } from "./body";
 import { ParserRTE, readParserOutput } from "./context";
-import { ParsedParameter } from "./parameter";
-import { ParsedResponse } from "./response";
-import { parseSchema } from "./schema";
-
-export interface ParsedItem<T> {
-  _tag: "ParsedItem";
-  name: string;
-  item: T;
-}
-
-export function parsedItem<T>(item: T, name: string): ParsedItem<T> {
-  return {
-    _tag: "ParsedItem",
-    name,
-    item,
-  };
-}
-
-export interface ParsedComponents {
-  schemas: Record<string, ParsedItem<gen.TypeDeclaration>>;
-  parameters: Record<string, ParsedItem<ParsedParameter>>;
-  responses: Record<string, ParsedItem<ParsedResponse>>;
-  requestBodies: Record<string, ParsedItem<ParsedBody>>;
-}
-
-export type ComponentType = keyof ParsedComponents;
-
-export interface ComponentRef<T extends ComponentType> {
-  _tag: "ComponentRef";
-  componentType: T;
-  pointer: string;
-}
-
-function componentRef<T extends ComponentType>(
-  componentType: T,
-  pointer: string
-): ComponentRef<T> {
-  return {
-    _tag: "ComponentRef",
-    componentType,
-    pointer,
-  };
-}
-
-export type ComponentRefItemType<C extends ComponentType> =
-  ParsedComponents[C][string];
-
-export type ItemOrRef<C extends ComponentType> =
-  | ComponentRefItemType<C>
-  | ComponentRef<C>;
-
-export function checkValidReference(
-  componentType: ComponentType,
-  pointer: JsonPointer
-): E.Either<Error, JsonPointer> {
-  const { tokens } = pointer;
-
-  if (
-    tokens.length === 4 &&
-    tokens[1] === "components" &&
-    tokens[2] === componentType
-  ) {
-    return E.right(pointer);
-  }
-
-  return E.left(
-    new Error(
-      `Cannot parse a reference to a ${componentType} not in '#/components/${componentType}'. Reference: ${pointer.toString()}`
-    )
-  );
-}
+import { ParsedParameter } from "./parameters/parseParameter";
+import { ParsedResponse } from "./response/parseResponse";
+import { JsonSchemaRef } from "json-schema-io-ts";
 
 export function createComponentRef<T extends ComponentType>(
   componentType: T,
@@ -89,30 +20,11 @@ export function createComponentRef<T extends ComponentType>(
   );
 }
 
-function getComponent<T extends ComponentType>(
-  componentType: T,
-  pointer: string
-): ParserRTE<ParsedComponents[T][string]> {
-  return pipe(
-    readParserOutput(),
-    RTE.map((output) => output.components[componentType][pointer]),
-    RTE.chain((component) =>
-      component
-        ? RTE.right(component as ParsedComponents[T][string])
-        : RTE.left(
-            new Error(
-              `Cannot get component name for componentType ${componentType}, pointer ${pointer}`
-            )
-          )
-    )
-  );
-}
-
 export function getOrCreateType(
   name: string,
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
 ): ParserRTE<gen.TypeDeclaration | gen.TypeReference> {
-  if (JsonReference.is(schema)) {
+  if (JsonSchemaRef.is(schema)) {
     return pipe(
       getComponent("schemas", schema.$ref),
       RTE.map((component) =>
@@ -130,6 +42,8 @@ export function getOrCreateType(
     RTE.map((type) => createDeclarationOrReturnType(`${name}Schema`, type))
   );
 }
+
+function getGeneratedModel();
 
 function createDeclarationOrReturnType(
   name: string,

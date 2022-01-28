@@ -1,67 +1,28 @@
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
-import { OpenAPIV3 } from "openapi-types";
-import { JsonReference } from "./JSONReference";
+import { OpenAPIV3_1 } from "openapi-types";
 import {
   createComponentRef,
   getOrCreateType,
   parsedItem,
   ParsedItem,
-  ComponentRef,
-} from "./common";
+} from "../common";
 import {
   JSON_MEDIA_TYPE,
   TEXT_PLAIN_MEDIA_TYPE,
   FORM_ENCODED_MEDIA_TYPE,
   MULTIPART_FORM_MEDIA_TYPE,
 } from "@openapi-io-ts/core";
-import { ParserRTE } from "./context";
-
-interface BaseParsedBody {
-  required: boolean;
-}
-
-export interface ParsedBinaryBody extends BaseParsedBody {
-  _tag: "ParsedBinaryBody";
-  mediaType: string;
-}
-
-export interface ParsedFormBody extends BaseParsedBody {
-  _tag: "ParsedFormBody";
-  type: gen.TypeDeclaration | gen.TypeReference;
-}
-
-export interface ParsedMultipartBody extends BaseParsedBody {
-  _tag: "ParsedMultipartBody";
-  type: gen.TypeDeclaration | gen.TypeReference;
-}
-
-export interface ParsedJsonBody extends BaseParsedBody {
-  _tag: "ParsedJsonBody";
-  type: gen.TypeDeclaration | gen.TypeReference;
-}
-
-export interface ParsedTextBody extends BaseParsedBody {
-  _tag: "ParsedTextBody";
-}
-
-export type ParsedBody =
-  | ParsedBinaryBody
-  | ParsedFormBody
-  | ParsedMultipartBody
-  | ParsedJsonBody
-  | ParsedTextBody;
-
-export type BodyItemOrRef =
-  | ParsedItem<ParsedBody>
-  | ComponentRef<"requestBodies">;
+import { ParserRTE } from "../context";
+import { JsonSchemaRef } from "json-schema-io-ts";
+import { ParsedItemOrComponentReference } from "../references";
 
 export function parseBody(
   name: string,
-  body: OpenAPIV3.ReferenceObject | OpenAPIV3.RequestBodyObject
-): ParserRTE<BodyItemOrRef> {
-  if (JsonReference.is(body)) {
+  body: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.RequestBodyObject
+): ParserRTE<ParsedItemOrComponentReference<ParsedBody>> {
+  if (JsonSchemaRef.is(body)) {
     return RTE.fromEither(createComponentRef("requestBodies", body.$ref));
   }
 
@@ -70,7 +31,7 @@ export function parseBody(
 
 export function parseBodyObject(
   name: string,
-  body: OpenAPIV3.RequestBodyObject
+  body: OpenAPIV3_1.RequestBodyObject
 ): ParserRTE<ParsedItem<ParsedBody>> {
   const { content } = body;
   const required = body.required ?? false;
@@ -147,7 +108,7 @@ export function parseBodyObject(
 
 function getOrCreateTypeFromOptional(
   name: string,
-  schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject | undefined
+  schema: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.SchemaObject | undefined
 ): ParserRTE<gen.TypeDeclaration | gen.TypeReference> {
   if (schema == null) {
     return RTE.right(gen.unknownType);

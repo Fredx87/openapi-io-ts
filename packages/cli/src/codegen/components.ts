@@ -3,8 +3,8 @@ import * as RTE from "fp-ts/ReaderTaskEither";
 import { TypeDeclaration } from "io-ts-codegen";
 import { ParsedBody } from "../parser/body";
 import { ParsedItem } from "../parser/common";
-import { ParsedParameter } from "../parser/parameter";
-import { ParsedResponse } from "../parser/response";
+import { ParsedParameter } from "../parser/parameters/parseParameter";
+import { ParsedResponse } from "../parser/response/parseResponse";
 import { generateOperationBody, generateOperationBodySchema } from "./body";
 import {
   generateSchemaIfDeclaration,

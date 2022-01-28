@@ -6,7 +6,7 @@ import * as R from "fp-ts/Record";
 import * as gen from "io-ts-codegen";
 import { capitalize } from "../utils";
 import { BodyItemOrRef } from "../parser/body";
-import { ParsedOperation } from "../parser/operation";
+import { ParsedOperation } from "../parser/operation/parseOperation";
 import {
   generateSchemaIfDeclaration,
   getParsedItem,
@@ -22,9 +22,12 @@ import {
 } from "./common";
 import { CodegenContext, CodegenRTE } from "./context";
 import { generateOperationParameter } from "./parameter";
-import { ParameterItemOrRef } from "../parser/parameter";
+import { ParameterItemOrRef } from "../parser/parameters/parseParameter";
 import { generateOperationResponses } from "./response";
-import { ParsedJsonResponse, ResponseItemOrRef } from "../parser/response";
+import {
+  ParsedJsonResponse,
+  ResponseItemOrRef,
+} from "../parser/response/parseResponse";
 import {
   generateOperationBody,
   generateOperationBodySchema,

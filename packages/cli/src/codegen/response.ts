@@ -1,5 +1,5 @@
 import { pipe } from "fp-ts/function";
-import { ResponseItemOrRef } from "../parser/response";
+import { ResponseItemOrRef } from "../parser/response/parseResponse";
 import { getItemOrRefPrefix, getParsedItem } from "./common";
 import { CodegenRTE } from "./context";
 import * as RTE from "fp-ts/ReaderTaskEither";

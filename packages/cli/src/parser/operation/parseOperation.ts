@@ -4,21 +4,16 @@ import * as RTE from "fp-ts/ReaderTaskEither";
 import * as R from "fp-ts/Record";
 import { OpenAPIV3 } from "openapi-types";
 import { OperationMethod } from "@openapi-io-ts/core";
-import { toValidVariableName } from "../utils";
-import { BodyItemOrRef, parseBody } from "./body";
-import { parsedItem } from "./common";
-import { modifyParserOutput, ParserContext, ParserRTE } from "./context";
-import { ParameterItemOrRef, parseParameter } from "./parameter";
-import { parseResponse, ResponseItemOrRef } from "./response";
+import { toValidVariableName } from "../../utils";
+import { BodyItemOrRef, parseBody } from "../body";
+import { parsedItem } from "../common";
+import { modifyParserOutput, ParserContext, ParserRTE } from "../context";
+import {
+  ParameterItemOrRef,
+  parseParameter,
+} from "../parameters/parseParameter";
+import { parseResponse, ResponseItemOrRef } from "../response/parseResponse";
 import * as gen from "io-ts-codegen";
-
-export type ParsedOperation = {
-  path: string;
-  method: OperationMethod;
-  parameters: ParameterItemOrRef[];
-  body: O.Option<BodyItemOrRef>;
-  responses: Record<string, ResponseItemOrRef>;
-};
 
 export function parseAllPaths(): ParserRTE<void> {
   return pipe(

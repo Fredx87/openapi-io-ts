@@ -18,10 +18,16 @@ function createParserContext(): ProgramRTE<ParserContext> {
   return pipe(
     RTE.ask<Environment>(),
     RTE.bindTo("env"),
-    RTE.bind("document", ({ env }) =>
+    RTE.bind("parsedDocument", ({ env }) =>
       RTE.fromTaskEither(parseDocument(env.inputFile))
     ),
     RTE.bind("outputRef", () => RTE.rightIO(newIORef(parserOutput()))),
-    RTE.map(({ document, outputRef }) => ({ document, outputRef }))
+    RTE.map(
+      ({ parsedDocument: { document, parseSchemaContext }, outputRef }) => ({
+        document,
+        outputRef,
+        parseSchemaContext,
+      })
+    )
   );
 }

@@ -1,5 +1,4 @@
-import { ParsedComponents } from "./common";
-import { ParsedOperation } from "./operation";
+import { ParsedComponents } from "./components";
 import { ParsedServer } from "./server";
 
 export interface ParserOutput {
