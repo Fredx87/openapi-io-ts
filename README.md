@@ -135,39 +135,52 @@ You can also use a different HTTP client, but you need to convert the `RequestIn
 
 ### Using the request functions
 
-The CLI will generate a request function for each operation defined in the OpenAPI document. There is a function builder that accepts an `HttpRequestAdapter` and returns the actual request function. For convenience, the client will also generate a service builder for each tag defined in the OpenAPI document. This service builder takes an `HttpRequestAdapter` as a parameter and returns an object containing all of the request functions for that tag.
+The CLI will generate a request function for each operation defined in the OpenAPI document. There is a function builder (`requestFunctionsBuilder`) that accepts an `HttpRequestAdapter` and returns request functions for all operations.
 
-For example, if your OpenAPI document contains a `updateUser` operation that takes a `username` as a path parameter, a `User` object in the body, and returns an `User` on success, the request function builder will have this signature:
+For convenience, the client will also generate a service builder for each tag defined in the OpenAPI document. This service builder takes the result of `requestFunctionsBuilder` as a parameter and returns an object containing all of the request functions for that tag.
+
+For example, if your OpenAPI document contains a `updateUser` operation that takes a `username` as a path parameter, a `User` object in the body, and returns an `User` on success, the request functions builder will have an `updateUser` key that return a function with this signature:
 
 ```ts
 export type UpdateUserRequestParameters = {
   username: string;
 };
 
-export const updateUserBuilder = (requestAdapter: HttpRequestAdapter) => (
-  params: UpdateUserRequestParameters,
-  body: schemas.User
-): TaskEither<ApiError, ApiResponse<schemas.User>>
+const requestFunctions = requestFunctionsBuilder(fetchRequestAdapter);
+
+// requestFunctions.updateUser will have this signature:
+declare function updateUser({
+  params,
+  body,
+}: {
+  params: UpdateUserRequestParameters;
+  body: schemas.User;
+}): TaskEither<ApiError, ApiResponse<schemas.User>>;
 ```
 
 You can use it passing your defined `HttpRequestAdapter`:
 
 ```ts
-const updateUser = updateUserBuilder(fetchRequestAdapter);
+const requestFunctions = requestFunctionsBuilder(fetchRequestAdapter);
 
-updateUser(
-  { username: "johndoe" },
-  { email: "john.doe@example.com" }
-)().then(/*...*/);
+requestFunctions
+  .updateUser({
+    params: { username: "johndoe" },
+    body: { email: "john.doe@example.com" },
+  })()
+  .then(/*...*/);
 ```
 
 If this operation has a tag called user you can also use the generated `userServiceBuilder`
 
 ```ts
-const userService = userServiceBuilder(fetchRequestAdapter);
+const userService = userServiceBuilder(requestFunctions);
 
 userService
-  .updateUser({ username: "johndoe" }, { email: "john.doe@example.com" })()
+  .updateUser({
+    params: { username: "johndoe" },
+    body: { email: "john.doe@example.com" },
+  })()
   .then(/*...*/);
 ```
 
@@ -180,16 +193,21 @@ If you want to run the asynchronous computation you can call the `()` method of 
 ```ts
 import * as E from "fp-ts/Either";
 
-updateUser({ username: "johndoe" }, { email: "john.doe@example.com" })().then(
-  E.fold(
-    (e) => {
-      /* e is an ApiError */
-    },
-    (res) => {
-      /* res.data is schemas.User, res.response is the Response object */
-    }
-  )
-);
+requestFunctions
+  .updateUser({
+    params: { username: "johndoe" },
+    body: { email: "john.doe@example.com" },
+  })()
+  .then(
+    E.fold(
+      (e) => {
+        /* e is an ApiError */
+      },
+      (res) => {
+        /* res.data is schemas.User, res.response is the Response object */
+      }
+    )
+  );
 ```
 
 ## Contributors
