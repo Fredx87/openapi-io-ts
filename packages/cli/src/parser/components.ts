@@ -199,7 +199,7 @@ function parseResponseComponent(
   }
 
   const pointer = responsesPointer.concat([name]);
-  const generatedName = toValidVariableName("name", "camel");
+  const generatedName = toValidVariableName(name, "camel");
 
   return pipe(
     parseResponseObject(generatedName, response),
