@@ -1,4 +1,8 @@
-import { petServiceBuilder } from "../../api/services/petService";
+import {
+  petServiceBuilder,
+  requestFunctionsBuilder,
+} from "../../api/operations";
 import { fetchRequestAdapter } from "../../common/fetchRequestAdapter";
 
-export const petService = petServiceBuilder(fetchRequestAdapter);
+const requestFunctions = requestFunctionsBuilder(fetchRequestAdapter);
+export const petService = petServiceBuilder(requestFunctions);

@@ -22,7 +22,7 @@ export interface PetsTableProps {
 export function PetsTable({ status }: PetsTableProps): JSX.Element {
   const { isLoading, error, data } = useOpenApiQuery(
     ["pets", { status }],
-    petService.findPetsByStatus({ status })
+    petService.findPetsByStatus({ params: { status } })
   );
   const history = useHistory();
 

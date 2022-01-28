@@ -1,11 +1,4 @@
-import {
-  ApiError,
-  ApiResponse,
-  HttpRequestAdapter,
-  Operation,
-  request,
-} from "@openapi-io-ts/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
+import type { OperationTypes } from "@openapi-io-ts/runtime";
 
 export type UpdatePetWithFormRequestParameters = {
   petId: number;
@@ -13,7 +6,7 @@ export type UpdatePetWithFormRequestParameters = {
   status?: string;
 };
 
-export const updatePetWithFormOperation: Operation = {
+export const updatePetWithFormOperation = {
   path: "/pet/{petId}",
   method: "post",
   responses: { "405": { _tag: "EmptyResponse" } },
@@ -38,11 +31,10 @@ export const updatePetWithFormOperation: Operation = {
     },
   ],
   requestDefaultHeaders: {},
-};
+} as const;
 
-export const updatePetWithFormBuilder =
-  (requestAdapter: HttpRequestAdapter) =>
-  (
-    params: UpdatePetWithFormRequestParameters
-  ): TaskEither<ApiError, ApiResponse<void>> =>
-    request(updatePetWithFormOperation, params, undefined, requestAdapter);
+export type UpdatePetWithFormOperationTypes = OperationTypes<
+  UpdatePetWithFormRequestParameters,
+  undefined,
+  void
+>;

@@ -1,18 +1,11 @@
-import {
-  ApiError,
-  ApiResponse,
-  HttpRequestAdapter,
-  Operation,
-  request,
-} from "@openapi-io-ts/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
+import type { OperationTypes } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export type UpdateUserRequestParameters = {
   username: string;
 };
 
-export const updateUserOperation: Operation = {
+export const updateUserOperation = {
   path: "/user/{username}",
   method: "put",
   responses: { default: { _tag: "EmptyResponse" } },
@@ -28,12 +21,10 @@ export const updateUserOperation: Operation = {
   body: {
     _tag: "JsonBody",
   },
-};
+} as const;
 
-export const updateUserBuilder =
-  (requestAdapter: HttpRequestAdapter) =>
-  (
-    params: UpdateUserRequestParameters,
-    body: schemas.User
-  ): TaskEither<ApiError, ApiResponse<void>> =>
-    request(updateUserOperation, params, body, requestAdapter);
+export type UpdateUserOperationTypes = OperationTypes<
+  UpdateUserRequestParameters,
+  schemas.User,
+  void
+>;

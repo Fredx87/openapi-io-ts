@@ -1,18 +1,11 @@
-import {
-  ApiError,
-  ApiResponse,
-  HttpRequestAdapter,
-  Operation,
-  request,
-} from "@openapi-io-ts/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
+import type { OperationTypes } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export type GetUserByNameRequestParameters = {
   username: string;
 };
 
-export const getUserByNameOperation: Operation = {
+export const getUserByNameOperation = {
   path: "/user/{username}",
   method: "get",
   responses: {
@@ -29,11 +22,10 @@ export const getUserByNameOperation: Operation = {
     },
   ],
   requestDefaultHeaders: { Accept: "application/json" },
-};
+} as const;
 
-export const getUserByNameBuilder =
-  (requestAdapter: HttpRequestAdapter) =>
-  (
-    params: GetUserByNameRequestParameters
-  ): TaskEither<ApiError, ApiResponse<schemas.User>> =>
-    request(getUserByNameOperation, params, undefined, requestAdapter);
+export type GetUserByNameOperationTypes = OperationTypes<
+  GetUserByNameRequestParameters,
+  undefined,
+  schemas.User
+>;

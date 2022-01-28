@@ -1,11 +1,4 @@
-import {
-  ApiError,
-  ApiResponse,
-  HttpRequestAdapter,
-  Operation,
-  request,
-} from "@openapi-io-ts/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
+import type { OperationTypes } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export type UploadFileRequestParameters = {
@@ -13,7 +6,7 @@ export type UploadFileRequestParameters = {
   additionalMetadata?: string;
 };
 
-export const uploadFileOperation: Operation = {
+export const uploadFileOperation = {
   path: "/pet/{petId}/uploadImage",
   method: "post",
   responses: { "200": { _tag: "JsonResponse", decoder: schemas.ApiResponse } },
@@ -36,12 +29,10 @@ export const uploadFileOperation: Operation = {
     _tag: "BinaryBody",
     mediaType: "application/octet-stream",
   },
-};
+} as const;
 
-export const uploadFileBuilder =
-  (requestAdapter: HttpRequestAdapter) =>
-  (
-    params: UploadFileRequestParameters,
-    body: Blob
-  ): TaskEither<ApiError, ApiResponse<schemas.ApiResponse>> =>
-    request(uploadFileOperation, params, body, requestAdapter);
+export type UploadFileOperationTypes = OperationTypes<
+  UploadFileRequestParameters,
+  Blob,
+  schemas.ApiResponse
+>;

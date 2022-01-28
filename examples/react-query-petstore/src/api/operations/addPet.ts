@@ -1,14 +1,7 @@
-import {
-  ApiError,
-  ApiResponse,
-  HttpRequestAdapter,
-  Operation,
-  request,
-} from "@openapi-io-ts/runtime";
-import { TaskEither } from "fp-ts/TaskEither";
+import type { OperationTypes } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
-export const addPetOperation: Operation = {
+export const addPetOperation = {
   path: "/pet",
   method: "post",
   responses: {
@@ -23,9 +16,10 @@ export const addPetOperation: Operation = {
   body: {
     _tag: "JsonBody",
   },
-};
+} as const;
 
-export const addPetBuilder =
-  (requestAdapter: HttpRequestAdapter) =>
-  (body: schemas.Pet): TaskEither<ApiError, ApiResponse<schemas.Pet>> =>
-    request(addPetOperation, {}, body, requestAdapter);
+export type AddPetOperationTypes = OperationTypes<
+  undefined,
+  schemas.Pet,
+  schemas.Pet
+>;

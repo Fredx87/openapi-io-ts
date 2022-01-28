@@ -40,7 +40,8 @@ import { ParsedItem } from "../parser/common";
 export function generateOperations(): CodegenRTE<void> {
   return pipe(
     RTE.asks((context: CodegenContext) => context.parserOutput.operations),
-    RTE.chain((operations) =>
+    RTE.bindTo("operations"),
+    RTE.chainFirst(({ operations }) =>
       R.traverseWithIndex(RTE.ApplicativeSeq)(generateOperation)(operations)
     ),
     RTE.map(() => void 0)
@@ -49,6 +50,14 @@ export function generateOperations(): CodegenRTE<void> {
 
 export function requestBuilderName(operationId: string): string {
   return `${capitalize(operationId, "camel")}Builder`;
+}
+
+export function operationTypesName(operationId: string): string {
+  return capitalize(`${operationName(operationId)}Types`, "pascal");
+}
+
+export function operationName(operationId: string): string {
+  return `${capitalize(operationId, "camel")}Operation`;
 }
 
 interface GeneratedOperationParameters {
@@ -111,12 +120,11 @@ function generateFileContent(
   items: GeneratedItems
 ): CodegenRTE<string> {
   const content = `import * as t from "io-ts";
+  import type { OperationTypes } from "${RUNTIME_PACKAGE}";
   import * as schemas from "../${SCHEMAS_PATH}";
   import * as parameters from "../${PARAMETERS_PATH}";
   import * as responses from "../${RESPONSES_PATH}";
   import * as requestBodies from "../${REQUEST_BODIES_PATH}";
-  import { Operation, HttpRequestAdapter, ApiError, ApiResponse, request } from "${RUNTIME_PACKAGE}";
-  import { TaskEither } from "fp-ts/TaskEither";
 
   ${
     items.parameters
@@ -131,7 +139,7 @@ function generateFileContent(
 
   ${generateOperationObject(operationId, operation, items)}
 
-  ${generateRequest(operationId, items)}
+  ${generateOperationTypes(operationId, items)}
   `;
 
   return RTE.right(content);
@@ -236,14 +244,14 @@ function generateOperationObject(
 ): string {
   const { path, method } = operation;
 
-  return `export const ${operationName(operationId)}: Operation = {
+  return `export const ${operationName(operationId)} = {
       path: "${path}",
       method: "${method}",
       responses: ${generatedItems.responses.operationResponses},
       parameters: ${generatedItems.parameters?.definition ?? "[]"},
       requestDefaultHeaders: ${generatedItems.defaultHeaders},
       ${generatedItems.body ? `body: ${generatedItems.body.operationBody}` : ""}
-  }`;
+  } as const`;
 }
 
 function generateBody(
@@ -300,31 +308,23 @@ function isParsedJsonResponse(
   return isParsedItem(response) && response.item._tag === "ParsedJsonResponse";
 }
 
-function generateRequest(
+function generateOperationTypes(
   operationId: string,
   generatedItems: GeneratedItems
 ): string {
-  const PARAM_ARG_NAME = "params";
-  const BODY_ARG_NAME = "body";
+  const { parameters, body } = generatedItems;
 
-  const args: string[] = [];
+  const requestParametersType = parameters
+    ? requestParametersMapName(operationId)
+    : "undefined";
 
-  if (generatedItems.parameters) {
-    args.push(`${PARAM_ARG_NAME}: ${requestParametersMapName(operationId)}`);
-  }
+  const requestBodyType = body ? body.requestBody : "undefined";
 
-  if (generatedItems.body) {
-    args.push(`${BODY_ARG_NAME}: ${generatedItems.body.requestBody}`);
-  }
-
-  return `export const ${requestBuilderName(
+  return `export type ${operationTypesName(
     operationId
-  )} = (requestAdapter: HttpRequestAdapter) => (${args.join(
-    ", "
-  )}): TaskEither<ApiError, ApiResponse<${generatedItems.returnType}>> =>
-      request(${operationName(operationId)}, ${
-    generatedItems.parameters ? PARAM_ARG_NAME : "{}"
-  }, ${generatedItems.body ? BODY_ARG_NAME : "undefined"}, requestAdapter);`;
+  )} = OperationTypes<${requestParametersType}, ${requestBodyType}, ${
+    generatedItems.returnType
+  }>;`;
 }
 
 function getReturnType(
@@ -441,8 +441,4 @@ function getSuccessfulResponse(
 
 function requestParametersMapName(operationId: string): string {
   return `${capitalize(operationId, "pascal")}RequestParameters`;
-}
-
-function operationName(operationId: string): string {
-  return `${capitalize(operationId, "camel")}Operation`;
 }

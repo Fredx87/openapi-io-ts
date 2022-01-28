@@ -11,7 +11,9 @@ export function toValidVariableName(
   return capitalize(joined, casing);
 }
 
-export function capitalize(input: string, casing: "camel" | "pascal"): string {
+export type CapitalizeCasing = "camel" | "pascal";
+
+export function capitalize(input: string, casing: CapitalizeCasing): string {
   const firstChar =
     casing === "camel"
       ? input.charAt(0).toLocaleLowerCase()
