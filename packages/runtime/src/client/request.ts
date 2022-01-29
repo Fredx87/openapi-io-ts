@@ -15,15 +15,15 @@ export type RequestFunctionArgs =
     }
   | undefined;
 
-export type RequestFunction<Args extends RequestFunctionArgs, ReturnType> = (
+export type RequestFunction<Args extends RequestFunctionArgs, T> = (
   ...params: undefined extends Args ? [args?: Args] : [args: Args]
-) => TE.TaskEither<ApiError, ApiResponse<ReturnType>>;
+) => TE.TaskEither<ApiError, ApiResponse<T>>;
 
 export const requestFunctionBuilder =
-  <Args extends RequestFunctionArgs, ReturnType>(
+  <Args extends RequestFunctionArgs, T>(
     operation: Operation,
     requestAdapter: HttpRequestAdapter
-  ): RequestFunction<Args, ReturnType> =>
+  ): RequestFunction<Args, T> =>
   (...params) => {
     const [args] = params;
 

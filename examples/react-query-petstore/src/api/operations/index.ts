@@ -1,10 +1,7 @@
 import {
   HttpRequestAdapter,
-  RequestFunction,
-  RequestFunctionArgs,
   requestFunctionBuilder,
 } from "@openapi-io-ts/runtime";
-import { fetchRequestAdapter } from "../../common/fetchRequestAdapter";
 import { addPetOperation, AddPetRequestFunction } from "./addPet";
 import { createUserOperation, CreateUserRequestFunction } from "./createUser";
 import {
