@@ -1,4 +1,5 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { ApiError, ApiResponse } from "@openapi-io-ts/runtime";
+import type { TaskEither } from "fp-ts/TaskEither";
 import * as schemas from "../components/schemas";
 
 export const createUsersWithListInputOperation = {
@@ -18,8 +19,6 @@ export const createUsersWithListInputOperation = {
   },
 } as const;
 
-export type CreateUsersWithListInputOperationTypes = OperationTypes<
-  undefined,
-  Array<schemas.User>,
-  schemas.User
->;
+export type CreateUsersWithListInputOperationRequestFunction = (args: {
+  body: Array<schemas.User>;
+}) => TaskEither<ApiError, ApiResponse<schemas.User>>;

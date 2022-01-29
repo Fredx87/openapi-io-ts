@@ -1,4 +1,5 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { ApiError, ApiResponse } from "@openapi-io-ts/runtime";
+import type { TaskEither } from "fp-ts/TaskEither";
 
 export type DeleteUserRequestParameters = {
   username: string;
@@ -22,8 +23,6 @@ export const deleteUserOperation = {
   requestDefaultHeaders: {},
 } as const;
 
-export type DeleteUserOperationTypes = OperationTypes<
-  DeleteUserRequestParameters,
-  undefined,
-  void
->;
+export type DeleteUserOperationRequestFunction = (args: {
+  params: DeleteUserRequestParameters;
+}) => TaskEither<ApiError, ApiResponse<void>>;

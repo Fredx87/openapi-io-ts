@@ -1,4 +1,5 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { ApiError, ApiResponse } from "@openapi-io-ts/runtime";
+import type { TaskEither } from "fp-ts/TaskEither";
 import * as schemas from "../components/schemas";
 
 export type GetOrderByIdRequestParameters = {
@@ -24,8 +25,6 @@ export const getOrderByIdOperation = {
   requestDefaultHeaders: { Accept: "application/json" },
 } as const;
 
-export type GetOrderByIdOperationTypes = OperationTypes<
-  GetOrderByIdRequestParameters,
-  undefined,
-  schemas.Order
->;
+export type GetOrderByIdOperationRequestFunction = (args: {
+  params: GetOrderByIdRequestParameters;
+}) => TaskEither<ApiError, ApiResponse<schemas.Order>>;

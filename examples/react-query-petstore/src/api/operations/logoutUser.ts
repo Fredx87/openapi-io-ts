@@ -1,4 +1,5 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { ApiError, ApiResponse } from "@openapi-io-ts/runtime";
+import type { TaskEither } from "fp-ts/TaskEither";
 
 export const logoutUserOperation = {
   path: "/user/logout",
@@ -8,8 +9,7 @@ export const logoutUserOperation = {
   requestDefaultHeaders: {},
 } as const;
 
-export type LogoutUserOperationTypes = OperationTypes<
-  undefined,
-  undefined,
-  void
+export type LogoutUserOperationRequestFunction = () => TaskEither<
+  ApiError,
+  ApiResponse<void>
 >;

@@ -1,4 +1,5 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { ApiError, ApiResponse } from "@openapi-io-ts/runtime";
+import type { TaskEither } from "fp-ts/TaskEither";
 import * as schemas from "../components/schemas";
 
 export type UploadFileRequestParameters = {
@@ -31,8 +32,7 @@ export const uploadFileOperation = {
   },
 } as const;
 
-export type UploadFileOperationTypes = OperationTypes<
-  UploadFileRequestParameters,
-  Blob,
-  schemas.ApiResponse
->;
+export type UploadFileOperationRequestFunction = (args: {
+  params: UploadFileRequestParameters;
+  body: Blob;
+}) => TaskEither<ApiError, ApiResponse<schemas.ApiResponse>>;

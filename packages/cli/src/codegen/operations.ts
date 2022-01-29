@@ -52,8 +52,8 @@ export function requestBuilderName(operationId: string): string {
   return `${capitalize(operationId, "camel")}Builder`;
 }
 
-export function operationTypesName(operationId: string): string {
-  return capitalize(`${operationName(operationId)}Types`, "pascal");
+export function requestFunctionName(operationId: string): string {
+  return capitalize(`${operationName(operationId)}RequestFunction`, "pascal");
 }
 
 export function operationName(operationId: string): string {
@@ -120,7 +120,8 @@ function generateFileContent(
   items: GeneratedItems
 ): CodegenRTE<string> {
   const content = `import * as t from "io-ts";
-  import type { OperationTypes } from "${RUNTIME_PACKAGE}";
+  import type { TaskEither } from "fp-ts/TaskEither";
+  import type { ApiError, ApiResponse } from "${RUNTIME_PACKAGE}";
   import * as schemas from "../${SCHEMAS_PATH}";
   import * as parameters from "../${PARAMETERS_PATH}";
   import * as responses from "../${RESPONSES_PATH}";
@@ -139,7 +140,7 @@ function generateFileContent(
 
   ${generateOperationObject(operationId, operation, items)}
 
-  ${generateOperationTypes(operationId, items)}
+  ${generateRequestFunctionType(operationId, items)}
   `;
 
   return RTE.right(content);
@@ -308,23 +309,29 @@ function isParsedJsonResponse(
   return isParsedItem(response) && response.item._tag === "ParsedJsonResponse";
 }
 
-function generateOperationTypes(
+function generateRequestFunctionType(
   operationId: string,
   generatedItems: GeneratedItems
 ): string {
   const { parameters, body } = generatedItems;
 
-  const requestParametersType = parameters
-    ? requestParametersMapName(operationId)
-    : "undefined";
+  const argsArray: string[] = [];
 
-  const requestBodyType = body ? body.requestBody : "undefined";
+  if (parameters != null) {
+    argsArray.push(`params: ${requestParametersMapName(operationId)}`);
+  }
 
-  return `export type ${operationTypesName(
+  if (body != null) {
+    argsArray.push(`body: ${body.requestBody}`);
+  }
+
+  const args = argsArray.length > 0 ? `args: { ${argsArray.join("; ")} }` : "";
+
+  return `export type ${requestFunctionName(
     operationId
-  )} = OperationTypes<${requestParametersType}, ${requestBodyType}, ${
+  )} = (${args}) => TaskEither<ApiError, ApiResponse<${
     generatedItems.returnType
-  }>;`;
+  }>>`;
 }
 
 function getReturnType(

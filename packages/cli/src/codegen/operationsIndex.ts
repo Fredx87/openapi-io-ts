@@ -4,11 +4,10 @@ import * as R from "fp-ts/Record";
 import { capitalize, CapitalizeCasing } from "../utils";
 import { OPERATIONS_PATH, RUNTIME_PACKAGE, writeGeneratedFile } from "./common";
 import { CodegenContext, CodegenRTE } from "./context";
-import { operationName, operationTypesName } from "./operations";
+import { operationName, requestFunctionName } from "./operations";
 
 const OPERATIONS_OBJECT_NAME = "operations";
-const OPERATIONS_TYPES_MAP_NAME = "OperationsTypesMap";
-const MAPPED_OPERATION_REQUEST_FUNCTION_TYPE = `RequestFunctionsMap<${OPERATIONS_TYPES_MAP_NAME}>`;
+const REQUEST_FUNCTIONS_MAP = "OperationRequestFunctionMap";
 
 export function generateOperationsIndex(): CodegenRTE<void> {
   return pipe(
@@ -49,7 +48,7 @@ function generateImports(operationIds: string[]): string {
   const operationsImport = operationIds
     .map(
       (id) =>
-        `import { ${operationName(id)}, ${operationTypesName(
+        `import { ${operationName(id)}, ${requestFunctionName(
           id
         )} } from "./${id}"`
     )
@@ -65,13 +64,15 @@ function generateRequestFunctionsBuilder(operationIds: string[]): string {
     ${operationIds.map((id) => `${id}: ${operationName(id)}, `).join("\n")}
    } as const;
 
-   export interface ${OPERATIONS_TYPES_MAP_NAME} {
-    ${operationIds.map((id) => `${id}: ${operationTypesName(id)}; `).join("\n")}
+   export interface ${REQUEST_FUNCTIONS_MAP} {
+    ${operationIds
+      .map((id) => `${id}: ${requestFunctionName(id)}; `)
+      .join("\n")}
    }
 
   export const requestFunctionsBuilder = (
     requestAdapter: HttpRequestAdapter
-  ): ${MAPPED_OPERATION_REQUEST_FUNCTION_TYPE} => ({
+  ): ${REQUEST_FUNCTIONS_MAP} => ({
     ${operationIds
       .map(
         (id) =>
@@ -89,7 +90,7 @@ function generateTagsOperations(tags: Record<string, string[]>): string {
 function generateTagOperations(tag: string, operationIds: string[]): string {
   return `
    export const ${tagServiceBuilderName(tag)} = (
-    requestFunctions: ${MAPPED_OPERATION_REQUEST_FUNCTION_TYPE}
+    requestFunctions: ${REQUEST_FUNCTIONS_MAP}
   ) => ({
     ${operationIds.map((id) => `${id}: requestFunctions.${id},`).join("\n")}
   });

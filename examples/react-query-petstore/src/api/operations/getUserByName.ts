@@ -1,4 +1,5 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { ApiError, ApiResponse } from "@openapi-io-ts/runtime";
+import type { TaskEither } from "fp-ts/TaskEither";
 import * as schemas from "../components/schemas";
 
 export type GetUserByNameRequestParameters = {
@@ -24,8 +25,6 @@ export const getUserByNameOperation = {
   requestDefaultHeaders: { Accept: "application/json" },
 } as const;
 
-export type GetUserByNameOperationTypes = OperationTypes<
-  GetUserByNameRequestParameters,
-  undefined,
-  schemas.User
->;
+export type GetUserByNameOperationRequestFunction = (args: {
+  params: GetUserByNameRequestParameters;
+}) => TaskEither<ApiError, ApiResponse<schemas.User>>;

@@ -1,48 +1,80 @@
 import {
   HttpRequestAdapter,
   requestFunctionBuilder,
-  RequestFunctionsMap,
 } from "@openapi-io-ts/runtime";
-import { addPetOperation, AddPetOperationTypes } from "./addPet";
-import { createUserOperation, CreateUserOperationTypes } from "./createUser";
+import { addPetOperation, AddPetOperationRequestFunction } from "./addPet";
+import {
+  createUserOperation,
+  CreateUserOperationRequestFunction,
+} from "./createUser";
 import {
   createUsersWithListInputOperation,
-  CreateUsersWithListInputOperationTypes,
+  CreateUsersWithListInputOperationRequestFunction,
 } from "./createUsersWithListInput";
-import { deleteOrderOperation, DeleteOrderOperationTypes } from "./deleteOrder";
-import { deletePetOperation, DeletePetOperationTypes } from "./deletePet";
-import { deleteUserOperation, DeleteUserOperationTypes } from "./deleteUser";
+import {
+  deleteOrderOperation,
+  DeleteOrderOperationRequestFunction,
+} from "./deleteOrder";
+import {
+  deletePetOperation,
+  DeletePetOperationRequestFunction,
+} from "./deletePet";
+import {
+  deleteUserOperation,
+  DeleteUserOperationRequestFunction,
+} from "./deleteUser";
 import {
   findPetsByStatusOperation,
-  FindPetsByStatusOperationTypes,
+  FindPetsByStatusOperationRequestFunction,
 } from "./findPetsByStatus";
 import {
   findPetsByTagsOperation,
-  FindPetsByTagsOperationTypes,
+  FindPetsByTagsOperationRequestFunction,
 } from "./findPetsByTags";
 import {
   getInventoryOperation,
-  GetInventoryOperationTypes,
+  GetInventoryOperationRequestFunction,
 } from "./getInventory";
 import {
   getOrderByIdOperation,
-  GetOrderByIdOperationTypes,
+  GetOrderByIdOperationRequestFunction,
 } from "./getOrderById";
-import { getPetByIdOperation, GetPetByIdOperationTypes } from "./getPetById";
+import {
+  getPetByIdOperation,
+  GetPetByIdOperationRequestFunction,
+} from "./getPetById";
 import {
   getUserByNameOperation,
-  GetUserByNameOperationTypes,
+  GetUserByNameOperationRequestFunction,
 } from "./getUserByName";
-import { loginUserOperation, LoginUserOperationTypes } from "./loginUser";
-import { logoutUserOperation, LogoutUserOperationTypes } from "./logoutUser";
-import { placeOrderOperation, PlaceOrderOperationTypes } from "./placeOrder";
-import { updatePetOperation, UpdatePetOperationTypes } from "./updatePet";
+import {
+  loginUserOperation,
+  LoginUserOperationRequestFunction,
+} from "./loginUser";
+import {
+  logoutUserOperation,
+  LogoutUserOperationRequestFunction,
+} from "./logoutUser";
+import {
+  placeOrderOperation,
+  PlaceOrderOperationRequestFunction,
+} from "./placeOrder";
+import {
+  updatePetOperation,
+  UpdatePetOperationRequestFunction,
+} from "./updatePet";
 import {
   updatePetWithFormOperation,
-  UpdatePetWithFormOperationTypes,
+  UpdatePetWithFormOperationRequestFunction,
 } from "./updatePetWithForm";
-import { updateUserOperation, UpdateUserOperationTypes } from "./updateUser";
-import { uploadFileOperation, UploadFileOperationTypes } from "./uploadFile";
+import {
+  updateUserOperation,
+  UpdateUserOperationRequestFunction,
+} from "./updateUser";
+import {
+  uploadFileOperation,
+  UploadFileOperationRequestFunction,
+} from "./uploadFile";
 
 export const operations = {
   addPet: addPetOperation,
@@ -66,31 +98,31 @@ export const operations = {
   deleteUser: deleteUserOperation,
 } as const;
 
-export interface OperationsTypesMap {
-  addPet: AddPetOperationTypes;
-  updatePet: UpdatePetOperationTypes;
-  findPetsByStatus: FindPetsByStatusOperationTypes;
-  findPetsByTags: FindPetsByTagsOperationTypes;
-  getPetById: GetPetByIdOperationTypes;
-  updatePetWithForm: UpdatePetWithFormOperationTypes;
-  deletePet: DeletePetOperationTypes;
-  uploadFile: UploadFileOperationTypes;
-  getInventory: GetInventoryOperationTypes;
-  placeOrder: PlaceOrderOperationTypes;
-  getOrderById: GetOrderByIdOperationTypes;
-  deleteOrder: DeleteOrderOperationTypes;
-  createUser: CreateUserOperationTypes;
-  createUsersWithListInput: CreateUsersWithListInputOperationTypes;
-  loginUser: LoginUserOperationTypes;
-  logoutUser: LogoutUserOperationTypes;
-  getUserByName: GetUserByNameOperationTypes;
-  updateUser: UpdateUserOperationTypes;
-  deleteUser: DeleteUserOperationTypes;
+export interface OperationRequestFunctionMap {
+  addPet: AddPetOperationRequestFunction;
+  updatePet: UpdatePetOperationRequestFunction;
+  findPetsByStatus: FindPetsByStatusOperationRequestFunction;
+  findPetsByTags: FindPetsByTagsOperationRequestFunction;
+  getPetById: GetPetByIdOperationRequestFunction;
+  updatePetWithForm: UpdatePetWithFormOperationRequestFunction;
+  deletePet: DeletePetOperationRequestFunction;
+  uploadFile: UploadFileOperationRequestFunction;
+  getInventory: GetInventoryOperationRequestFunction;
+  placeOrder: PlaceOrderOperationRequestFunction;
+  getOrderById: GetOrderByIdOperationRequestFunction;
+  deleteOrder: DeleteOrderOperationRequestFunction;
+  createUser: CreateUserOperationRequestFunction;
+  createUsersWithListInput: CreateUsersWithListInputOperationRequestFunction;
+  loginUser: LoginUserOperationRequestFunction;
+  logoutUser: LogoutUserOperationRequestFunction;
+  getUserByName: GetUserByNameOperationRequestFunction;
+  updateUser: UpdateUserOperationRequestFunction;
+  deleteUser: DeleteUserOperationRequestFunction;
 }
 
 export const requestFunctionsBuilder = (
   requestAdapter: HttpRequestAdapter
-): RequestFunctionsMap<OperationsTypesMap> => ({
+): OperationRequestFunctionMap => ({
   addPet: requestFunctionBuilder(operations.addPet, requestAdapter),
   updatePet: requestFunctionBuilder(operations.updatePet, requestAdapter),
   findPetsByStatus: requestFunctionBuilder(
@@ -128,7 +160,7 @@ export const requestFunctionsBuilder = (
 });
 
 export const petServiceBuilder = (
-  requestFunctions: RequestFunctionsMap<OperationsTypesMap>
+  requestFunctions: OperationRequestFunctionMap
 ) => ({
   addPet: requestFunctions.addPet,
   updatePet: requestFunctions.updatePet,
@@ -141,7 +173,7 @@ export const petServiceBuilder = (
 });
 
 export const storeServiceBuilder = (
-  requestFunctions: RequestFunctionsMap<OperationsTypesMap>
+  requestFunctions: OperationRequestFunctionMap
 ) => ({
   getInventory: requestFunctions.getInventory,
   placeOrder: requestFunctions.placeOrder,
@@ -150,7 +182,7 @@ export const storeServiceBuilder = (
 });
 
 export const userServiceBuilder = (
-  requestFunctions: RequestFunctionsMap<OperationsTypesMap>
+  requestFunctions: OperationRequestFunctionMap
 ) => ({
   createUser: requestFunctions.createUser,
   createUsersWithListInput: requestFunctions.createUsersWithListInput,

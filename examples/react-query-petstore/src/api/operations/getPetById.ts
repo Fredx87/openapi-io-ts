@@ -1,4 +1,5 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { ApiError, ApiResponse } from "@openapi-io-ts/runtime";
+import type { TaskEither } from "fp-ts/TaskEither";
 import * as schemas from "../components/schemas";
 
 export type GetPetByIdRequestParameters = {
@@ -24,8 +25,6 @@ export const getPetByIdOperation = {
   requestDefaultHeaders: { Accept: "application/json" },
 } as const;
 
-export type GetPetByIdOperationTypes = OperationTypes<
-  GetPetByIdRequestParameters,
-  undefined,
-  schemas.Pet
->;
+export type GetPetByIdOperationRequestFunction = (args: {
+  params: GetPetByIdRequestParameters;
+}) => TaskEither<ApiError, ApiResponse<schemas.Pet>>;
