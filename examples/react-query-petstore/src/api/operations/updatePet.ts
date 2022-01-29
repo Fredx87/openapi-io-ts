@@ -1,5 +1,4 @@
-import type { ApiError, ApiResponse } from "@openapi-io-ts/runtime";
-import type { TaskEither } from "fp-ts/TaskEither";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export const updatePetOperation = {
@@ -21,6 +20,7 @@ export const updatePetOperation = {
   },
 } as const;
 
-export type UpdatePetOperationRequestFunction = (args: {
-  body: schemas.Pet;
-}) => TaskEither<ApiError, ApiResponse<schemas.Pet>>;
+export type UpdatePetRequestFunction = RequestFunction<
+  { body: schemas.Pet },
+  schemas.Pet
+>;

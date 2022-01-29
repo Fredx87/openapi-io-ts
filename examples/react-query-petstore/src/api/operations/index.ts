@@ -1,80 +1,53 @@
 import {
   HttpRequestAdapter,
+  RequestFunction,
+  RequestFunctionArgs,
   requestFunctionBuilder,
 } from "@openapi-io-ts/runtime";
-import { addPetOperation, AddPetOperationRequestFunction } from "./addPet";
-import {
-  createUserOperation,
-  CreateUserOperationRequestFunction,
-} from "./createUser";
+import { fetchRequestAdapter } from "../../common/fetchRequestAdapter";
+import { addPetOperation, AddPetRequestFunction } from "./addPet";
+import { createUserOperation, CreateUserRequestFunction } from "./createUser";
 import {
   createUsersWithListInputOperation,
-  CreateUsersWithListInputOperationRequestFunction,
+  CreateUsersWithListInputRequestFunction,
 } from "./createUsersWithListInput";
 import {
   deleteOrderOperation,
-  DeleteOrderOperationRequestFunction,
+  DeleteOrderRequestFunction,
 } from "./deleteOrder";
-import {
-  deletePetOperation,
-  DeletePetOperationRequestFunction,
-} from "./deletePet";
-import {
-  deleteUserOperation,
-  DeleteUserOperationRequestFunction,
-} from "./deleteUser";
+import { deletePetOperation, DeletePetRequestFunction } from "./deletePet";
+import { deleteUserOperation, DeleteUserRequestFunction } from "./deleteUser";
 import {
   findPetsByStatusOperation,
-  FindPetsByStatusOperationRequestFunction,
+  FindPetsByStatusRequestFunction,
 } from "./findPetsByStatus";
 import {
   findPetsByTagsOperation,
-  FindPetsByTagsOperationRequestFunction,
+  FindPetsByTagsRequestFunction,
 } from "./findPetsByTags";
 import {
   getInventoryOperation,
-  GetInventoryOperationRequestFunction,
+  GetInventoryRequestFunction,
 } from "./getInventory";
 import {
   getOrderByIdOperation,
-  GetOrderByIdOperationRequestFunction,
+  GetOrderByIdRequestFunction,
 } from "./getOrderById";
-import {
-  getPetByIdOperation,
-  GetPetByIdOperationRequestFunction,
-} from "./getPetById";
+import { getPetByIdOperation, GetPetByIdRequestFunction } from "./getPetById";
 import {
   getUserByNameOperation,
-  GetUserByNameOperationRequestFunction,
+  GetUserByNameRequestFunction,
 } from "./getUserByName";
-import {
-  loginUserOperation,
-  LoginUserOperationRequestFunction,
-} from "./loginUser";
-import {
-  logoutUserOperation,
-  LogoutUserOperationRequestFunction,
-} from "./logoutUser";
-import {
-  placeOrderOperation,
-  PlaceOrderOperationRequestFunction,
-} from "./placeOrder";
-import {
-  updatePetOperation,
-  UpdatePetOperationRequestFunction,
-} from "./updatePet";
+import { loginUserOperation, LoginUserRequestFunction } from "./loginUser";
+import { logoutUserOperation, LogoutUserRequestFunction } from "./logoutUser";
+import { placeOrderOperation, PlaceOrderRequestFunction } from "./placeOrder";
+import { updatePetOperation, UpdatePetRequestFunction } from "./updatePet";
 import {
   updatePetWithFormOperation,
-  UpdatePetWithFormOperationRequestFunction,
+  UpdatePetWithFormRequestFunction,
 } from "./updatePetWithForm";
-import {
-  updateUserOperation,
-  UpdateUserOperationRequestFunction,
-} from "./updateUser";
-import {
-  uploadFileOperation,
-  UploadFileOperationRequestFunction,
-} from "./uploadFile";
+import { updateUserOperation, UpdateUserRequestFunction } from "./updateUser";
+import { uploadFileOperation, UploadFileRequestFunction } from "./uploadFile";
 
 export const operations = {
   addPet: addPetOperation,
@@ -99,25 +72,25 @@ export const operations = {
 } as const;
 
 export interface OperationRequestFunctionMap {
-  addPet: AddPetOperationRequestFunction;
-  updatePet: UpdatePetOperationRequestFunction;
-  findPetsByStatus: FindPetsByStatusOperationRequestFunction;
-  findPetsByTags: FindPetsByTagsOperationRequestFunction;
-  getPetById: GetPetByIdOperationRequestFunction;
-  updatePetWithForm: UpdatePetWithFormOperationRequestFunction;
-  deletePet: DeletePetOperationRequestFunction;
-  uploadFile: UploadFileOperationRequestFunction;
-  getInventory: GetInventoryOperationRequestFunction;
-  placeOrder: PlaceOrderOperationRequestFunction;
-  getOrderById: GetOrderByIdOperationRequestFunction;
-  deleteOrder: DeleteOrderOperationRequestFunction;
-  createUser: CreateUserOperationRequestFunction;
-  createUsersWithListInput: CreateUsersWithListInputOperationRequestFunction;
-  loginUser: LoginUserOperationRequestFunction;
-  logoutUser: LogoutUserOperationRequestFunction;
-  getUserByName: GetUserByNameOperationRequestFunction;
-  updateUser: UpdateUserOperationRequestFunction;
-  deleteUser: DeleteUserOperationRequestFunction;
+  addPet: AddPetRequestFunction;
+  updatePet: UpdatePetRequestFunction;
+  findPetsByStatus: FindPetsByStatusRequestFunction;
+  findPetsByTags: FindPetsByTagsRequestFunction;
+  getPetById: GetPetByIdRequestFunction;
+  updatePetWithForm: UpdatePetWithFormRequestFunction;
+  deletePet: DeletePetRequestFunction;
+  uploadFile: UploadFileRequestFunction;
+  getInventory: GetInventoryRequestFunction;
+  placeOrder: PlaceOrderRequestFunction;
+  getOrderById: GetOrderByIdRequestFunction;
+  deleteOrder: DeleteOrderRequestFunction;
+  createUser: CreateUserRequestFunction;
+  createUsersWithListInput: CreateUsersWithListInputRequestFunction;
+  loginUser: LoginUserRequestFunction;
+  logoutUser: LogoutUserRequestFunction;
+  getUserByName: GetUserByNameRequestFunction;
+  updateUser: UpdateUserRequestFunction;
+  deleteUser: DeleteUserRequestFunction;
 }
 
 export const requestFunctionsBuilder = (

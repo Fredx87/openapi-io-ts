@@ -1,5 +1,4 @@
-import type { ApiError, ApiResponse } from "@openapi-io-ts/runtime";
-import type { TaskEither } from "fp-ts/TaskEither";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as t from "io-ts";
 
 export type LoginUserRequestParameters = {
@@ -31,6 +30,7 @@ export const loginUserOperation = {
   requestDefaultHeaders: { Accept: "application/json" },
 } as const;
 
-export type LoginUserOperationRequestFunction = (args: {
-  params: LoginUserRequestParameters;
-}) => TaskEither<ApiError, ApiResponse<string>>;
+export type LoginUserRequestFunction = RequestFunction<
+  { params: LoginUserRequestParameters },
+  string
+>;

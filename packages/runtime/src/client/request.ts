@@ -8,13 +8,15 @@ import { prepareRequest } from "./prepareRequest";
 import { parseResponse } from "./parseResponse";
 import { ApiResponse } from "./apiResponse";
 
-export interface RequestFunctionArgs {
-  params?: Record<string, unknown>;
-  body?: unknown;
-}
+export type RequestFunctionArgs =
+  | {
+      params?: Record<string, unknown>;
+      body?: unknown;
+    }
+  | undefined;
 
 export type RequestFunction<Args extends RequestFunctionArgs, ReturnType> = (
-  args?: Args
+  ...params: undefined extends Args ? [args?: Args] : [args: Args]
 ) => TE.TaskEither<ApiError, ApiResponse<ReturnType>>;
 
 export const requestFunctionBuilder =
@@ -22,12 +24,15 @@ export const requestFunctionBuilder =
     operation: Operation,
     requestAdapter: HttpRequestAdapter
   ): RequestFunction<Args, ReturnType> =>
-  (args) =>
-    pipe(
+  (...params) => {
+    const [args] = params;
+
+    return pipe(
       prepareRequest(operation, args?.params ?? {}, args?.body),
       TE.chain(({ url, init }) => performRequest(url, init, requestAdapter)),
       TE.chain((response) => parseResponse(response, operation.responses))
     );
+  };
 
 function performRequest(
   url: string,

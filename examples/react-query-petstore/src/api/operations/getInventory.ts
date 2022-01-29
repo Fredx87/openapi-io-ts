@@ -1,5 +1,4 @@
-import type { ApiError, ApiResponse } from "@openapi-io-ts/runtime";
-import type { TaskEither } from "fp-ts/TaskEither";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as t from "io-ts";
 
 export const getInventoryOperation = {
@@ -10,7 +9,7 @@ export const getInventoryOperation = {
   requestDefaultHeaders: { Accept: "application/json" },
 } as const;
 
-export type GetInventoryOperationRequestFunction = () => TaskEither<
-  ApiError,
-  ApiResponse<Record<string, unknown>>
+export type GetInventoryRequestFunction = RequestFunction<
+  undefined,
+  Record<string, unknown>
 >;

@@ -1,5 +1,4 @@
-import type { ApiError, ApiResponse } from "@openapi-io-ts/runtime";
-import type { TaskEither } from "fp-ts/TaskEither";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export const createUserOperation = {
@@ -13,6 +12,7 @@ export const createUserOperation = {
   },
 } as const;
 
-export type CreateUserOperationRequestFunction = (args: {
-  body: schemas.User;
-}) => TaskEither<ApiError, ApiResponse<void>>;
+export type CreateUserRequestFunction = RequestFunction<
+  { body: schemas.User },
+  void
+>;

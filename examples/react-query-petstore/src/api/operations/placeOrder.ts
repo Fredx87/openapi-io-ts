@@ -1,5 +1,4 @@
-import type { ApiError, ApiResponse } from "@openapi-io-ts/runtime";
-import type { TaskEither } from "fp-ts/TaskEither";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export const placeOrderOperation = {
@@ -19,6 +18,7 @@ export const placeOrderOperation = {
   },
 } as const;
 
-export type PlaceOrderOperationRequestFunction = (args: {
-  body: schemas.Order;
-}) => TaskEither<ApiError, ApiResponse<schemas.Order>>;
+export type PlaceOrderRequestFunction = RequestFunction<
+  { body: schemas.Order },
+  schemas.Order
+>;

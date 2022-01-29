@@ -53,7 +53,7 @@ export function requestBuilderName(operationId: string): string {
 }
 
 export function requestFunctionName(operationId: string): string {
-  return capitalize(`${operationName(operationId)}RequestFunction`, "pascal");
+  return `${capitalize(operationId, "pascal")}RequestFunction`;
 }
 
 export function operationName(operationId: string): string {
@@ -120,8 +120,7 @@ function generateFileContent(
   items: GeneratedItems
 ): CodegenRTE<string> {
   const content = `import * as t from "io-ts";
-  import type { TaskEither } from "fp-ts/TaskEither";
-  import type { ApiError, ApiResponse } from "${RUNTIME_PACKAGE}";
+  import type { RequestFunction } from "${RUNTIME_PACKAGE}";
   import * as schemas from "../${SCHEMAS_PATH}";
   import * as parameters from "../${PARAMETERS_PATH}";
   import * as responses from "../${RESPONSES_PATH}";
@@ -325,13 +324,12 @@ function generateRequestFunctionType(
     argsArray.push(`body: ${body.requestBody}`);
   }
 
-  const args = argsArray.length > 0 ? `args: { ${argsArray.join("; ")} }` : "";
+  const args =
+    argsArray.length > 0 ? `{ ${argsArray.join("; ")} }` : "undefined";
 
   return `export type ${requestFunctionName(
     operationId
-  )} = (${args}) => TaskEither<ApiError, ApiResponse<${
-    generatedItems.returnType
-  }>>`;
+  )} = RequestFunction<${args}, ${generatedItems.returnType}>`;
 }
 
 function getReturnType(
