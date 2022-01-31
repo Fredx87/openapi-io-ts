@@ -1,6 +1,6 @@
 {
   "name": "@openapi-io-ts/cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "OpenAPI code generation tool with validation powered by io-ts",
   "keywords": [
     "openapi",
