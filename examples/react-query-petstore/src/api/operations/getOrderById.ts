@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export type GetOrderByIdRequestParameters = {
@@ -24,8 +24,7 @@ export const getOrderByIdOperation = {
   requestDefaultHeaders: { Accept: "application/json" },
 } as const;
 
-export type GetOrderByIdOperationTypes = OperationTypes<
-  GetOrderByIdRequestParameters,
-  undefined,
+export type GetOrderByIdRequestFunction = RequestFunction<
+  { params: GetOrderByIdRequestParameters },
   schemas.Order
 >;

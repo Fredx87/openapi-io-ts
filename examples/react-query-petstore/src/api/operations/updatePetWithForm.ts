@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 
 export type UpdatePetWithFormRequestParameters = {
   petId: number;
@@ -33,8 +33,7 @@ export const updatePetWithFormOperation = {
   requestDefaultHeaders: {},
 } as const;
 
-export type UpdatePetWithFormOperationTypes = OperationTypes<
-  UpdatePetWithFormRequestParameters,
-  undefined,
+export type UpdatePetWithFormRequestFunction = RequestFunction<
+  { params: UpdatePetWithFormRequestParameters },
   void
 >;

@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as t from "io-ts";
 import * as schemas from "../components/schemas";
 
@@ -24,8 +24,7 @@ export const findPetsByTagsOperation = {
   requestDefaultHeaders: { Accept: "application/json" },
 } as const;
 
-export type FindPetsByTagsOperationTypes = OperationTypes<
-  FindPetsByTagsRequestParameters,
-  undefined,
+export type FindPetsByTagsRequestFunction = RequestFunction<
+  { params: FindPetsByTagsRequestParameters },
   Array<schemas.Pet>
 >;

@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export type UpdateUserRequestParameters = {
@@ -23,8 +23,7 @@ export const updateUserOperation = {
   },
 } as const;
 
-export type UpdateUserOperationTypes = OperationTypes<
-  UpdateUserRequestParameters,
-  schemas.User,
+export type UpdateUserRequestFunction = RequestFunction<
+  { params: UpdateUserRequestParameters; body: schemas.User },
   void
 >;

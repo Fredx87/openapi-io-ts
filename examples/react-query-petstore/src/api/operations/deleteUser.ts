@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 
 export type DeleteUserRequestParameters = {
   username: string;
@@ -22,8 +22,7 @@ export const deleteUserOperation = {
   requestDefaultHeaders: {},
 } as const;
 
-export type DeleteUserOperationTypes = OperationTypes<
-  DeleteUserRequestParameters,
-  undefined,
+export type DeleteUserRequestFunction = RequestFunction<
+  { params: DeleteUserRequestParameters },
   void
 >;

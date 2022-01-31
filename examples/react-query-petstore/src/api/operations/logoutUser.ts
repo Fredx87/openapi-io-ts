@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 
 export const logoutUserOperation = {
   path: "/user/logout",
@@ -8,8 +8,4 @@ export const logoutUserOperation = {
   requestDefaultHeaders: {},
 } as const;
 
-export type LogoutUserOperationTypes = OperationTypes<
-  undefined,
-  undefined,
-  void
->;
+export type LogoutUserRequestFunction = RequestFunction<undefined, void>;

@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export const updatePetOperation = {
@@ -20,8 +20,7 @@ export const updatePetOperation = {
   },
 } as const;
 
-export type UpdatePetOperationTypes = OperationTypes<
-  undefined,
-  schemas.Pet,
+export type UpdatePetRequestFunction = RequestFunction<
+  { body: schemas.Pet },
   schemas.Pet
 >;

@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as t from "io-ts";
 
 export type LoginUserRequestParameters = {
@@ -30,8 +30,7 @@ export const loginUserOperation = {
   requestDefaultHeaders: { Accept: "application/json" },
 } as const;
 
-export type LoginUserOperationTypes = OperationTypes<
-  LoginUserRequestParameters,
-  undefined,
+export type LoginUserRequestFunction = RequestFunction<
+  { params: LoginUserRequestParameters },
   string
 >;

@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export type UploadFileRequestParameters = {
@@ -31,8 +31,7 @@ export const uploadFileOperation = {
   },
 } as const;
 
-export type UploadFileOperationTypes = OperationTypes<
-  UploadFileRequestParameters,
-  Blob,
+export type UploadFileRequestFunction = RequestFunction<
+  { params: UploadFileRequestParameters; body: Blob },
   schemas.ApiResponse
 >;

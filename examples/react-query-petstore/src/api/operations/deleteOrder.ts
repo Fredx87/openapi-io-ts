@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 
 export type DeleteOrderRequestParameters = {
   orderId: number;
@@ -22,8 +22,7 @@ export const deleteOrderOperation = {
   requestDefaultHeaders: {},
 } as const;
 
-export type DeleteOrderOperationTypes = OperationTypes<
-  DeleteOrderRequestParameters,
-  undefined,
+export type DeleteOrderRequestFunction = RequestFunction<
+  { params: DeleteOrderRequestParameters },
   void
 >;

@@ -1,48 +1,50 @@
 import {
   HttpRequestAdapter,
   requestFunctionBuilder,
-  RequestFunctionsMap,
 } from "@openapi-io-ts/runtime";
-import { addPetOperation, AddPetOperationTypes } from "./addPet";
-import { createUserOperation, CreateUserOperationTypes } from "./createUser";
+import { addPetOperation, AddPetRequestFunction } from "./addPet";
+import { createUserOperation, CreateUserRequestFunction } from "./createUser";
 import {
   createUsersWithListInputOperation,
-  CreateUsersWithListInputOperationTypes,
+  CreateUsersWithListInputRequestFunction,
 } from "./createUsersWithListInput";
-import { deleteOrderOperation, DeleteOrderOperationTypes } from "./deleteOrder";
-import { deletePetOperation, DeletePetOperationTypes } from "./deletePet";
-import { deleteUserOperation, DeleteUserOperationTypes } from "./deleteUser";
+import {
+  deleteOrderOperation,
+  DeleteOrderRequestFunction,
+} from "./deleteOrder";
+import { deletePetOperation, DeletePetRequestFunction } from "./deletePet";
+import { deleteUserOperation, DeleteUserRequestFunction } from "./deleteUser";
 import {
   findPetsByStatusOperation,
-  FindPetsByStatusOperationTypes,
+  FindPetsByStatusRequestFunction,
 } from "./findPetsByStatus";
 import {
   findPetsByTagsOperation,
-  FindPetsByTagsOperationTypes,
+  FindPetsByTagsRequestFunction,
 } from "./findPetsByTags";
 import {
   getInventoryOperation,
-  GetInventoryOperationTypes,
+  GetInventoryRequestFunction,
 } from "./getInventory";
 import {
   getOrderByIdOperation,
-  GetOrderByIdOperationTypes,
+  GetOrderByIdRequestFunction,
 } from "./getOrderById";
-import { getPetByIdOperation, GetPetByIdOperationTypes } from "./getPetById";
+import { getPetByIdOperation, GetPetByIdRequestFunction } from "./getPetById";
 import {
   getUserByNameOperation,
-  GetUserByNameOperationTypes,
+  GetUserByNameRequestFunction,
 } from "./getUserByName";
-import { loginUserOperation, LoginUserOperationTypes } from "./loginUser";
-import { logoutUserOperation, LogoutUserOperationTypes } from "./logoutUser";
-import { placeOrderOperation, PlaceOrderOperationTypes } from "./placeOrder";
-import { updatePetOperation, UpdatePetOperationTypes } from "./updatePet";
+import { loginUserOperation, LoginUserRequestFunction } from "./loginUser";
+import { logoutUserOperation, LogoutUserRequestFunction } from "./logoutUser";
+import { placeOrderOperation, PlaceOrderRequestFunction } from "./placeOrder";
+import { updatePetOperation, UpdatePetRequestFunction } from "./updatePet";
 import {
   updatePetWithFormOperation,
-  UpdatePetWithFormOperationTypes,
+  UpdatePetWithFormRequestFunction,
 } from "./updatePetWithForm";
-import { updateUserOperation, UpdateUserOperationTypes } from "./updateUser";
-import { uploadFileOperation, UploadFileOperationTypes } from "./uploadFile";
+import { updateUserOperation, UpdateUserRequestFunction } from "./updateUser";
+import { uploadFileOperation, UploadFileRequestFunction } from "./uploadFile";
 
 export const operations = {
   addPet: addPetOperation,
@@ -66,31 +68,31 @@ export const operations = {
   deleteUser: deleteUserOperation,
 } as const;
 
-export interface OperationsTypesMap {
-  addPet: AddPetOperationTypes;
-  updatePet: UpdatePetOperationTypes;
-  findPetsByStatus: FindPetsByStatusOperationTypes;
-  findPetsByTags: FindPetsByTagsOperationTypes;
-  getPetById: GetPetByIdOperationTypes;
-  updatePetWithForm: UpdatePetWithFormOperationTypes;
-  deletePet: DeletePetOperationTypes;
-  uploadFile: UploadFileOperationTypes;
-  getInventory: GetInventoryOperationTypes;
-  placeOrder: PlaceOrderOperationTypes;
-  getOrderById: GetOrderByIdOperationTypes;
-  deleteOrder: DeleteOrderOperationTypes;
-  createUser: CreateUserOperationTypes;
-  createUsersWithListInput: CreateUsersWithListInputOperationTypes;
-  loginUser: LoginUserOperationTypes;
-  logoutUser: LogoutUserOperationTypes;
-  getUserByName: GetUserByNameOperationTypes;
-  updateUser: UpdateUserOperationTypes;
-  deleteUser: DeleteUserOperationTypes;
+export interface OperationRequestFunctionMap {
+  addPet: AddPetRequestFunction;
+  updatePet: UpdatePetRequestFunction;
+  findPetsByStatus: FindPetsByStatusRequestFunction;
+  findPetsByTags: FindPetsByTagsRequestFunction;
+  getPetById: GetPetByIdRequestFunction;
+  updatePetWithForm: UpdatePetWithFormRequestFunction;
+  deletePet: DeletePetRequestFunction;
+  uploadFile: UploadFileRequestFunction;
+  getInventory: GetInventoryRequestFunction;
+  placeOrder: PlaceOrderRequestFunction;
+  getOrderById: GetOrderByIdRequestFunction;
+  deleteOrder: DeleteOrderRequestFunction;
+  createUser: CreateUserRequestFunction;
+  createUsersWithListInput: CreateUsersWithListInputRequestFunction;
+  loginUser: LoginUserRequestFunction;
+  logoutUser: LogoutUserRequestFunction;
+  getUserByName: GetUserByNameRequestFunction;
+  updateUser: UpdateUserRequestFunction;
+  deleteUser: DeleteUserRequestFunction;
 }
 
 export const requestFunctionsBuilder = (
   requestAdapter: HttpRequestAdapter
-): RequestFunctionsMap<OperationsTypesMap> => ({
+): OperationRequestFunctionMap => ({
   addPet: requestFunctionBuilder(operations.addPet, requestAdapter),
   updatePet: requestFunctionBuilder(operations.updatePet, requestAdapter),
   findPetsByStatus: requestFunctionBuilder(
@@ -128,7 +130,7 @@ export const requestFunctionsBuilder = (
 });
 
 export const petServiceBuilder = (
-  requestFunctions: RequestFunctionsMap<OperationsTypesMap>
+  requestFunctions: OperationRequestFunctionMap
 ) => ({
   addPet: requestFunctions.addPet,
   updatePet: requestFunctions.updatePet,
@@ -141,7 +143,7 @@ export const petServiceBuilder = (
 });
 
 export const storeServiceBuilder = (
-  requestFunctions: RequestFunctionsMap<OperationsTypesMap>
+  requestFunctions: OperationRequestFunctionMap
 ) => ({
   getInventory: requestFunctions.getInventory,
   placeOrder: requestFunctions.placeOrder,
@@ -150,7 +152,7 @@ export const storeServiceBuilder = (
 });
 
 export const userServiceBuilder = (
-  requestFunctions: RequestFunctionsMap<OperationsTypesMap>
+  requestFunctions: OperationRequestFunctionMap
 ) => ({
   createUser: requestFunctions.createUser,
   createUsersWithListInput: requestFunctions.createUsersWithListInput,

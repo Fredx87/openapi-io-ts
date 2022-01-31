@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as t from "io-ts";
 
 export const getInventoryOperation = {
@@ -9,8 +9,7 @@ export const getInventoryOperation = {
   requestDefaultHeaders: { Accept: "application/json" },
 } as const;
 
-export type GetInventoryOperationTypes = OperationTypes<
-  undefined,
+export type GetInventoryRequestFunction = RequestFunction<
   undefined,
   Record<string, unknown>
 >;

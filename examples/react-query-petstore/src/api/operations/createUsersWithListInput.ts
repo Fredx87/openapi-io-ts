@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export const createUsersWithListInputOperation = {
@@ -18,8 +18,7 @@ export const createUsersWithListInputOperation = {
   },
 } as const;
 
-export type CreateUsersWithListInputOperationTypes = OperationTypes<
-  undefined,
-  Array<schemas.User>,
+export type CreateUsersWithListInputRequestFunction = RequestFunction<
+  { body: Array<schemas.User> },
   schemas.User
 >;

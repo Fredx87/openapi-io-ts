@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export const placeOrderOperation = {
@@ -18,8 +18,7 @@ export const placeOrderOperation = {
   },
 } as const;
 
-export type PlaceOrderOperationTypes = OperationTypes<
-  undefined,
-  schemas.Order,
+export type PlaceOrderRequestFunction = RequestFunction<
+  { body: schemas.Order },
   schemas.Order
 >;

@@ -1,4 +1,4 @@
-import type { OperationTypes } from "@openapi-io-ts/runtime";
+import type { RequestFunction } from "@openapi-io-ts/runtime";
 import * as schemas from "../components/schemas";
 
 export type GetUserByNameRequestParameters = {
@@ -24,8 +24,7 @@ export const getUserByNameOperation = {
   requestDefaultHeaders: { Accept: "application/json" },
 } as const;
 
-export type GetUserByNameOperationTypes = OperationTypes<
-  GetUserByNameRequestParameters,
-  undefined,
+export type GetUserByNameRequestFunction = RequestFunction<
+  { params: GetUserByNameRequestParameters },
   schemas.User
 >;
