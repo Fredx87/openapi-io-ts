@@ -29,7 +29,8 @@ export const requestFunctionBuilder =
 
     return pipe(
       prepareRequest(operation, args?.params ?? {}, args?.body),
-      TE.chain(({ url, init }) => performRequest(url, init, requestAdapter)),
+      TE.fromEither,
+      TE.chainW(({ url, init }) => performRequest(url, init, requestAdapter)),
       TE.chain((response) => parseResponse(response, operation.responses))
     );
   };
