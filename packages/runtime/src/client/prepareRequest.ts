@@ -4,7 +4,7 @@ import { ApiError, requestError } from "./apiError";
 import { pipe } from "fp-ts/function";
 import { OperationParameterIn } from "@openapi-io-ts/core";
 
-interface PrepareRequestResult {
+export interface PrepareRequestResult {
   url: string;
   init: RequestInit;
 }
@@ -52,7 +52,7 @@ function prepareUrl(
     ),
     TE.map(
       ({ path, queryString }) =>
-        `${path}${queryString ? `?${queryString}` : ""}`
+        `${path}${queryString ? `/?${queryString}` : ""}`
     )
   );
 }
