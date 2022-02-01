@@ -22,7 +22,7 @@ import {
 } from "./common";
 import { CodegenContext, CodegenRTE } from "./context";
 import { generateOperationParameter } from "./parameter";
-import { ParameterItemOrRef } from "../parser/parameters/parseParameter";
+import { ParameterItemOrRef } from "../parser/parameter/parseParameter";
 import { generateOperationResponses } from "./response";
 import {
   ParsedJsonResponse,

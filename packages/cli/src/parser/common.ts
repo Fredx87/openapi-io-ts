@@ -5,7 +5,7 @@ import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { ParsedBody } from "./body";
 import { ParserRTE, readParserOutput } from "./context";
-import { ParsedParameter } from "./parameters/parseParameter";
+import { ParsedParameter } from "./parameter/parseParameter";
 import { ParsedResponse } from "./response/parseResponse";
 import { JsonSchemaRef } from "json-schema-io-ts";
 

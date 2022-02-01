@@ -1,6 +1,6 @@
 import { ParsedBody } from "../body";
-import { ParsedParameter } from "../parameters";
-import { ParsedItem } from "../ParsedItem";
+import { ParsedParameter } from "../parameter";
+import { ParsedItem } from "../parsedItem/ParsedItem";
 import { ParsedResponse } from "../response";
 
 export interface ParsedComponents {
@@ -10,6 +10,10 @@ export interface ParsedComponents {
 }
 
 export type ComponentType = keyof ParsedComponents;
+
+export type ComponentTypeParsedItemMap = {
+  [key in ComponentType]: ParsedComponents[key][string];
+};
 
 export interface ComponentReference<T extends ComponentType> {
   type: "ComponentReference";

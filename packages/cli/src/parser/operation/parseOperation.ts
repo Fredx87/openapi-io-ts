@@ -11,7 +11,7 @@ import { modifyParserOutput, ParserContext, ParserRTE } from "../context";
 import {
   ParameterItemOrRef,
   parseParameter,
-} from "../parameters/parseParameter";
+} from "../parameter/parseParameter";
 import { parseResponse, ResponseItemOrRef } from "../response/parseResponse";
 import * as gen from "io-ts-codegen";
 

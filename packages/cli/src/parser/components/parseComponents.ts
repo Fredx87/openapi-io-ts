@@ -8,7 +8,7 @@ import { toValidVariableName } from "../../utils";
 import { parseBodyObject } from "../body";
 import { parsedItem, ParsedItem } from "../common";
 import { modifyParserOutput, ParserContext, ParserRTE } from "../context";
-import { parseParameterObject } from "../parameters/parseParameter";
+import { parseParameterObject } from "../parameter/parseParameter";
 import { parseResponseObject } from "../response/parseResponse";
 
 export function parseAllComponents(): ParserRTE<void> {

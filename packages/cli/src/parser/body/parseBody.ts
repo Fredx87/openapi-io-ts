@@ -1,13 +1,8 @@
 import { pipe } from "fp-ts/function";
+import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3_1 } from "openapi-types";
-import {
-  createComponentRef,
-  getOrCreateType,
-  parsedItem,
-  ParsedItem,
-} from "../common";
 import {
   JSON_MEDIA_TYPE,
   TEXT_PLAIN_MEDIA_TYPE,
@@ -16,21 +11,24 @@ import {
 } from "@openapi-io-ts/core";
 import { ParserRTE } from "../context";
 import { JsonSchemaRef } from "json-schema-io-ts";
-import { ParsedItemOrComponentReference } from "../references";
+import {
+  ParsedItem,
+  ParsedItemOrComponentReference,
+} from "../parsedItem/ParsedItem";
+import { ParsedBody } from "./ParsedBody";
+import { getOrCreateComponent } from "../components";
 
 export function parseBody(
-  name: string,
   body: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.RequestBodyObject
-): ParserRTE<ParsedItemOrComponentReference<ParsedBody>> {
+): ParserRTE<ParsedItemOrComponentReference<"requestBodies">> {
   if (JsonSchemaRef.is(body)) {
-    return RTE.fromEither(createComponentRef("requestBodies", body.$ref));
+    return getOrCreateComponent("requestBodies", body.$ref, parseBodyObject);
   }
 
-  return parseBodyObject(name, body);
+  return parseBodyObject(body);
 }
 
 export function parseBodyObject(
-  name: string,
   body: OpenAPIV3_1.RequestBodyObject
 ): ParserRTE<ParsedItem<ParsedBody>> {
   const { content } = body;

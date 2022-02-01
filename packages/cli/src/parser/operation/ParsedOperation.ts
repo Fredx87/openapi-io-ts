@@ -1,7 +1,7 @@
 import { OperationMethod } from "@openapi-io-ts/core";
 import * as O from "fp-ts/Option";
 import { ParsedBody } from "../body";
-import { ParsedParameter } from "../parameters";
+import { ParsedParameter } from "../parameter";
 import { ParsedResponse } from "../response";
 
 export type ParsedOperation = {

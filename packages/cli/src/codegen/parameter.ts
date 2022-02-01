@@ -1,4 +1,4 @@
-import { ParsedParameter } from "../parser/parameters/parseParameter";
+import { ParsedParameter } from "../parser/parameter/parseParameter";
 
 export function generateOperationParameter(parameter: ParsedParameter): string {
   const baseParameter = `        in: "${parameter.in}",
