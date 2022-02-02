@@ -1,9 +1,14 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import * as E from "fp-ts/Either";
 import { Operation } from "../model";
 import { prepareRequest, PrepareRequestResult } from "./prepareRequest";
 import {
   getArticlesOperationBase,
   getUserOperationBase,
+  postOperationBase,
 } from "./__fixtures__/baseOperations";
 
 describe("prepareRequest", () => {
@@ -48,7 +53,7 @@ describe("prepareRequest", () => {
     };
 
     const expected: PrepareRequestResult = {
-      url: "/users/john.doe/?showDetails=true",
+      url: "/users/john.doe?showDetails=true",
       init: {
         method: "get",
         headers: {
@@ -61,6 +66,74 @@ describe("prepareRequest", () => {
 
     const result = prepareRequest(
       getUserOperation,
+      requestParameters,
+      undefined
+    );
+
+    expect(result).toEqual(E.right(expected));
+  });
+
+  it("should support optional parameter", () => {
+    const getArticlesOperation: Operation = {
+      ...getArticlesOperationBase,
+      parameters: [
+        ...getArticlesOperationBase.parameters,
+        {
+          _tag: "FormParameter",
+          in: "query",
+          explode: false,
+          name: "search",
+        },
+      ],
+    } as const;
+
+    const expected: PrepareRequestResult = {
+      url: getArticlesOperation.path,
+      init: {
+        method: "get",
+        headers: {},
+        body: null,
+      },
+    };
+
+    const result = prepareRequest(getArticlesOperation, {}, undefined);
+
+    expect(result).toEqual(E.right(expected));
+  });
+
+  it("should serialize a Date parameter", () => {
+    const getArticlesOperation: Operation = {
+      ...getArticlesOperationBase,
+      parameters: [
+        ...getArticlesOperationBase.parameters,
+        {
+          _tag: "FormParameter",
+          in: "query",
+          explode: false,
+          name: "fromDate",
+        },
+      ],
+    } as const;
+
+    const fromDate = new Date(2022, 1, 2, 10, 0, 0, 0);
+
+    const requestParameters = {
+      fromDate,
+    };
+
+    const expected: PrepareRequestResult = {
+      url: `${getArticlesOperation.path}?fromDate=${encodeURIComponent(
+        fromDate.toISOString()
+      )}`,
+      init: {
+        method: "get",
+        headers: {},
+        body: null,
+      },
+    };
+
+    const result = prepareRequest(
+      getArticlesOperation,
       requestParameters,
       undefined
     );
@@ -87,7 +160,7 @@ describe("prepareRequest", () => {
     };
 
     const expected: PrepareRequestResult = {
-      url: `/users/foo/?viewInfo=${encodeURIComponent(
+      url: `/users/foo?viewInfo=${encodeURIComponent(
         `{"showDetails":true,"avatar":"large"}`
       )}`,
       init: {
@@ -125,7 +198,7 @@ describe("prepareRequest", () => {
     };
 
     const expected: PrepareRequestResult = {
-      url: `${getArticlesOperation.path}/?articleIds=${encodeURIComponent(
+      url: `${getArticlesOperation.path}?articleIds=${encodeURIComponent(
         "1,2,3"
       )}`,
       init: {
@@ -163,7 +236,7 @@ describe("prepareRequest", () => {
     };
 
     const expected: PrepareRequestResult = {
-      url: `${getArticlesOperation.path}/?articleIds=1&articleIds=2&articleIds=3`,
+      url: `${getArticlesOperation.path}?articleIds=1&articleIds=2&articleIds=3`,
       init: {
         method: "get",
         headers: {},
@@ -176,6 +249,194 @@ describe("prepareRequest", () => {
       requestParameters,
       undefined
     );
+
+    expect(result).toEqual(E.right(expected));
+  });
+
+  it("should support unexploded object parameter", () => {
+    const getArticlesOperation: Operation = {
+      ...getArticlesOperationBase,
+      parameters: [
+        ...getArticlesOperationBase.parameters,
+        {
+          _tag: "FormParameter",
+          in: "query",
+          explode: false,
+          name: "filter",
+        },
+      ],
+    } as const;
+
+    const requestParameters = {
+      filter: { field: "date", dir: "asc" },
+    };
+
+    const expected: PrepareRequestResult = {
+      url: `${getArticlesOperation.path}?filter=${encodeURIComponent(
+        "field,date,dir,asc"
+      )}`,
+      init: {
+        method: "get",
+        headers: {},
+        body: null,
+      },
+    };
+
+    const result = prepareRequest(
+      getArticlesOperation,
+      requestParameters,
+      undefined
+    );
+
+    expect(result).toEqual(E.right(expected));
+  });
+
+  it("should support exploded object parameter", () => {
+    const getArticlesOperation: Operation = {
+      ...getArticlesOperationBase,
+      parameters: [
+        ...getArticlesOperationBase.parameters,
+        {
+          _tag: "FormParameter",
+          in: "query",
+          explode: true,
+          name: "filter",
+        },
+      ],
+    } as const;
+
+    const requestParameters = {
+      filter: { field: "date", dir: "asc" },
+    };
+
+    const expected: PrepareRequestResult = {
+      url: `${getArticlesOperation.path}?field=date&dir=asc`,
+      init: {
+        method: "get",
+        headers: {},
+        body: null,
+      },
+    };
+
+    const result = prepareRequest(
+      getArticlesOperation,
+      requestParameters,
+      undefined
+    );
+
+    expect(result).toEqual(E.right(expected));
+  });
+
+  it("should support text body", () => {
+    const postOperation: Operation = {
+      ...postOperationBase,
+      body: { _tag: "TextBody" },
+    };
+
+    const body = "Request Body";
+
+    const expected: PrepareRequestResult = {
+      url: postOperation.path,
+      init: {
+        method: "post",
+        headers: {},
+        body,
+      },
+    };
+
+    const result = prepareRequest(postOperation, {}, body);
+
+    expect(result).toEqual(E.right(expected));
+  });
+
+  it("should support JSON body", () => {
+    const postOperation: Operation = {
+      ...postOperationBase,
+      body: { _tag: "JsonBody" },
+    };
+
+    const body = { user: "john.doe", age: 35 };
+
+    const expected: PrepareRequestResult = {
+      url: postOperation.path,
+      init: {
+        method: "post",
+        headers: {},
+        body: JSON.stringify(body),
+      },
+    };
+
+    const result = prepareRequest(postOperation, {}, body);
+
+    expect(result).toEqual(E.right(expected));
+  });
+
+  it("should support form encoded body", () => {
+    const postOperation: Operation = {
+      ...postOperationBase,
+      body: { _tag: "FormBody" },
+    };
+
+    const body = { user: "john.doe", age: 35 };
+
+    const expected: PrepareRequestResult = {
+      url: postOperation.path,
+      init: {
+        method: "post",
+        headers: {},
+        body: new URLSearchParams("user=john.doe&age=35"),
+      },
+    };
+
+    const result = prepareRequest(postOperation, {}, body);
+
+    expect(result).toEqual(E.right(expected));
+  });
+
+  it("should support multipart form body", () => {
+    const postOperation: Operation = {
+      ...postOperationBase,
+      body: { _tag: "MultipartBody" },
+    };
+
+    const body = { user: "john.doe", age: 35 };
+
+    const expectedBody = new FormData();
+    expectedBody.append("user", "john.doe");
+    expectedBody.append("age", "35");
+
+    const expected: PrepareRequestResult = {
+      url: postOperation.path,
+      init: {
+        method: "post",
+        headers: {},
+        body: expectedBody,
+      },
+    };
+
+    const result = prepareRequest(postOperation, {}, body);
+
+    expect(result).toEqual(E.right(expected));
+  });
+
+  it("should support binary body", () => {
+    const postOperation: Operation = {
+      ...postOperationBase,
+      body: { _tag: "BinaryBody", mediaType: "text/string" },
+    };
+
+    const body = new Blob(["foo"]);
+
+    const expected: PrepareRequestResult = {
+      url: postOperation.path,
+      init: {
+        method: "post",
+        headers: {},
+        body,
+      },
+    };
+
+    const result = prepareRequest(postOperation, {}, body);
 
     expect(result).toEqual(E.right(expected));
   });

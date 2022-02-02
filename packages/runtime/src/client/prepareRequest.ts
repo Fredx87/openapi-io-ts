@@ -1,8 +1,8 @@
-import { Operation, OperationParameter, OperationBody } from "../model";
+import { OperationParameterIn } from "@openapi-io-ts/core";
+import { pipe } from "fp-ts/function";
 import * as E from "fp-ts/Either";
 import { requestError, RequestError } from "./apiError";
-import { pipe } from "fp-ts/function";
-import { OperationParameterIn } from "@openapi-io-ts/core";
+import { Operation, OperationParameter, OperationBody } from "../model";
 
 export interface PrepareRequestResult {
   url: string;
@@ -52,7 +52,7 @@ function prepareUrl(
     ),
     E.map(
       ({ path, queryString }) =>
-        `${path}${queryString ? `/?${queryString}` : ""}`
+        `${path}${queryString ? `?${queryString}` : ""}`
     )
   );
 }
@@ -123,7 +123,7 @@ function encodeFormParameter(
     }
   }
 
-  if (typeof value === "object" && value != null) {
+  if (typeof value === "object" && value != null && !(value instanceof Date)) {
     return encodeFormObjectParameter(name, explode, value);
   }
 

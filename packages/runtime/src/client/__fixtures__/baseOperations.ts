@@ -22,3 +22,11 @@ export const getUserOperationBase: Operation = {
   ],
   requestDefaultHeaders: { Accept: "application/json" },
 } as const;
+
+export const postOperationBase: Operation = {
+  path: "/post",
+  method: "post",
+  responses: {},
+  parameters: [],
+  requestDefaultHeaders: {},
+};
