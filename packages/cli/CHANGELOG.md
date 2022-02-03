@@ -1,5 +1,11 @@
 # @openapi-io-ts/cli
 
+## 0.4.0
+
+### Minor Changes
+
+- [#16](https://github.com/Fredx87/openapi-io-ts/pull/16) [`aab6f0b`](https://github.com/Fredx87/openapi-io-ts/commit/aab6f0b0dc352f9ac501a9b114974fa098b3565b) Thanks [@Fredx87](https://github.com/Fredx87)! - Added support for nullable schemas
+
 ## 0.3.0
 
 ### Minor Changes
