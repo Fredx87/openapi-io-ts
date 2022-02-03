@@ -3,3 +3,5 @@ out
 dist
 .parcel-cache
 coverage
+.yalc
+yalc.lock
