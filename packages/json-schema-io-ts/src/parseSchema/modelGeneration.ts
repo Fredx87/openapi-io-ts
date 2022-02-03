@@ -8,7 +8,7 @@ import { basename, extname } from "path";
 import { JsonReference } from "../jsonReference";
 
 export interface GeneratedModels {
-  modelNameTypeMap: Record<string, gen.TypeReference>;
+  modelNameTypeMap: Record<string, gen.TypeDeclaration>;
   referenceModelNameMap: Record<string, string>;
   prefixImportPathMap: Record<string, string>;
 }

@@ -46,7 +46,11 @@ function addModelToContext(
   return pipe(
     modifyGeneratedModelsRef(
       produce((draft) => {
-        draft.modelNameTypeMap[generatedName] = type;
+        draft.modelNameTypeMap[generatedName] = gen.typeDeclaration(
+          generatedName,
+          type,
+          true
+        );
 
         draft.referenceModelNameMap[jsonReferenceToString(reference)] =
           generatedName;
