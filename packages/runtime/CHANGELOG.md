@@ -1,5 +1,11 @@
 # @openapi-io-ts/runtime
 
+## 0.3.1
+
+### Patch Changes
+
+- [#14](https://github.com/Fredx87/openapi-io-ts/pull/14) [`2d5a207`](https://github.com/Fredx87/openapi-io-ts/commit/2d5a207d50a35553b68c788a5895f7454620a560) Thanks [@Fredx87](https://github.com/Fredx87)! - Fixed a bug for serializing of Date parameters and added some tests
+
 ## 0.3.0
 
 ### Minor Changes
