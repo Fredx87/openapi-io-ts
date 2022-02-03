@@ -1,5 +1,11 @@
 # @openapi-io-ts/cli
 
+## 0.4.1
+
+### Patch Changes
+
+- [#17](https://github.com/Fredx87/openapi-io-ts/pull/17) [`39494f5`](https://github.com/Fredx87/openapi-io-ts/commit/39494f5bc1949cc92b55f6ae294af6f27596d81b) Thanks [@Fredx87](https://github.com/Fredx87)! - Fixed generation for schema with nullable and allOf
+
 ## 0.4.0
 
 ### Minor Changes
