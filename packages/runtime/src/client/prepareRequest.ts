@@ -1,10 +1,10 @@
-import { Operation, OperationParameter, OperationBody } from "../model";
-import * as TE from "fp-ts/TaskEither";
-import { ApiError, requestError } from "./apiError";
-import { pipe } from "fp-ts/function";
 import { OperationParameterIn } from "@openapi-io-ts/core";
+import { pipe } from "fp-ts/function";
+import * as E from "fp-ts/Either";
+import { requestError, RequestError } from "./apiError";
+import { Operation, OperationParameter, OperationBody } from "../model";
 
-interface PrepareRequestResult {
+export interface PrepareRequestResult {
   url: string;
   init: RequestInit;
 }
@@ -13,13 +13,13 @@ export function prepareRequest(
   operation: Operation,
   requestParameters: Record<string, unknown>,
   requestBody: unknown
-): TE.TaskEither<ApiError, PrepareRequestResult> {
+): E.Either<RequestError, PrepareRequestResult> {
   return pipe(
-    TE.Do,
-    TE.bind("url", () => prepareUrl(operation, requestParameters)),
-    TE.bind("headers", () => prepareHeaders(operation, requestParameters)),
-    TE.bind("body", () => prepareBody(operation.body, requestBody)),
-    TE.map(({ url, headers, body }) => {
+    E.Do,
+    E.bind("url", () => prepareUrl(operation, requestParameters)),
+    E.bind("headers", () => prepareHeaders(operation, requestParameters)),
+    E.bind("body", () => prepareBody(operation.body, requestBody)),
+    E.map(({ url, headers, body }) => {
       const init: RequestInit = {
         method: operation.method,
         body,
@@ -34,23 +34,23 @@ export function prepareRequest(
 function prepareUrl(
   operation: Operation,
   requestParameters: Record<string, unknown>
-): TE.TaskEither<ApiError, string> {
+): E.Either<RequestError, string> {
   return pipe(
-    TE.Do,
-    TE.bind("path", () =>
+    E.Do,
+    E.bind("path", () =>
       preparePath(
         operation.path,
         filterParametersByType("path", operation.parameters),
         requestParameters
       )
     ),
-    TE.bind("queryString", () =>
+    E.bind("queryString", () =>
       prepareQueryString(
         filterParametersByType("query", operation.parameters),
         requestParameters
       )
     ),
-    TE.map(
+    E.map(
       ({ path, queryString }) =>
         `${path}${queryString ? `?${queryString}` : ""}`
     )
@@ -61,7 +61,7 @@ function preparePath(
   path: string,
   pathParameters: OperationParameter[],
   requestParameters: Record<string, unknown>
-): TE.TaskEither<ApiError, string> {
+): E.Either<RequestError, string> {
   let res = path;
 
   for (const parameter of pathParameters) {
@@ -69,13 +69,13 @@ function preparePath(
     res = res.replace(`{${parameter.name}}`, value);
   }
 
-  return TE.right(res);
+  return E.right(res);
 }
 
 function prepareQueryString(
   parameters: OperationParameter[],
   requestParameters: Record<string, unknown>
-): TE.TaskEither<ApiError, string> {
+): E.Either<RequestError, string> {
   const qs = new URLSearchParams();
 
   for (const parameter of parameters) {
@@ -90,7 +90,7 @@ function prepareQueryString(
     }
   }
 
-  return TE.right(qs.toString());
+  return E.right(qs.toString());
 }
 
 function encodeRequestParameter(
@@ -123,7 +123,7 @@ function encodeFormParameter(
     }
   }
 
-  if (typeof value === "object" && value != null) {
+  if (typeof value === "object" && value != null && !(value instanceof Date)) {
     return encodeFormObjectParameter(name, explode, value);
   }
 
@@ -156,7 +156,7 @@ function encodeFormObjectParameter(
 function prepareHeaders(
   operation: Operation,
   requestParameters: Record<string, unknown>
-): TE.TaskEither<ApiError, Record<string, string>> {
+): E.Either<RequestError, Record<string, string>> {
   const headers: Record<string, string> = {};
 
   for (const parameter of filterParametersByType(
@@ -168,26 +168,26 @@ function prepareHeaders(
     );
   }
 
-  return TE.right({ ...operation.requestDefaultHeaders, ...headers });
+  return E.right({ ...operation.requestDefaultHeaders, ...headers });
 }
 
 function prepareBody(
   body: OperationBody | undefined,
   requestBody: unknown
-): TE.TaskEither<ApiError, BodyInit | null> {
+): E.Either<RequestError, BodyInit | null> {
   if (body == null) {
-    return TE.right(null);
+    return E.right(null);
   }
 
   switch (body._tag) {
     case "TextBody": {
-      return TE.right(requestBody as string);
+      return E.right(requestBody as string);
     }
     case "BinaryBody": {
-      return TE.right(requestBody as Blob);
+      return E.right(requestBody as Blob);
     }
     case "JsonBody": {
-      return TE.right(JSON.stringify(requestBody));
+      return E.right(JSON.stringify(requestBody));
     }
     case "FormBody": {
       return prepareFormBody(requestBody);
@@ -200,7 +200,7 @@ function prepareBody(
 
 function prepareFormBody(
   requestBody: unknown
-): TE.TaskEither<ApiError, URLSearchParams> {
+): E.Either<RequestError, URLSearchParams> {
   if (typeof requestBody === "object" && requestBody != null) {
     const res = new URLSearchParams();
 
@@ -208,7 +208,7 @@ function prepareFormBody(
       res.append(k, v);
     }
 
-    return TE.right(res);
+    return E.right(res);
   }
 
   return pipe(
@@ -216,13 +216,13 @@ function prepareFormBody(
       `requestBody for a form encoded body should be a not null object, received ${typeof requestBody}`
     ),
     requestError,
-    TE.left
+    E.left
   );
 }
 
 function prepareMultipartBody(
   requestBody: unknown
-): TE.TaskEither<ApiError, FormData> {
+): E.Either<RequestError, FormData> {
   if (typeof requestBody === "object" && requestBody != null) {
     const formData = new FormData();
 
@@ -231,7 +231,7 @@ function prepareMultipartBody(
       formData.append(name, value);
     }
 
-    return TE.right(formData);
+    return E.right(formData);
   }
 
   return pipe(
@@ -239,7 +239,7 @@ function prepareMultipartBody(
       `requestBody for a multipart form body should be a not null object, received ${typeof requestBody}`
     ),
     requestError,
-    TE.left
+    E.left
   );
 }
 
