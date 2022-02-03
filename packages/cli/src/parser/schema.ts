@@ -13,6 +13,13 @@ export function parseSchema(
     return parseJsonReference(schema.$ref);
   }
 
+  if (schema.nullable && schema.allOf) {
+    return pipe(
+      parseAllOf(schema.allOf),
+      E.map((allOf) => gen.unionCombinator([allOf, gen.nullType]))
+    );
+  }
+
   return pipe(
     parseBaseSchema(schema),
     E.map((baseSchema) =>
@@ -76,7 +83,9 @@ function parseAllOf(
 ): E.Either<Error, gen.TypeReference> {
   return pipe(
     parseSchemas(schemas),
-    E.map((schemas) => gen.intersectionCombinator(schemas))
+    E.map((schemas) =>
+      schemas.length === 1 ? schemas[0] : gen.intersectionCombinator(schemas)
+    )
   );
 }
 
@@ -85,7 +94,9 @@ function parseOneOf(
 ): E.Either<Error, gen.TypeReference> {
   return pipe(
     parseSchemas(schemas),
-    E.map((schemas) => gen.unionCombinator(schemas))
+    E.map((schemas) =>
+      schemas.length === 1 ? schemas[0] : gen.unionCombinator(schemas)
+    )
   );
 }
 

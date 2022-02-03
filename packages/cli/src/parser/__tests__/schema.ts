@@ -222,4 +222,24 @@ describe("OpenAPI schema", () => {
 
     expect(result).toEqual(E.right(expected));
   });
+
+  it("parses a nullable schema with allOf", () => {
+    const schema: OpenAPIV3.SchemaObject = {
+      nullable: true,
+      allOf: [
+        {
+          type: "array",
+          items: { type: "string" },
+        },
+      ],
+    };
+
+    const result = parseSchema(schema);
+    const expected = gen.unionCombinator([
+      gen.arrayCombinator(gen.stringType),
+      gen.nullType,
+    ]);
+
+    expect(result).toEqual(E.right(expected));
+  });
 });
