@@ -13,6 +13,19 @@ export function parseSchema(
     return parseJsonReference(schema.$ref);
   }
 
+  return pipe(
+    parseBaseSchema(schema),
+    E.map((baseSchema) =>
+      schema.nullable
+        ? gen.unionCombinator([baseSchema, gen.nullType])
+        : baseSchema
+    )
+  );
+}
+
+function parseBaseSchema(
+  schema: OpenAPIV3.SchemaObject
+): E.Either<Error, gen.TypeReference> {
   if (schema.allOf) {
     return parseAllOf(schema.allOf);
   }
