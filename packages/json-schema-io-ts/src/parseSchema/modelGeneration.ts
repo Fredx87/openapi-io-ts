@@ -7,28 +7,14 @@ import upperFirst from "lodash/upperFirst";
 import { basename, extname } from "path";
 import { JsonReference } from "../jsonReference";
 
-export interface GeneratedModels {
-  modelNameTypeMap: Record<string, gen.TypeDeclaration>;
-  referenceModelNameMap: Record<string, string>;
-  prefixImportPathMap: Record<string, string>;
-}
-
-export const initialGeneratedModels: GeneratedModels = {
-  modelNameTypeMap: {},
-  referenceModelNameMap: {},
-  prefixImportPathMap: {
-    tTypes: "io-ts-types",
-  },
-};
-
-export interface ModelGenerationImportData {
-  prefix: string;
-  path: string;
-}
+export type GeneratedModels = Record<
+  string,
+  gen.TypeDeclaration | gen.TypeReference
+>;
 
 export interface ModelGenerationInfo {
   name: string;
-  importData?: ModelGenerationImportData;
+  filePath?: string;
 }
 
 export type ModelGenerationInfoFn = (
@@ -55,3 +41,5 @@ export const defaultModelGenerationInfo: ModelGenerationInfoFn = ({
 export function pascalCase(input: string): string {
   return upperFirst(camelCase(input));
 }
+
+export { camelCase };

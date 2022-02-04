@@ -1,12 +1,12 @@
 import * as RTE from "fp-ts/ReaderTaskEither";
-import * as gen from "io-ts-codegen";
 import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 import { ParseSchemaContext } from "./ParseSchemaContext";
 
-export type ParseSchemaRTE<
-  A = gen.TypeReference,
-  E = Error
-> = RTE.ReaderTaskEither<ParseSchemaContext, E, A>;
+export type ParseSchemaRTE<A, E = Error> = RTE.ReaderTaskEither<
+  ParseSchemaContext,
+  E,
+  A
+>;
 
 export type ParsableDocument =
   | OpenAPIV3_1.Document

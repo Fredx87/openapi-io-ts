@@ -11,11 +11,14 @@ import {
   readCurrentDocumentUri,
   readGeneratedModelsRef,
 } from "./ioRefs";
+import { getReferenceFromGeneratedModel } from "./generateModel";
 
-export function parseJsonReference(reference: string): ParseSchemaRTE {
+export function parseJsonReference(
+  reference: string
+): ParseSchemaRTE<gen.TypeReference> {
   return pipe(
     getParsedReference(reference),
-    RTE.chainW(O.fold(() => parseNewReference(reference), RTE.right))
+    RTE.chainW(O.foldW(() => parseNewReference(reference), RTE.right))
   );
 }
 
@@ -26,15 +29,20 @@ function getParsedReference(
     readGeneratedModelsRef(),
     RTE.map((currentRes) =>
       pipe(
-        currentRes.referenceModelNameMap[stringReference],
+        currentRes[stringReference] as
+          | gen.TypeReference
+          | gen.TypeDeclaration
+          | undefined,
         O.fromNullable,
-        O.map(gen.identifier)
+        O.map(getReferenceFromGeneratedModel)
       )
     )
   );
 }
 
-function parseNewReference(stringReference: string): ParseSchemaRTE {
+function parseNewReference(
+  stringReference: string
+): ParseSchemaRTE<gen.TypeReference> {
   return pipe(
     RTE.Do,
     RTE.bind("jsonReference", () => resolveStringReference(stringReference)),
@@ -47,7 +55,7 @@ function parseNewReference(stringReference: string): ParseSchemaRTE {
 
 function setCurrentDocumentUriAndParseSchema(
   jsonReference: JsonReference
-): ParseSchemaRTE {
+): ParseSchemaRTE<gen.TypeReference> {
   return pipe(
     setCurrentDocumentUri(jsonReference),
     RTE.chainW(() => parseSchemaFromJsonReference(jsonReference)),

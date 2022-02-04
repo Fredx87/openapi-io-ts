@@ -15,9 +15,11 @@ import {
 } from "./types";
 import { parseJsonReference } from "./parseJsonReference";
 import { resolveSchema, resolveStringReference } from "./resolvers";
-import { addModelToResultIfNeeded } from "./addModelToResult";
+import { generateModel } from "./generateModel";
 
-export function parseSchema(reference: string): ParseSchemaRTE {
+export function parseSchema(
+  reference: string
+): ParseSchemaRTE<gen.TypeDeclaration | gen.TypeReference> {
   return pipe(
     resolveStringReference(reference),
     RTE.chain((jsonReference) => parseSchemaFromJsonReference(jsonReference))
@@ -26,24 +28,19 @@ export function parseSchema(reference: string): ParseSchemaRTE {
 
 export function parseSchemaFromJsonReference(
   jsonReference: JsonReference
-): ParseSchemaRTE {
+): ParseSchemaRTE<gen.TypeReference> {
   return pipe(
     RTE.Do,
     RTE.bind("schema", () => resolveSchema(jsonReference)),
     RTE.bind("type", ({ schema }) => parseResolvedSchema(schema)),
-    RTE.bind("generatedModelName", ({ type }) =>
-      addModelToResultIfNeeded(jsonReference, type)
-    ),
-    RTE.map(({ type, generatedModelName }) =>
-      pipe(
-        generatedModelName,
-        O.fold(() => type, gen.identifier)
-      )
-    )
+    RTE.bind("model", ({ type }) => generateModel(jsonReference, type)),
+    RTE.map(({ model }) => model)
   );
 }
 
-function parseResolvedSchema(schema: SchemaOrRef): ParseSchemaRTE {
+function parseResolvedSchema(
+  schema: SchemaOrRef
+): ParseSchemaRTE<gen.TypeReference> {
   if (JsonSchemaRef.is(schema)) {
     return parseJsonReference(schema.$ref);
   }
@@ -80,21 +77,23 @@ function convertSchemaToOpenApi3_1(
   return schema;
 }
 
-function parseAllOf(schemas: SchemaOrRef[]): ParseSchemaRTE {
+function parseAllOf(schemas: SchemaOrRef[]): ParseSchemaRTE<gen.TypeReference> {
   return pipe(
     parseSchemas(schemas),
     RTE.map((schemas) => gen.intersectionCombinator(schemas))
   );
 }
 
-function parseOneOf(schemas: SchemaOrRef[]): ParseSchemaRTE {
+function parseOneOf(schemas: SchemaOrRef[]): ParseSchemaRTE<gen.TypeReference> {
   return pipe(
     parseSchemas(schemas),
     RTE.map((schemas) => gen.unionCombinator(schemas))
   );
 }
 
-function parseSchemaByTypes(schema: SchemaObject): ParseSchemaRTE {
+function parseSchemaByTypes(
+  schema: SchemaObject
+): ParseSchemaRTE<gen.TypeReference> {
   const types =
     schema.type != null
       ? Array.isArray(schema.type)
@@ -147,19 +146,21 @@ function parseSchemaByType(
   }
 }
 
-function parseString(schema: SchemaObject): ParseSchemaRTE {
+function parseString(schema: SchemaObject): ParseSchemaRTE<gen.TypeReference> {
   if (schema.enum) {
     return parseEnum(schema.enum as string[]);
   }
 
   if (schema.format === "date" || schema.format === "date-time") {
-    return RTE.right(gen.customCombinator("Date", "tTypes.DateFromISOString"));
+    return RTE.right(
+      gen.importedIdentifier("DateFromIsoString", "io-ts-types")
+    );
   }
 
   return RTE.right(gen.stringType);
 }
 
-function parseEnum(enums: string[]): ParseSchemaRTE {
+function parseEnum(enums: string[]): ParseSchemaRTE<gen.TypeReference> {
   if (enums.length === 1) {
     return RTE.right(gen.literalCombinator(enums[0]));
   }
@@ -168,7 +169,9 @@ function parseEnum(enums: string[]): ParseSchemaRTE {
   return RTE.right(gen.unionCombinator(literals));
 }
 
-function parseArray(items: ArraySchemaObject["items"]): ParseSchemaRTE {
+function parseArray(
+  items: ArraySchemaObject["items"]
+): ParseSchemaRTE<gen.TypeReference> {
   return pipe(
     parseResolvedSchema(items),
     RTE.map((t) => gen.arrayCombinator(t))
@@ -185,7 +188,9 @@ function parseSchemas(
   );
 }
 
-function parseObject(schema: NonArraySchemaObject): ParseSchemaRTE {
+function parseObject(
+  schema: NonArraySchemaObject
+): ParseSchemaRTE<gen.TypeReference> {
   if (schema.properties) {
     return pipe(
       Object.entries(schema.properties),

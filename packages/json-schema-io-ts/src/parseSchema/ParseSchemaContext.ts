@@ -4,7 +4,6 @@ import * as IORef from "fp-ts/IORef";
 import * as O from "fp-ts/Option";
 import {
   defaultModelGenerationInfo,
-  initialGeneratedModels,
   GeneratedModels,
   ModelGenerationInfoFn,
 } from "./modelGeneration";
@@ -28,7 +27,7 @@ export function createSchemaContext(
   return pipe(
     IO.Do,
     IO.bind("currentDocumentUriRef", () => IORef.newIORef(O.none)),
-    IO.bind("generatedModelsRef", () => IORef.newIORef(initialGeneratedModels)),
+    IO.bind("generatedModelsRef", () => IORef.newIORef({})),
     IO.map(({ currentDocumentUriRef, generatedModelsRef }) => ({
       rootDocumentUri,
       uriDocumentMap,
