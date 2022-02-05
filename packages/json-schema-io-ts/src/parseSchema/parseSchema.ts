@@ -265,7 +265,7 @@ function parseObject(
         const isRecursive = props.some((p) => p.isRecursive);
         return {
           isRecursive,
-          typeReference: gen.typeCombinator([...props.map((p) => p.property)]),
+          typeReference: gen.typeCombinator(props.map((p) => p.property)),
         };
       })
     );
