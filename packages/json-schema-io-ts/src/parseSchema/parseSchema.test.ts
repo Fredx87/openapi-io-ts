@@ -508,6 +508,87 @@ describe("parseSchema", () => {
     expect(resultBody).toEqual(E.right(gen.identifier("Body")));
     expect(generatedModels).toEqual(expectedGeneratedModels);
   });
+
+  it("should parse a recursive schema", async () => {
+    const document = {
+      $defs: {
+        Foo: {
+          type: "object",
+          properties: {
+            Bar: { type: "string" },
+            Foo: { $ref: "#/$defs/Foo" },
+          },
+        },
+      },
+    } as NonArraySchemaObject;
+    const context = createContextFromSingleDocument(document);
+
+    await parseSchema("#/$defs/Foo")(context)();
+    const generatedModels = context.generatedModelsRef.read();
+
+    const expectedFoo = gen.typeDeclaration(
+      "Foo",
+      gen.recursiveCombinator(
+        gen.identifier("Foo"),
+        "Foo",
+        gen.typeCombinator([
+          gen.property("Bar", gen.stringType, true),
+          gen.property("Foo", gen.identifier("Foo"), true),
+        ])
+      ),
+      true
+    );
+
+    const expectedGeneratedModels = {
+      [`${SINGLE_DOCUMENT_ROOT_URI}#/$defs/Foo`]: expectedFoo,
+    };
+
+    expect(generatedModels).toEqual(expectedGeneratedModels);
+  });
+
+  it("should parse mutually recursive schemas", async () => {
+    const document = {
+      $defs: {
+        Foo: {
+          type: "object",
+          properties: {
+            Baz: { type: "string" },
+            Bar: { $ref: "#/$defs/Bar" },
+          },
+        },
+        Bar: {
+          type: "array",
+          items: { $ref: "#/$defs/Foo" },
+        },
+      },
+    } as NonArraySchemaObject;
+    const context = createContextFromSingleDocument(document);
+
+    await parseSchema("#/$defs/Foo")(context)();
+    const generatedModels = context.generatedModelsRef.read();
+
+    const expectedFoo = gen.typeDeclaration(
+      "Foo",
+      gen.recursiveCombinator(
+        gen.identifier("Foo"),
+        "Foo",
+        gen.typeCombinator([
+          gen.property("Baz", gen.stringType, true),
+          gen.property("Bar", gen.arrayCombinator(gen.identifier("Foo")), true),
+        ])
+      ),
+      true
+    );
+
+    const expectedBar = gen.arrayCombinator(gen.identifier("Foo"));
+
+    const expectedGeneratedModels = {
+      [`${SINGLE_DOCUMENT_ROOT_URI}#/$defs/Foo`]: expectedFoo,
+      [`${SINGLE_DOCUMENT_ROOT_URI}#/$defs/Bar`]: expectedBar,
+    };
+
+    expect(generatedModels).toEqual(expectedGeneratedModels);
+  });
 });
 
 function createContextFromSingleDocument(

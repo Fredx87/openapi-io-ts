@@ -1,4 +1,5 @@
 import * as RTE from "fp-ts/ReaderTaskEither";
+import * as gen from "io-ts-codegen";
 import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 import { ParseSchemaContext } from "./ParseSchemaContext";
 
@@ -26,3 +27,8 @@ export type SchemaOrRef = SchemaObject | ReferenceObject;
 export type SchemaType =
   | OpenAPIV3_1.ArraySchemaObjectType
   | OpenAPIV3_1.NonArraySchemaObjectType;
+
+export interface ParseResolvedSchemaResult {
+  typeReference: gen.TypeReference;
+  isRecursive: boolean;
+}

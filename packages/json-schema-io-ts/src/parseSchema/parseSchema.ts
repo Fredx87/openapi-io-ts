@@ -12,6 +12,7 @@ import {
   NonArraySchemaObject,
   SchemaType,
   ParseSchemaRTE,
+  ParseResolvedSchemaResult,
 } from "./types";
 import { parseJsonReference } from "./parseJsonReference";
 import { resolveSchema, resolveStringReference } from "./resolvers";
@@ -22,44 +23,58 @@ export function parseSchema(
 ): ParseSchemaRTE<gen.TypeDeclaration | gen.TypeReference> {
   return pipe(
     resolveStringReference(reference),
-    RTE.chain((jsonReference) => parseSchemaFromJsonReference(jsonReference))
+    RTE.chain((jsonReference) =>
+      parseSchemaFromJsonReference(jsonReference, [reference])
+    ),
+    RTE.map(({ typeReference }) => typeReference)
   );
 }
 
 export function parseSchemaFromJsonReference(
-  jsonReference: JsonReference
-): ParseSchemaRTE<gen.TypeReference> {
+  jsonReference: JsonReference,
+  visitedReferences: string[]
+): ParseSchemaRTE<ParseResolvedSchemaResult> {
   return pipe(
     RTE.Do,
     RTE.bind("schema", () => resolveSchema(jsonReference)),
-    RTE.bind("type", ({ schema }) => parseResolvedSchema(schema)),
-    RTE.bind("model", ({ type }) => generateModel(jsonReference, type)),
-    RTE.map(({ model }) => model)
+    RTE.bind("parseSchemaRes", ({ schema }) =>
+      parseResolvedSchema(schema, visitedReferences)
+    ),
+    RTE.bind("model", ({ parseSchemaRes: { typeReference, isRecursive } }) =>
+      generateModel(jsonReference, typeReference, isRecursive)
+    ),
+    RTE.map(
+      ({ parseSchemaRes, model }): ParseResolvedSchemaResult => ({
+        isRecursive: parseSchemaRes.isRecursive,
+        typeReference: model,
+      })
+    )
   );
 }
 
 function parseResolvedSchema(
-  schema: SchemaOrRef
-): ParseSchemaRTE<gen.TypeReference> {
+  schema: SchemaOrRef,
+  visitedReferences: string[]
+): ParseSchemaRTE<ParseResolvedSchemaResult> {
   if (JsonSchemaRef.is(schema)) {
-    return parseJsonReference(schema.$ref);
+    return parseJsonReference(schema.$ref, visitedReferences);
   }
 
   const converted = convertSchemaToOpenApi3_1(schema);
 
   if (converted.allOf) {
-    return parseAllOf(converted.allOf);
+    return parseAllOf(converted.allOf, visitedReferences);
   }
 
   if (converted.oneOf) {
-    return parseOneOf(converted.oneOf);
+    return parseOneOf(converted.oneOf, visitedReferences);
   }
 
   if (converted.anyOf) {
-    return parseOneOf(converted.anyOf);
+    return parseOneOf(converted.anyOf, visitedReferences);
   }
 
-  return parseSchemaByTypes(converted);
+  return parseSchemaByTypes(converted, visitedReferences);
 }
 
 function convertSchemaToOpenApi3_1(
@@ -77,23 +92,36 @@ function convertSchemaToOpenApi3_1(
   return schema;
 }
 
-function parseAllOf(schemas: SchemaOrRef[]): ParseSchemaRTE<gen.TypeReference> {
+function parseAllOf(
+  schemas: SchemaOrRef[],
+  visitedReferences: string[]
+): ParseSchemaRTE<ParseResolvedSchemaResult> {
   return pipe(
-    parseSchemas(schemas),
-    RTE.map((schemas) => gen.intersectionCombinator(schemas))
+    parseSchemas(schemas, visitedReferences),
+    RTE.map((res) => ({
+      isRecursive: res.isRecursive,
+      typeReference: gen.intersectionCombinator(res.typeReferences),
+    }))
   );
 }
 
-function parseOneOf(schemas: SchemaOrRef[]): ParseSchemaRTE<gen.TypeReference> {
+function parseOneOf(
+  schemas: SchemaOrRef[],
+  visitedReferences: string[]
+): ParseSchemaRTE<ParseResolvedSchemaResult> {
   return pipe(
-    parseSchemas(schemas),
-    RTE.map((schemas) => gen.unionCombinator(schemas))
+    parseSchemas(schemas, visitedReferences),
+    RTE.map((res) => ({
+      isRecursive: res.isRecursive,
+      typeReference: gen.unionCombinator(res.typeReferences),
+    }))
   );
 }
 
 function parseSchemaByTypes(
-  schema: SchemaObject
-): ParseSchemaRTE<gen.TypeReference> {
+  schema: SchemaObject,
+  visitedReferences: string[]
+): ParseSchemaRTE<ParseResolvedSchemaResult> {
   const types =
     schema.type != null
       ? Array.isArray(schema.type)
@@ -103,44 +131,61 @@ function parseSchemaByTypes(
 
   return pipe(
     types,
-    RTE.traverseSeqArray((type) => parseSchemaByType(schema, type)),
+    RTE.traverseSeqArray((type) =>
+      parseSchemaByType(schema, type, visitedReferences)
+    ),
     RTE.map((res) => [...res]),
     RTE.map(A.compact),
     RTE.map((res) => {
       if (res.length === 0) {
-        return gen.unknownType;
+        return { isRecursive: false, typeReference: gen.unknownType };
       }
 
       if (res.length === 1) {
-        return res[0];
+        return {
+          isRecursive: res[0].isRecursive,
+          typeReference: res[0].typeReference,
+        };
       }
 
-      return gen.unionCombinator(res);
+      const isRecursive = res.some((r) => r.isRecursive);
+
+      return {
+        isRecursive: isRecursive,
+        typeReference: gen.unionCombinator(res.map((r) => r.typeReference)),
+      };
     })
   );
 }
 
 function parseSchemaByType(
   schema: SchemaObject,
-  type: SchemaType
-): ParseSchemaRTE<O.Option<gen.TypeReference>> {
+  type: SchemaType,
+  visitedReferences: string[]
+): ParseSchemaRTE<O.Option<ParseResolvedSchemaResult>> {
   switch (type) {
     case "boolean":
-      return RTE.right(O.some(gen.booleanType));
+      return RTE.right(O.some(nonRecursiveType(gen.booleanType)));
     case "integer":
     case "number":
-      return RTE.right(O.some(gen.numberType));
+      return RTE.right(O.some(nonRecursiveType(gen.numberType)));
     case "null":
-      return RTE.right(O.some(gen.nullType));
+      return RTE.right(O.some(nonRecursiveType(gen.nullType)));
     case "string":
-      return pipe(parseString(schema), RTE.map(O.some));
+      return pipe(
+        parseString(schema),
+        RTE.map((type) => O.some(nonRecursiveType(type)))
+      );
     case "array":
       return pipe(
-        parseArray((schema as ArraySchemaObject).items),
+        parseArray((schema as ArraySchemaObject).items, visitedReferences),
         RTE.map(O.some)
       );
     case "object":
-      return pipe(parseObject(schema as NonArraySchemaObject), RTE.map(O.some));
+      return pipe(
+        parseObject(schema as NonArraySchemaObject, visitedReferences),
+        RTE.map(O.some)
+      );
     default:
       return RTE.right(O.none);
   }
@@ -170,53 +215,99 @@ function parseEnum(enums: string[]): ParseSchemaRTE<gen.TypeReference> {
 }
 
 function parseArray(
-  items: ArraySchemaObject["items"]
-): ParseSchemaRTE<gen.TypeReference> {
+  items: ArraySchemaObject["items"],
+  visitedReferences: string[]
+): ParseSchemaRTE<ParseResolvedSchemaResult> {
   return pipe(
-    parseResolvedSchema(items),
-    RTE.map((t) => gen.arrayCombinator(t))
+    parseResolvedSchema(items, visitedReferences),
+    RTE.map(
+      (res): ParseResolvedSchemaResult => ({
+        isRecursive: res.isRecursive,
+        typeReference: gen.arrayCombinator(res.typeReference),
+      })
+    )
   );
 }
 
+interface ParseMultipleSchemasResult {
+  isRecursive: boolean;
+  typeReferences: gen.TypeReference[];
+}
+
 function parseSchemas(
-  schemas: SchemaOrRef[]
-): ParseSchemaRTE<gen.TypeReference[]> {
+  schemas: SchemaOrRef[],
+  visitedReferences: string[]
+): ParseSchemaRTE<ParseMultipleSchemasResult> {
   return pipe(
     schemas,
-    RTE.traverseSeqArray(parseResolvedSchema),
-    RTE.map((res) => [...res])
+    RTE.traverseSeqArray((s) => parseResolvedSchema(s, visitedReferences)),
+    RTE.map((res) => {
+      const isRecursive = res.some((r) => r.isRecursive);
+      return {
+        isRecursive: isRecursive,
+        typeReferences: res.map((r) => r.typeReference),
+      };
+    })
   );
 }
 
 function parseObject(
-  schema: NonArraySchemaObject
-): ParseSchemaRTE<gen.TypeReference> {
+  schema: NonArraySchemaObject,
+  visitedReferences: string[]
+): ParseSchemaRTE<ParseResolvedSchemaResult> {
   if (schema.properties) {
     return pipe(
       Object.entries(schema.properties),
       RTE.traverseSeqArray(([name, propSchema]) =>
-        parseProperty(name, propSchema, schema)
+        parseProperty(name, propSchema, schema, visitedReferences)
       ),
-      RTE.map((props) => gen.typeCombinator([...props]))
+      RTE.map((props) => {
+        const isRecursive = props.some((p) => p.isRecursive);
+        return {
+          isRecursive,
+          typeReference: gen.typeCombinator([...props.map((p) => p.property)]),
+        };
+      })
     );
   }
 
-  return RTE.right(gen.unknownRecordType);
+  return RTE.right({
+    isRecursive: false,
+    typeReference: gen.unknownRecordType,
+  });
+}
+
+export interface ParsePropertyResult {
+  isRecursive: boolean;
+  property: gen.Property;
 }
 
 function parseProperty(
   name: string,
   schema: SchemaOrRef,
-  parentSchema: NonArraySchemaObject
-): ParseSchemaRTE<gen.Property> {
+  parentSchema: NonArraySchemaObject,
+  visitedReferences: string[]
+): ParseSchemaRTE<ParsePropertyResult> {
   return pipe(
-    parseResolvedSchema(schema),
-    RTE.map((t) =>
-      gen.property(
-        name,
-        t,
-        parentSchema.required ? !parentSchema.required.includes(name) : true
-      )
-    )
+    parseResolvedSchema(schema, visitedReferences),
+    RTE.map(({ isRecursive, typeReference }) => {
+      return {
+        isRecursive,
+        property: gen.property(
+          name,
+          typeReference,
+          parentSchema.required ? !parentSchema.required.includes(name) : true
+        ),
+      };
+    })
   );
+}
+
+function nonRecursiveType(
+  typeReference: gen.TypeReference
+): ParseResolvedSchemaResult {
+  return {
+    typeReference,
+    isRecursive: false,
+  };
 }

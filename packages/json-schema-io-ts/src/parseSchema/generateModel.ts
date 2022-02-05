@@ -10,14 +10,19 @@ import { ParseSchemaRTE } from "./types";
 
 export function generateModel(
   reference: JsonReference,
-  type: gen.TypeReference
+  type: gen.TypeReference,
+  isRecursive: boolean
 ): ParseSchemaRTE<gen.TypeReference> {
   return pipe(
     RTE.Do,
     RTE.bind("generationInfo", () => getModelGenerationInfo(reference)),
     RTE.bind("model", ({ generationInfo }) =>
       RTE.right(
-        generateModelFromTypeReferenceAndGenerationInfo(type, generationInfo)
+        generateModelFromTypeReferenceAndGenerationInfo(
+          type,
+          generationInfo,
+          isRecursive
+        )
       )
     ),
     RTE.chainFirst(({ model }) => addModelToContext(reference, model)),
@@ -42,7 +47,7 @@ export function getReferenceFromGeneratedModel(
   return generatedModel;
 }
 
-function getModelGenerationInfo(
+export function getModelGenerationInfo(
   reference: JsonReference
 ): ParseSchemaRTE<ModelGenerationInfo> {
   return pipe(
@@ -53,20 +58,25 @@ function getModelGenerationInfo(
 
 function generateModelFromTypeReferenceAndGenerationInfo(
   typeReference: gen.TypeReference,
-  { name, filePath }: ModelGenerationInfo
+  { name, filePath }: ModelGenerationInfo,
+  isRecursive: boolean
 ): gen.TypeReference | gen.TypeDeclaration {
-  if (shouldGenerateDeclaration(typeReference)) {
-    return gen.typeDeclaration(
-      name,
-      typeReference,
-      true,
-      undefined,
-      undefined,
-      filePath
-    );
+  if (!shouldGenerateDeclaration(typeReference)) {
+    return typeReference;
   }
 
-  return typeReference;
+  const finalTypeReference = isRecursive
+    ? gen.recursiveCombinator(gen.identifier(name), name, typeReference)
+    : typeReference;
+
+  return gen.typeDeclaration(
+    name,
+    finalTypeReference,
+    true,
+    undefined,
+    undefined,
+    filePath
+  );
 }
 
 function addModelToContext(
@@ -85,15 +95,39 @@ function addModelToContext(
 function shouldGenerateDeclaration(type: gen.TypeReference): boolean {
   switch (type.kind) {
     case "ArrayCombinator":
+    case "ReadonlyArrayCombinator":
+    case "ReadonlyCombinator":
       return shouldGenerateDeclaration(type.type);
+    case "DictionaryCombinator":
+      return shouldGenerateDeclaration(type.codomain);
     case "IntersectionCombinator":
     case "UnionCombinator":
     case "TupleCombinator":
+    case "TaggedUnionCombinator":
       return type.types.some(shouldGenerateDeclaration);
     case "InterfaceCombinator":
-    case "TaggedUnionCombinator":
+    case "RecursiveCombinator":
+    case "BrandCombinator":
+    case "ExactCombinator":
+    case "CustomCombinator":
+    case "PartialCombinator":
+    case "StrictCombinator":
       return true;
-    default:
+    case "AnyArrayType":
+    case "AnyDictionaryType":
+    case "BooleanType":
+    case "FunctionType":
+    case "Identifier":
+    case "ImportedIdentifier":
+    case "IntType":
+    case "IntegerType":
+    case "NumberType":
+    case "StringType":
+    case "NullType":
+    case "KeyofCombinator":
+    case "LiteralCombinator":
+    case "UndefinedType":
+    case "UnknownType":
       return false;
   }
 }
