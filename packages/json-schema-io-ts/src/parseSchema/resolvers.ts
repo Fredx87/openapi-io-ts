@@ -19,15 +19,15 @@ export function resolveStringReference(
   );
 }
 
-export function resolveSchema(
+export function resolveReferenceFromContext<T = SchemaOrRef>(
   jsonReference: JsonReference
-): ParseSchemaRTE<SchemaOrRef> {
+): ParseSchemaRTE<T> {
   return pipe(
     RTE.Do,
     RTE.bind("uriDocumentMap", () => readUriDocumentMap()),
     RTE.chainW(({ uriDocumentMap }) => {
       return pipe(
-        resolveReference<SchemaOrRef>(uriDocumentMap, jsonReference),
+        resolveReference<T>(uriDocumentMap, jsonReference),
         RTE.fromOption(
           () =>
             new Error(

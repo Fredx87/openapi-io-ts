@@ -15,7 +15,10 @@ import {
   ParseResolvedSchemaResult,
 } from "./types";
 import { parseJsonReference } from "./parseJsonReference";
-import { resolveSchema, resolveStringReference } from "./resolvers";
+import {
+  resolveReferenceFromContext,
+  resolveStringReference,
+} from "./resolvers";
 import { generateModel } from "./generateModel";
 
 export function parseSchema(
@@ -36,7 +39,7 @@ export function parseSchemaFromJsonReference(
 ): ParseSchemaRTE<ParseResolvedSchemaResult> {
   return pipe(
     RTE.Do,
-    RTE.bind("schema", () => resolveSchema(jsonReference)),
+    RTE.bind("schema", () => resolveReferenceFromContext(jsonReference)),
     RTE.bind("parseSchemaRes", ({ schema }) =>
       parseResolvedSchema(schema, visitedReferences)
     ),

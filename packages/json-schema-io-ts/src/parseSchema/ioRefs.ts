@@ -4,6 +4,7 @@ import * as RTE from "fp-ts/ReaderTaskEither";
 import { ParseSchemaContext, UriDocumentMap } from "./ParseSchemaContext";
 import { GeneratedModels } from "./modelGeneration";
 import { ParseSchemaRTE } from "./types";
+import { JsonReference } from "../jsonReference";
 
 export function readGeneratedModelsRef(): ParseSchemaRTE<
   GeneratedModels,
@@ -49,7 +50,24 @@ export function readCurrentDocumentUri(): ParseSchemaRTE<string, never> {
   );
 }
 
-export function modifyCurrentDocumentUri(
+export function setCurrentDocumentUriIfNeeded({
+  uri,
+}: JsonReference): ParseSchemaRTE<void> {
+  return pipe(
+    readCurrentDocumentUri(),
+    RTE.chain((currentDocumentUri) =>
+      uri !== currentDocumentUri
+        ? modifyCurrentDocumentUri(O.some(uri))
+        : RTE.right(undefined)
+    )
+  );
+}
+
+export function resetCurrentDocumentUri(): ParseSchemaRTE<void> {
+  return modifyCurrentDocumentUri(O.none);
+}
+
+function modifyCurrentDocumentUri(
   currentDocumentUri: O.Option<string>
 ): ParseSchemaRTE<void, never> {
   return pipe(

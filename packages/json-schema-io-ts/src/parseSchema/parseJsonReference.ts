@@ -7,9 +7,9 @@ import { JsonReference, jsonReferenceToString } from "../jsonReference";
 import { resolveStringReference } from "./resolvers";
 import { ParseResolvedSchemaResult, ParseSchemaRTE } from "./types";
 import {
-  modifyCurrentDocumentUri,
-  readCurrentDocumentUri,
   readGeneratedModelsRef,
+  resetCurrentDocumentUri,
+  setCurrentDocumentUriIfNeeded,
 } from "./ioRefs";
 import {
   getModelGenerationInfo,
@@ -104,21 +104,10 @@ function setCurrentDocumentUriAndParseSchema(
   visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParseResolvedSchemaResult> {
   return pipe(
-    setCurrentDocumentUri(jsonReference),
+    setCurrentDocumentUriIfNeeded(jsonReference),
     RTE.chainW(() =>
       parseSchemaFromJsonReference(jsonReference, visitedReferences)
     ),
-    RTE.chainFirstW(() => modifyCurrentDocumentUri(O.none))
-  );
-}
-
-function setCurrentDocumentUri({ uri }: JsonReference): ParseSchemaRTE<void> {
-  return pipe(
-    readCurrentDocumentUri(),
-    RTE.chain((currentDocumentUri) =>
-      uri !== currentDocumentUri
-        ? modifyCurrentDocumentUri(O.some(uri))
-        : RTE.right(undefined)
-    )
+    RTE.chainFirstW(() => resetCurrentDocumentUri())
   );
 }
