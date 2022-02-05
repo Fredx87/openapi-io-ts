@@ -3,7 +3,7 @@ import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { parseSchemaFromJsonReference } from "./parseSchema";
-import { JsonReference } from "../jsonReference";
+import { JsonReference, jsonReferenceToString } from "../jsonReference";
 import { resolveStringReference } from "./resolvers";
 import { ParseResolvedSchemaResult, ParseSchemaRTE } from "./types";
 import {
@@ -18,37 +18,50 @@ import {
 
 export function parseJsonReference(
   reference: string,
-  visitedReferences: string[]
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParseResolvedSchemaResult> {
-  const isRecursive = visitedReferences.includes(reference);
-
-  if (isRecursive) {
-    return pipe(
-      getIdentifierFromReference(reference),
-      RTE.map((identifier) => ({
-        isRecursive: true,
-        typeReference: identifier,
-      }))
-    );
-  }
-
   return pipe(
-    getParsedReference(reference),
-    RTE.chainW(
-      O.foldW(
-        () => parseNewReference(reference, visitedReferences),
-        (typeReference) => RTE.right({ isRecursive: false, typeReference })
-      )
-    )
+    resolveStringReference(reference),
+    RTE.chain((jsonReference) => {
+      if (isRecursive(jsonReference, visitedReferences)) {
+        return pipe(
+          getIdentifierFromReference(jsonReference),
+          RTE.map((identifier) => ({
+            isRecursive: true,
+            typeReference: identifier,
+          }))
+        );
+      }
+
+      return pipe(
+        getParsedReference(reference),
+        RTE.chainW(
+          O.foldW(
+            () => parseNewReference(jsonReference, visitedReferences),
+            (typeReference) => RTE.right({ isRecursive: false, typeReference })
+          )
+        )
+      );
+    })
+  );
+}
+
+function isRecursive(
+  jsonReference: JsonReference,
+  visitedReferences: JsonReference[]
+): boolean {
+  return (
+    visitedReferences.find(
+      (r) => jsonReferenceToString(r) === jsonReferenceToString(jsonReference)
+    ) != null
   );
 }
 
 function getIdentifierFromReference(
-  reference: string
+  jsonReference: JsonReference
 ): ParseSchemaRTE<gen.Identifier | gen.ImportedIdentifier> {
   return pipe(
-    resolveStringReference(reference),
-    RTE.chain((jsonReference) => getModelGenerationInfo(jsonReference)),
+    getModelGenerationInfo(jsonReference),
     RTE.map(({ name, filePath }) =>
       filePath == null
         ? gen.identifier(name)
@@ -76,24 +89,19 @@ function getParsedReference(
 }
 
 function parseNewReference(
-  stringReference: string,
-  visitedReferences: string[]
+  jsonReference: JsonReference,
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParseResolvedSchemaResult> {
-  const newVisitedReferences = visitedReferences.concat(stringReference);
-
-  return pipe(
-    RTE.Do,
-    RTE.bind("jsonReference", () => resolveStringReference(stringReference)),
-    RTE.bind("parseSchemaRes", ({ jsonReference }) =>
-      setCurrentDocumentUriAndParseSchema(jsonReference, newVisitedReferences)
-    ),
-    RTE.map(({ parseSchemaRes }) => parseSchemaRes)
+  const newVisitedReferences = visitedReferences.concat(jsonReference);
+  return setCurrentDocumentUriAndParseSchema(
+    jsonReference,
+    newVisitedReferences
   );
 }
 
 function setCurrentDocumentUriAndParseSchema(
   jsonReference: JsonReference,
-  visitedReferences: string[]
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParseResolvedSchemaResult> {
   return pipe(
     setCurrentDocumentUri(jsonReference),

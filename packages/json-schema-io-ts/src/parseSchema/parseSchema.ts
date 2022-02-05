@@ -24,7 +24,7 @@ export function parseSchema(
   return pipe(
     resolveStringReference(reference),
     RTE.chain((jsonReference) =>
-      parseSchemaFromJsonReference(jsonReference, [reference])
+      parseSchemaFromJsonReference(jsonReference, [jsonReference])
     ),
     RTE.map(({ typeReference }) => typeReference)
   );
@@ -32,7 +32,7 @@ export function parseSchema(
 
 export function parseSchemaFromJsonReference(
   jsonReference: JsonReference,
-  visitedReferences: string[]
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParseResolvedSchemaResult> {
   return pipe(
     RTE.Do,
@@ -54,7 +54,7 @@ export function parseSchemaFromJsonReference(
 
 function parseResolvedSchema(
   schema: SchemaOrRef,
-  visitedReferences: string[]
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParseResolvedSchemaResult> {
   if (JsonSchemaRef.is(schema)) {
     return parseJsonReference(schema.$ref, visitedReferences);
@@ -94,7 +94,7 @@ function convertSchemaToOpenApi3_1(
 
 function parseAllOf(
   schemas: SchemaOrRef[],
-  visitedReferences: string[]
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParseResolvedSchemaResult> {
   return pipe(
     parseSchemas(schemas, visitedReferences),
@@ -107,7 +107,7 @@ function parseAllOf(
 
 function parseOneOf(
   schemas: SchemaOrRef[],
-  visitedReferences: string[]
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParseResolvedSchemaResult> {
   return pipe(
     parseSchemas(schemas, visitedReferences),
@@ -120,7 +120,7 @@ function parseOneOf(
 
 function parseSchemaByTypes(
   schema: SchemaObject,
-  visitedReferences: string[]
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParseResolvedSchemaResult> {
   const types =
     schema.type != null
@@ -161,7 +161,7 @@ function parseSchemaByTypes(
 function parseSchemaByType(
   schema: SchemaObject,
   type: SchemaType,
-  visitedReferences: string[]
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<O.Option<ParseResolvedSchemaResult>> {
   switch (type) {
     case "boolean":
@@ -216,7 +216,7 @@ function parseEnum(enums: string[]): ParseSchemaRTE<gen.TypeReference> {
 
 function parseArray(
   items: ArraySchemaObject["items"],
-  visitedReferences: string[]
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParseResolvedSchemaResult> {
   return pipe(
     parseResolvedSchema(items, visitedReferences),
@@ -236,7 +236,7 @@ interface ParseMultipleSchemasResult {
 
 function parseSchemas(
   schemas: SchemaOrRef[],
-  visitedReferences: string[]
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParseMultipleSchemasResult> {
   return pipe(
     schemas,
@@ -253,7 +253,7 @@ function parseSchemas(
 
 function parseObject(
   schema: NonArraySchemaObject,
-  visitedReferences: string[]
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParseResolvedSchemaResult> {
   if (schema.properties) {
     return pipe(
@@ -286,7 +286,7 @@ function parseProperty(
   name: string,
   schema: SchemaOrRef,
   parentSchema: NonArraySchemaObject,
-  visitedReferences: string[]
+  visitedReferences: JsonReference[]
 ): ParseSchemaRTE<ParsePropertyResult> {
   return pipe(
     parseResolvedSchema(schema, visitedReferences),
