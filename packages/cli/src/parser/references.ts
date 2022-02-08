@@ -3,6 +3,7 @@ import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import {
   JsonReference,
+  jsonReferenceToString,
   parseSchema,
   resetCurrentDocumentUri,
   resolveReferenceFromContext,
@@ -12,12 +13,15 @@ import {
 import { ParserContext, ParserRTE } from "./context";
 
 export function getOrCreateModel(
-  reference: string
-): ParserRTE<gen.TypeReference> {
+  jsonReference: JsonReference
+): ParserRTE<gen.TypeReference | gen.TypeDeclaration> {
   return pipe(
     RTE.asks((c: ParserContext) => c.parseSchemaContext),
     RTE.chainW((parseSchemaContext) =>
-      pipe(parseSchema(reference)(parseSchemaContext), RTE.fromTaskEither)
+      pipe(
+        parseSchema(jsonReferenceToString(jsonReference))(parseSchemaContext),
+        RTE.fromTaskEither
+      )
     )
   );
 }

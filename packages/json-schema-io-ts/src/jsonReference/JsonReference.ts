@@ -52,6 +52,20 @@ export function jsonReferenceToString({
   return `${uri}${fragment}`;
 }
 
+export function concatJsonReference(
+  jsonReference: JsonReference,
+  tokens: string[]
+): JsonReference {
+  const jsonPointer = pipe(
+    jsonReference.jsonPointer,
+    RA.concat(tokens.map(jsonPointerTokenDecode))
+  );
+  return {
+    uri: jsonReference.uri,
+    jsonPointer,
+  };
+}
+
 export function resolveReference<T>(
   uriDocumentMap: Record<string, unknown>,
   { uri, jsonPointer }: JsonReference

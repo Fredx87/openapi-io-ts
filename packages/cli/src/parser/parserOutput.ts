@@ -1,10 +1,9 @@
-import { ParsedComponents } from "./components";
 import { ParsedOperation } from "./operation";
-import { ParsedItem, ReferencedParsedItems } from "./parsedItem";
+import { ParsedItem, ParsedItemType } from "./parsedItem";
 import { ParsedServer } from "./server";
 
 export interface ParserOutput {
-  referencedParsedItems: ReferencedParsedItems;
+  parsedItems: Record<string, ParsedItem<ParsedItemType>>;
   operations: Record<string, ParsedOperation>;
   tags: Record<string, string[]>;
   servers: ParsedServer[];
@@ -12,11 +11,7 @@ export interface ParserOutput {
 
 export function parserOutput(): ParserOutput {
   return {
-    referencedParsedItems: {
-      parameters: {},
-      responses: {},
-      requestBodies: {},
-    },
+    parsedItems: {},
     operations: {},
     tags: {},
     servers: [],

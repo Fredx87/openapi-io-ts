@@ -1,35 +1,58 @@
+import {
+  FORM_ENCODED_MEDIA_TYPE,
+  JSON_MEDIA_TYPE,
+  MULTIPART_FORM_MEDIA_TYPE,
+  TEXT_PLAIN_MEDIA_TYPE,
+} from "@openapi-io-ts/core";
 import { pipe } from "fp-ts/function";
-import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
+import {
+  concatJsonReference,
+  JsonReference,
+  JsonSchemaRef,
+} from "json-schema-io-ts";
 import { OpenAPIV3_1 } from "openapi-types";
-import {
-  JSON_MEDIA_TYPE,
-  TEXT_PLAIN_MEDIA_TYPE,
-  FORM_ENCODED_MEDIA_TYPE,
-  MULTIPART_FORM_MEDIA_TYPE,
-} from "@openapi-io-ts/core";
 import { ParserRTE } from "../context";
-import { JsonSchemaRef } from "json-schema-io-ts";
 import {
+  parsedItem,
   ParsedItem,
-  ParsedItemOrComponentReference,
-} from "../parsedItem/ParsedItem";
-import { ParsedBody } from "./ParsedBody";
-import { getOrCreateComponent } from "../components";
+  getOrCreateParsedItemFromRef,
+} from "../parsedItem";
+import {
+  getOrCreateModel,
+  resolveObjectFromJsonReference,
+} from "../references";
+import { ParsedBody, ParsedJsonBody } from "./ParsedBody";
 
-export function parseBody(
-  body: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.RequestBodyObject
-): ParserRTE<ParsedItemOrComponentReference<"requestBodies">> {
-  if (JsonSchemaRef.is(body)) {
-    return getOrCreateComponent("requestBodies", body.$ref, parseBodyObject);
-  }
-
-  return parseBodyObject(body);
+export function parseBodyFromReference(
+  jsonReference: JsonReference
+): ParserRTE<ParsedItem<ParsedBody>> {
+  return pipe(
+    resolveObjectFromJsonReference<
+      OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.RequestBodyObject
+    >(jsonReference),
+    RTE.chain((body) => parseBody(body, jsonReference))
+  );
 }
 
-export function parseBodyObject(
-  body: OpenAPIV3_1.RequestBodyObject
+function parseBody(
+  body: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.RequestBodyObject,
+  jsonReference: JsonReference
+): ParserRTE<ParsedItem<ParsedBody>> {
+  if (JsonSchemaRef.is(body)) {
+    return getOrCreateParsedItemFromRef<ParsedBody>(
+      body.$ref,
+      parseBodyFromReference
+    );
+  }
+
+  return parseBodyObject(body, jsonReference);
+}
+
+function parseBodyObject(
+  body: OpenAPIV3_1.RequestBodyObject,
+  jsonReference: JsonReference
 ): ParserRTE<ParsedItem<ParsedBody>> {
   const { content } = body;
   const required = body.required ?? false;
@@ -37,8 +60,12 @@ export function parseBodyObject(
   const jsonContent = content?.[JSON_MEDIA_TYPE];
 
   if (jsonContent) {
+    const jsonContentRef = concatJsonReference(jsonReference, [
+      "content",
+      JSON_MEDIA_TYPE,
+    ]);
     return pipe(
-      getOrCreateTypeFromOptional(name, jsonContent.schema),
+      getOrCreateModel(jsonContentRef),
       RTE.map((type) => {
         const parsedBody: ParsedJsonBody = {
           _tag: "ParsedJsonBody",

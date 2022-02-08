@@ -103,7 +103,6 @@ importers:
       fp-ts: ^2.11.0
       immer: ^9.0.12
       io-ts: ^2.2.0
-      io-ts-codegen: ^0.4.0
       json-schema-io-ts: workspace:*
       openapi-types: ^10.0.0
       yargs: ^16.2.0
@@ -115,7 +114,6 @@ importers:
       fp-ts: 2.11.8
       immer: 9.0.12
       io-ts: 2.2.16_fp-ts@2.11.8
-      io-ts-codegen: 0.4.5
       json-schema-io-ts: link:../json-schema-io-ts
       openapi-types: 10.0.0
       yargs: 16.2.0
@@ -129,7 +127,7 @@ importers:
       "@types/node": ^16.0.0
       fp-ts: ^2.11.0
       immer: ^9.0.12
-      io-ts-codegen: ^0.4.0
+      io-ts-codegen: file:.yalc/io-ts-codegen
       lodash: ^4.17.21
       openapi-types: ^10.0.0
     dependencies:
@@ -137,7 +135,7 @@ importers:
       "@types/node": 16.11.21
       fp-ts: 2.11.8
       immer: 9.0.12
-      io-ts-codegen: 0.4.5
+      io-ts-codegen: link:.yalc/io-ts-codegen
       lodash: 4.17.21
       openapi-types: 10.0.0
 
@@ -8583,13 +8581,6 @@ packages:
       }
     dependencies:
       loose-envify: 1.4.0
-    dev: false
-
-  /io-ts-codegen/0.4.5:
-    resolution:
-      {
-        integrity: sha512-7Q6CbNyYOIelPt2OddqMIk5jGfUM5Z+Y2OSsPAJnaSRroCwedAp0cFNh5h02nsE/33P9xjyGhKTajMkPApEdcA==,
-      }
     dev: false
 
   /io-ts-types/0.5.16_fp-ts@2.11.8+io-ts@2.2.16:

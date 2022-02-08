@@ -51,8 +51,8 @@ export function getModelGenerationInfo(
   reference: JsonReference
 ): ParseSchemaRTE<ModelGenerationInfo> {
   return pipe(
-    RTE.asks((context: ParseSchemaContext) => context.modelGenerationInfoFn),
-    RTE.map((getModelGenerationInfo) => getModelGenerationInfo(reference))
+    RTE.ask<ParseSchemaContext>(),
+    RTE.map((context) => context.modelGenerationInfoFn(reference, context))
   );
 }
 

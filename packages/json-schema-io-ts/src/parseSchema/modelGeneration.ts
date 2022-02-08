@@ -5,6 +5,7 @@ import * as gen from "io-ts-codegen";
 import camelCase from "lodash/camelCase";
 import upperFirst from "lodash/upperFirst";
 import { basename, extname } from "path";
+import { ParseSchemaContext } from ".";
 import { JsonReference } from "../jsonReference";
 
 export type GeneratedModels = Record<
@@ -18,7 +19,8 @@ export interface ModelGenerationInfo {
 }
 
 export type ModelGenerationInfoFn = (
-  reference: JsonReference
+  reference: JsonReference,
+  context: ParseSchemaContext
 ) => ModelGenerationInfo;
 
 export const defaultModelGenerationInfo: ModelGenerationInfoFn = ({

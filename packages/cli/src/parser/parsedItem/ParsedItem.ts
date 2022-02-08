@@ -7,54 +7,30 @@ import {
   resolveStringReference,
 } from "json-schema-io-ts";
 import { ParsedBody } from "../body";
-import {
-  ComponentTypeParsedItemMap,
-  ComponentReference,
-  ComponentType,
-} from "../components";
 import { ParserContext, ParserRTE } from "../context";
 import { ParsedParameter } from "../parameter";
 import { ParsedResponse } from "../response";
 
-interface BaseParsedItem<T> {
+export type ParsedItemType = ParsedBody | ParsedParameter | ParsedResponse;
+
+export interface ParsedItem<T extends ParsedItemType> {
+  type: "ParsedItem";
   name: string;
   item: T;
+  filePath: string;
 }
 
-export interface ParsedItem<T> extends BaseParsedItem<T> {
-  type: "ParsedItem";
-}
-
-export function parsedItem<T>(name: string, item: T): ParsedItem<T> {
+export function parsedItem<T extends ParsedItemType>(
+  name: string,
+  item: T,
+  filePath: string
+): ParsedItem<T> {
   return {
     type: "ParsedItem",
     name,
     item,
-  };
-}
-
-export interface ReferencedParsedItem<T> extends BaseParsedItem<T> {
-  type: "ReferencedParsedItem";
-  filePath: string;
-}
-
-export function referencedParsedItem<T>(
-  name: string,
-  item: T,
-  filePath: string
-): ReferencedParsedItem<T> {
-  return {
-    type: "ReferencedParsedItem",
-    name,
-    item,
     filePath,
   };
-}
-
-export interface ReferencedParsedItems {
-  parameters: Record<string, ReferencedParsedItem<ParsedParameter>>;
-  responses: Record<string, ReferencedParsedItem<ParsedResponse>>;
-  requestBodies: Record<string, ReferencedParsedItem<ParsedBody>>;
 }
 
 export function getModelGenerationInfoFromReference(
@@ -105,10 +81,7 @@ function getModelGenerationInfoForExternalReference(
 
   const res: ModelGenerationInfo = {
     name,
-    importData: {
-      path: "externals",
-      prefix: "externals",
-    },
+    filePath: `externals/${name}.ts`,
   };
 
   return res;
@@ -123,10 +96,7 @@ function getModelGenerationInfoForComponent(
 
   const res: ModelGenerationInfo = {
     name,
-    importData: {
-      path: `components/${componentType}`,
-      prefix: componentType,
-    },
+    filePath: `components/${componentType}/${name}.ts`,
   };
 
   return res;
