@@ -36,5 +36,9 @@
   "peerDependencies": {
     "fp-ts": "^2.11.0",
     "io-ts": "^2.2.0"
+  },
+  "devDependencies": {
+    "fp-ts": "^2.11.0",
+    "io-ts": "^2.2.0"
   }
 }

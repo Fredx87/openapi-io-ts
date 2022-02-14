@@ -35,6 +35,7 @@
     "@types/node": "^16.0.0",
     "fp-ts": "^2.11.0",
     "immer": "^9.0.12",
+    "io-ts": "^2.2.0",
     "io-ts-codegen": "file:.yalc/io-ts-codegen",
     "lodash": "^4.17.21",
     "openapi-types": "^10.0.0"
