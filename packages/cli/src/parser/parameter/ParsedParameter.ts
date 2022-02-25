@@ -1,10 +1,10 @@
 import { OperationParameterIn } from "@openapi-io-ts/core";
-import * as gen from "io-ts-codegen";
+import { ParsedItemSchema } from "../parsedItem";
 
 export interface ParsedBaseParameter {
   in: OperationParameterIn;
   name: string;
-  type: gen.TypeDeclaration | gen.TypeReference;
+  schema: ParsedItemSchema;
   required: boolean;
   defaultValue?: unknown;
 }

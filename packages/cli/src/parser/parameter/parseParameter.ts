@@ -1,38 +1,67 @@
+import { JSON_MEDIA_TYPE, OperationParameterIn } from "@openapi-io-ts/core";
 import { pipe } from "fp-ts/function";
 import * as RTE from "fp-ts/ReaderTaskEither";
-import * as gen from "io-ts-codegen";
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
-import { OperationParameterIn, JSON_MEDIA_TYPE } from "@openapi-io-ts/core";
 import {
-  ComponentRef,
-  createComponentRef,
-  getOrCreateType,
-  parsedItem,
-  ParsedItem,
-} from "../common";
+  concatJsonReference,
+  JsonReference,
+  JsonSchemaRef,
+} from "json-schema-io-ts";
+import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 import { ParserContext, ParserRTE } from "../context";
-import { string } from "fp-ts";
-import { ParsedParameter } from "./ParsedParameter";
+import {
+  createParsedItem,
+  getOrCreateParsedItemFromRef,
+  ParsedItem,
+  ParsedItemSchema,
+  parseItemSchema,
+} from "../parsedItem";
+import {
+  getObjectFromStringReference,
+  resolveObjectFromJsonReference,
+} from "../references";
+import {
+  ParsedBaseParameter,
+  ParsedFormParameter,
+  ParsedJsonParameter,
+  ParsedParameter,
+} from "./ParsedParameter";
 
-export function parseParameter(
-  name: string,
-  param: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.ParameterObject
-): ParserRTE<string | ParsedParameter> {
-  if (JsonReference.is(param)) {
-    return RTE.fromEither(createComponentRef("parameters", param.$ref));
-  }
-
-  return parseParameterObject(name, param);
+export function parseParameterFromReference(
+  jsonReference: JsonReference
+): ParserRTE<ParsedItem<ParsedParameter>> {
+  return pipe(
+    resolveObjectFromJsonReference<
+      OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.ParameterObject
+    >(jsonReference),
+    RTE.chain((parameter) => parseParameter(parameter, jsonReference))
+  );
 }
 
-export function parseParameterObject(
-  name: string,
-  param: OpenAPIV3.ParameterObject
+function parseParameter(
+  param: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.ParameterObject,
+  jsonReference: JsonReference
+): ParserRTE<ParsedItem<ParsedParameter>> {
+  if (JsonSchemaRef.is(param)) {
+    return getOrCreateParsedItemFromRef<ParsedParameter>(
+      param.$ref,
+      parseParameterFromReference
+    );
+  }
+
+  return parseParameterObject(param, jsonReference);
+}
+
+function parseParameterObject(
+  param: OpenAPIV3.ParameterObject,
+  jsonReference: JsonReference
 ): ParserRTE<ParsedItem<ParsedParameter>> {
   if (param.schema != null) {
+    const schemaRef = concatJsonReference(jsonReference, ["schema"]);
+
     return parseParameterWithSchema(
-      name,
+      jsonReference,
       param,
+      schemaRef,
       param.schema,
       "ParsedFormParameter"
     );
@@ -41,9 +70,16 @@ export function parseParameterObject(
   const jsonContentSchema = param.content?.[JSON_MEDIA_TYPE].schema;
 
   if (jsonContentSchema != null) {
+    const schemaRef = concatJsonReference(jsonReference, [
+      "content",
+      JSON_MEDIA_TYPE,
+      "schema",
+    ]);
+
     return parseParameterWithSchema(
-      name,
+      jsonReference,
       param,
+      schemaRef,
       jsonContentSchema,
       "ParsedJsonParameter"
     );
@@ -57,17 +93,18 @@ export function parseParameterObject(
 }
 
 function parseParameterWithSchema(
-  name: string,
+  jsonReference: JsonReference,
   param: OpenAPIV3.ParameterObject,
-  schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject,
+  schemaRef: JsonReference,
+  schemaObj: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject,
   tag: ParsedParameter["_tag"]
 ): ParserRTE<ParsedItem<ParsedParameter>> {
   return pipe(
     RTE.Do,
-    RTE.bind("type", () => getOrCreateType(name, schema)),
-    RTE.bind("defaultValue", () => getDefaultValue(schema)),
-    RTE.map(({ type, defaultValue }) =>
-      buildParsedParameter(param, type, defaultValue, tag)
+    RTE.bind("schema", () => parseItemSchema(schemaRef)),
+    RTE.bind("defaultValue", () => getDefaultValue(schemaObj)),
+    RTE.chain(({ schema, defaultValue }) =>
+      buildParsedParameter(jsonReference, param, schema, defaultValue, tag)
     )
   );
 }
@@ -78,34 +115,21 @@ function getDefaultValue(
   return pipe(
     RTE.Do,
     RTE.bind("schema", () =>
-      JsonReference.is(s)
-        ? getOpenapiSchemaFromRef(s)
+      JsonSchemaRef.is(s)
+        ? getObjectFromStringReference<OpenAPIV3.SchemaObject>(s.$ref)
         : RTE.right<ParserContext, Error, OpenAPIV3.SchemaObject>(s)
     ),
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     RTE.map((obj) => obj.schema.default)
   );
 }
 
-function getOpenapiSchemaFromRef(
-  ref: OpenAPIV3.ReferenceObject
-): ParserRTE<OpenAPIV3.SchemaObject> {
-  return pipe(
-    RTE.asks(
-      (context) =>
-        context.document.components?.schemas?.[
-          ref.$ref
-        ] as OpenAPIV3.SchemaObject
-    )
-  );
-}
-
 function buildParsedParameter(
+  jsonReference: JsonReference,
   param: OpenAPIV3.ParameterObject,
-  type: gen.TypeDeclaration | gen.TypeReference,
+  schema: ParsedItemSchema,
   defaultValue: unknown,
   tag: ParsedParameter["_tag"]
-): ParsedItem<ParsedParameter> {
+): ParserRTE<ParsedItem<ParsedParameter>> {
   const { name } = param;
   const paramIn = param.in as OperationParameterIn;
   const required = param.required ?? false;
@@ -114,7 +138,7 @@ function buildParsedParameter(
     name,
     in: paramIn,
     required,
-    type,
+    schema,
     defaultValue,
   };
 
@@ -125,12 +149,12 @@ function buildParsedParameter(
       _tag: "ParsedFormParameter",
       explode: param.explode ?? defaultExplode,
     };
-    return parsedItem(item, name);
+    return createParsedItem(jsonReference, item);
   } else {
     const item: ParsedJsonParameter = {
       ...baseParameter,
       _tag: "ParsedJsonParameter",
     };
-    return parsedItem(item, name);
+    return createParsedItem(jsonReference, item);
   }
 }
