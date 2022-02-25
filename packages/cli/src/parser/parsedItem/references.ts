@@ -2,7 +2,14 @@ import { pipe } from "fp-ts/function";
 import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import { JsonReference, jsonReferenceToString } from "json-schema-io-ts";
-import { ParserRTE, readParserOutput } from "../context";
+import { parsedItem } from ".";
+import {
+  modifyParserOutput,
+  ParserContext,
+  ParserRTE,
+  readParserOutput,
+} from "../context";
+import { parsedItemModelGenerationInfo } from "../modelGeneration";
 import { resolveStringReferenceInParser } from "../references";
 import { ParsedItem, ParsedItemType } from "./ParsedItem";
 
@@ -38,4 +45,37 @@ export function getOrCreateParsedItemFromRef<T extends ParsedItemType>(
       getOrCreateParsedItem(jsonReference, parseFunction)
     )
   );
+}
+
+export function createParsedItem<T extends ParsedItemType>(
+  jsonReference: JsonReference,
+  item: T
+): ParserRTE<ParsedItem<T>> {
+  return pipe(
+    RTE.asks((c: ParserContext) => c.parseSchemaContext),
+    RTE.map((parseSchemaContext) =>
+      parsedItemModelGenerationInfo(jsonReference, parseSchemaContext)
+    ),
+    RTE.chain((modelGenerationInfo) => {
+      const parsed = parsedItem(item, modelGenerationInfo);
+
+      return pipe(
+        addParsedItemToOutputIfNeeded(jsonReference, parsed),
+        RTE.map(() => parsed)
+      );
+    })
+  );
+}
+
+function addParsedItemToOutputIfNeeded<T extends ParsedItemType>(
+  jsonReference: JsonReference,
+  parsedItem: ParsedItem<T>
+): ParserRTE<void> {
+  if (O.isNone(parsedItem.modelGenerationInfo)) {
+    return RTE.right(undefined);
+  }
+
+  return modifyParserOutput((draft) => {
+    draft.parsedItems[jsonReferenceToString(jsonReference)] = parsedItem;
+  });
 }
