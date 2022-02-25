@@ -47,5 +47,10 @@
       "prettier --write"
     ]
   },
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "pnpm": {
+    "overrides": {
+      "io-ts-codegen": "file:.yalc/io-ts-codegen"
+    }
+  }
 }

@@ -36,12 +36,12 @@
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.0.2",
     "@openapi-io-ts/core": "workspace:*",
-    "json-schema-io-ts": "workspace:*",
     "@types/node": "^17.0.10",
     "@types/yargs": "^16.0.0",
     "fp-ts": "^2.11.0",
     "immer": "^9.0.12",
     "io-ts": "^2.2.0",
+    "json-schema-io-ts": "workspace:*",
     "openapi-types": "^10.0.0",
     "yargs": "^16.2.0"
   },

@@ -1,5 +1,8 @@
 lockfileVersion: 5.3
 
+overrides:
+  io-ts-codegen: file:.yalc/io-ts-codegen
+
 importers:
   .:
     specifiers:
@@ -124,7 +127,7 @@ importers:
       fp-ts: ^2.11.0
       immer: ^9.0.12
       io-ts: ^2.2.0
-      io-ts-codegen: file:.yalc/io-ts-codegen
+      io-ts-codegen: 0.5.0
       lodash: ^4.17.21
       openapi-types: ^10.0.0
     dependencies:
@@ -133,7 +136,7 @@ importers:
       fp-ts: 2.11.8
       immer: 9.0.12
       io-ts: 2.2.16_fp-ts@2.11.8
-      io-ts-codegen: link:.yalc/io-ts-codegen
+      io-ts-codegen: 0.5.0
       lodash: 4.17.21
       openapi-types: 10.0.0
 
