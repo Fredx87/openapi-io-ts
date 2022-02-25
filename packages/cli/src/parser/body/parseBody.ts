@@ -15,15 +15,21 @@ import {
 import { OpenAPIV3_1 } from "openapi-types";
 import { ParserRTE } from "../context";
 import {
-  parsedItem,
-  ParsedItem,
+  createParsedItem,
   getOrCreateParsedItemFromRef,
+  ParsedItem,
+  ParsedItemSchema,
+  parseItemSchema,
 } from "../parsedItem";
+import { resolveObjectFromJsonReference } from "../references";
 import {
-  getOrCreateModel,
-  resolveObjectFromJsonReference,
-} from "../references";
-import { ParsedBody, ParsedJsonBody } from "./ParsedBody";
+  ParsedBinaryBody,
+  ParsedBody,
+  ParsedFormBody,
+  ParsedJsonBody,
+  ParsedMultipartBody,
+  ParsedTextBody,
+} from "./ParsedBody";
 
 export function parseBodyFromReference(
   jsonReference: JsonReference
@@ -65,14 +71,14 @@ function parseBodyObject(
       JSON_MEDIA_TYPE,
     ]);
     return pipe(
-      getOrCreateModel(jsonContentRef),
-      RTE.map((type) => {
+      parseItemSchema(jsonContentRef),
+      RTE.chain((schema) => {
         const parsedBody: ParsedJsonBody = {
           _tag: "ParsedJsonBody",
-          type,
+          schema,
           required,
         };
-        return parsedItem(parsedBody, name);
+        return createParsedItem(jsonReference, parsedBody);
       })
     );
   }
@@ -84,21 +90,30 @@ function parseBodyObject(
       _tag: "ParsedTextBody",
       required,
     };
-    return RTE.right(parsedItem(parsedBody, name));
+    return createParsedItem(jsonReference, parsedBody);
   }
 
   const formEncodedContent = content?.[FORM_ENCODED_MEDIA_TYPE];
 
   if (formEncodedContent) {
+    const formEncodedContentRef = concatJsonReference(jsonReference, [
+      "content",
+      FORM_ENCODED_MEDIA_TYPE,
+      "schema",
+    ]);
+
     return pipe(
-      getOrCreateTypeFromOptional(name, formEncodedContent.schema),
-      RTE.map((type) => {
+      getOrCreateSchemaFromOptional(
+        formEncodedContentRef,
+        formEncodedContent.schema
+      ),
+      RTE.chain((schema) => {
         const parsedBody: ParsedFormBody = {
           _tag: "ParsedFormBody",
-          type,
+          schema,
           required,
         };
-        return parsedItem(parsedBody, name);
+        return createParsedItem(jsonReference, parsedBody);
       })
     );
   }
@@ -106,15 +121,24 @@ function parseBodyObject(
   const multipartFormContent = content?.[MULTIPART_FORM_MEDIA_TYPE];
 
   if (multipartFormContent) {
+    const multipartFormContentRef = concatJsonReference(jsonReference, [
+      "content",
+      MULTIPART_FORM_MEDIA_TYPE,
+      "schema",
+    ]);
+
     return pipe(
-      getOrCreateTypeFromOptional(name, multipartFormContent.schema),
-      RTE.map((type) => {
+      getOrCreateSchemaFromOptional(
+        multipartFormContentRef,
+        multipartFormContent.schema
+      ),
+      RTE.chain((schema) => {
         const parsedBody: ParsedMultipartBody = {
           _tag: "ParsedMultipartBody",
-          type,
+          schema,
           required,
         };
-        return parsedItem(parsedBody, name);
+        return createParsedItem(jsonReference, parsedBody);
       })
     );
   }
@@ -128,15 +152,18 @@ function parseBodyObject(
     required,
   };
 
-  return RTE.right(parsedItem(parsedBody, name));
+  return createParsedItem(jsonReference, parsedBody);
 }
 
-function getOrCreateTypeFromOptional(
-  name: string,
+function getOrCreateSchemaFromOptional(
+  jsonReference: JsonReference,
   schema: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.SchemaObject | undefined
-): ParserRTE<gen.TypeDeclaration | gen.TypeReference> {
+): ParserRTE<ParsedItemSchema> {
   if (schema == null) {
-    return RTE.right(gen.unknownType);
+    return RTE.right({
+      _tag: "ParsedItemTypeReference",
+      typeReference: gen.unknownType,
+    });
   }
-  return getOrCreateType(name, schema);
+  return parseItemSchema(jsonReference);
 }

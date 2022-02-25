@@ -1,4 +1,4 @@
-import * as gen from "io-ts-codegen";
+import { ParsedItemSchema } from "../parsedItem";
 
 interface BaseParsedBody {
   required: boolean;
@@ -11,17 +11,17 @@ export interface ParsedBinaryBody extends BaseParsedBody {
 
 export interface ParsedFormBody extends BaseParsedBody {
   _tag: "ParsedFormBody";
-  type: gen.TypeDeclaration | gen.TypeReference;
+  schema: ParsedItemSchema;
 }
 
 export interface ParsedMultipartBody extends BaseParsedBody {
   _tag: "ParsedMultipartBody";
-  type: gen.TypeDeclaration | gen.TypeReference;
+  schema: ParsedItemSchema;
 }
 
 export interface ParsedJsonBody extends BaseParsedBody {
   _tag: "ParsedJsonBody";
-  type: gen.TypeDeclaration | gen.TypeReference;
+  schema: ParsedItemSchema;
 }
 
 export interface ParsedTextBody extends BaseParsedBody {
