@@ -1,4 +1,4 @@
-import * as gen from "io-ts-codegen";
+import { ParsedItemSchema } from "../parsedItem";
 
 export interface ParsedEmptyResponse {
   _tag: "ParsedEmptyResponse";
@@ -10,7 +10,7 @@ export interface ParsedFileResponse {
 
 export interface ParsedJsonResponse {
   _tag: "ParsedJsonResponse";
-  type: gen.TypeDeclaration | gen.TypeReference;
+  schema: ParsedItemSchema;
 }
 
 export type ParsedResponse =
