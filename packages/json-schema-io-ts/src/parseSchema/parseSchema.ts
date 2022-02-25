@@ -1,29 +1,29 @@
-import { pipe } from "fp-ts/function";
 import * as A from "fp-ts/Array";
+import { pipe } from "fp-ts/function";
 import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import * as gen from "io-ts-codegen";
 import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
-import { JsonSchemaRef, JsonReference } from "../jsonReference";
-import {
-  ArraySchemaObject,
-  SchemaOrRef,
-  SchemaObject,
-  NonArraySchemaObject,
-  SchemaType,
-  ParseSchemaRTE,
-  ParseResolvedSchemaResult,
-} from "./types";
+import { JsonReference, JsonSchemaRef } from "../jsonReference";
+import { generateModel } from "./generateModel";
 import { parseJsonReference } from "./parseJsonReference";
 import {
   resolveReferenceFromContext,
   resolveStringReference,
 } from "./resolvers";
-import { generateModel } from "./generateModel";
+import {
+  ArraySchemaObject,
+  NonArraySchemaObject,
+  ParseResolvedSchemaResult,
+  ParseSchemaRTE,
+  SchemaObject,
+  SchemaOrRef,
+  SchemaType,
+} from "./types";
 
 export function parseSchema(
   reference: string
-): ParseSchemaRTE<gen.TypeDeclaration | gen.TypeReference> {
+): ParseSchemaRTE<gen.TypeReference> {
   return pipe(
     resolveStringReference(reference),
     RTE.chain((jsonReference) =>
