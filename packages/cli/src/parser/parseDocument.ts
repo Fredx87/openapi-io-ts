@@ -9,6 +9,7 @@ import {
 } from "json-schema-io-ts";
 import { OpenAPIV3_1 } from "openapi-types";
 import { resolve } from "path";
+import { schemaModelGenerationInfo } from "./modelGeneration";
 
 interface ParsedDocumentResult {
   document: OpenAPIV3_1.Document;
@@ -38,7 +39,14 @@ export function parseDocument(
         : TE.left(new Error("Cannot parse OpenAPI v2 document"));
     }),
     TE.bindW("parseSchemaContext", ({ uriDocumentMap }) =>
-      pipe(createSchemaContext(absoluteUri, uriDocumentMap), TE.rightIO)
+      pipe(
+        createSchemaContext(
+          absoluteUri,
+          uriDocumentMap,
+          schemaModelGenerationInfo
+        ),
+        TE.rightIO
+      )
     ),
     TE.map(({ document, parseSchemaContext }) => {
       return {
