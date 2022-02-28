@@ -1,188 +1,171 @@
+import { OperationMethod } from "@openapi-io-ts/core";
 import { pipe } from "fp-ts/function";
 import * as O from "fp-ts/Option";
 import * as RTE from "fp-ts/ReaderTaskEither";
+import * as RA from "fp-ts/ReadonlyArray";
 import * as R from "fp-ts/Record";
-import { OpenAPIV3 } from "openapi-types";
-import { OperationMethod } from "@openapi-io-ts/core";
-import { toValidVariableName } from "../../utils";
-import { BodyItemOrRef, parseBody } from "../body";
-import { parsedItem } from "../common";
-import { modifyParserOutput, ParserContext, ParserRTE } from "../context";
 import {
-  ParameterItemOrRef,
-  parseParameter,
-} from "../parameter/parseParameter";
-import { parseResponse, ResponseItemOrRef } from "../response/parseResponse";
-import * as gen from "io-ts-codegen";
+  concatJsonReference,
+  JsonReference,
+  JsonSchemaRef,
+} from "json-schema-io-ts";
+import { OpenAPIV3_1 } from "openapi-types";
+import { parseBodyFromReference, ParsedBody } from "../body";
+import { modifyParserOutput, ParserRTE } from "../context";
+import { ParsedParameter, parseParameterFromReference } from "../parameter";
+import {
+  createParsedItem,
+  getOrCreateParsedItemFromRef,
+  ParsedItem,
+} from "../parsedItem";
+import { resolveObjectFromJsonReference } from "../references";
+import { ParsedResponse, parseResponseFromReference } from "../response";
+import { ParsedOperation } from "./ParsedOperation";
 
-export function parseAllPaths(): ParserRTE<void> {
+export function parseOperationFromReference(
+  operationPath: string,
+  jsonReference: JsonReference
+): ParserRTE<ParsedItem<ParsedOperation>> {
   return pipe(
-    RTE.asks((context: ParserContext) => context.document.paths),
-    RTE.chain((paths) => {
-      const tasks = Object.entries(paths).map(([path, pathObject]) =>
-        pathObject ? parsePath(path, pathObject) : RTE.right(undefined)
-      );
-      return RTE.sequenceSeqArray(tasks);
-    }),
-    RTE.map(() => void 0)
-  );
-}
-
-function parsePath(
-  path: string,
-  pathObject: OpenAPIV3.PathItemObject
-): ParserRTE<void> {
-  const operations = {
-    get: pathObject?.get,
-    post: pathObject?.post,
-    put: pathObject?.put,
-    delete: pathObject?.delete,
-  };
-
-  return pipe(
-    Object.entries(operations),
-    RTE.traverseSeqArray(([method, operation]) =>
-      operation
-        ? parseAndAddOperation(path, method as OperationMethod, operation)
-        : RTE.right(undefined)
-    ),
-    RTE.map(() => void 0)
-  );
-}
-
-function parseAndAddOperation(
-  path: string,
-  method: OperationMethod,
-  operation: OpenAPIV3.OperationObject
-): ParserRTE<void> {
-  const { operationId, tags } = operation;
-
-  if (operationId == null) {
-    return RTE.left(new Error(`Missing operationId in path ${path}`));
-  }
-
-  const generatedName = toValidVariableName(operationId, "camel");
-
-  return pipe(
-    parseOperation(path, method, operation),
-    RTE.chain((parsed) =>
-      modifyParserOutput((draft) => {
-        draft.operations[generatedName] = parsed;
-      })
-    ),
-    RTE.chain(() => parseOperationTags(generatedName, tags))
+    resolveObjectFromJsonReference<
+      OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.OperationObject
+    >(jsonReference),
+    RTE.chain((operation) =>
+      parseOperation(operationPath, operation, jsonReference)
+    )
   );
 }
 
 function parseOperation(
-  path: string,
-  method: OperationMethod,
-  operation: OpenAPIV3.OperationObject
-): ParserRTE<ParsedOperation> {
-  const { operationId } = operation;
-
-  if (operationId == null) {
-    return RTE.left(
-      new Error(`Missing operationId on path ${path}, method ${method}`)
+  operationPath: string,
+  operation: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.OperationObject,
+  jsonReference: JsonReference
+): ParserRTE<ParsedItem<ParsedOperation>> {
+  if (JsonSchemaRef.is(operation)) {
+    return getOrCreateParsedItemFromRef<ParsedOperation>(
+      operation.$ref,
+      (newRef) => parseOperationFromReference(operationPath, newRef)
     );
   }
+
+  return parseOperationObject(operationPath, operation, jsonReference);
+}
+
+function parseOperationObject(
+  operationPath: string,
+  operation: OpenAPIV3_1.OperationObject,
+  jsonReference: JsonReference
+): ParserRTE<ParsedItem<ParsedOperation>> {
+  const method = jsonReference.jsonPointer[
+    jsonReference.jsonPointer.length - 1
+  ] as OperationMethod;
+  const { parameters, requestBody, responses, tags } = operation;
 
   return pipe(
     RTE.Do,
     RTE.bind("parameters", () =>
-      parseOperationParameters(operation.parameters)
+      parseOperationParameters(
+        parameters,
+        concatJsonReference(jsonReference, ["parameters"])
+      )
     ),
     RTE.bind("body", () =>
-      parseOperationBody(operation.requestBody, operationId)
+      parseOperationBody(
+        requestBody,
+        concatJsonReference(jsonReference, ["requestBody"])
+      )
     ),
     RTE.bind("responses", () =>
-      parseOperationResponses(operation.responses, operationId)
+      parseOperationResponses(
+        responses,
+        concatJsonReference(jsonReference, ["responses"])
+      )
     ),
-    RTE.map(({ parameters, body, responses }) => {
-      const operation: ParsedOperation = {
-        path,
+    RTE.chain(({ parameters, body, responses }) => {
+      const parsedOperation: ParsedOperation = {
+        path: operationPath,
         method,
         parameters,
         body,
         responses,
       };
-      return operation;
-    })
+      return createParsedItem(jsonReference, parsedOperation);
+    }),
+    RTE.chainFirst((parsedOperation) =>
+      parseOperationTags(parsedOperation, tags)
+    )
+  );
+}
+
+function parseOperationParameters(
+  parameters:
+    | (OpenAPIV3_1.ParameterObject | OpenAPIV3_1.ReferenceObject)[]
+    | undefined,
+  jsonReference: JsonReference
+): ParserRTE<ParsedItem<ParsedParameter>[]> {
+  if (parameters == null) {
+    return RTE.right([]);
+  }
+
+  return pipe(
+    parameters,
+    RTE.traverseSeqArrayWithIndex((i) =>
+      parseParameterFromReference(
+        concatJsonReference(jsonReference, [String(i)])
+      )
+    ),
+    RTE.map(RA.toArray)
+  );
+}
+
+function parseOperationBody(
+  requestBody:
+    | OpenAPIV3_1.ReferenceObject
+    | OpenAPIV3_1.RequestBodyObject
+    | undefined,
+  jsonReference: JsonReference
+): ParserRTE<O.Option<ParsedItem<ParsedBody>>> {
+  if (requestBody == null) {
+    return RTE.right(O.none);
+  }
+
+  return pipe(parseBodyFromReference(jsonReference), RTE.map(O.some));
+}
+
+function parseOperationResponses(
+  responses: OpenAPIV3_1.ResponsesObject | undefined,
+  jsonReference: JsonReference
+): ParserRTE<Record<string, ParsedItem<ParsedResponse>>> {
+  if (responses == null) {
+    return RTE.right({});
+  }
+
+  return pipe(
+    responses,
+    R.traverseWithIndex(RTE.ApplicativeSeq)((code) =>
+      parseResponseFromReference(concatJsonReference(jsonReference, [code]))
+    )
   );
 }
 
 function parseOperationTags(
-  operationId: string,
-  tags?: string[]
+  parsedOperation: ParsedItem<ParsedOperation>,
+  tags: string[] | undefined
 ): ParserRTE<void> {
   if (tags == null) {
-    return RTE.right(undefined);
+    return RTE.right(void 0);
   }
 
   return pipe(
     tags,
     RTE.traverseSeqArray((tag) =>
       modifyParserOutput((draft) => {
-        const currentTags = draft.tags[tag];
-        draft.tags[tag] = currentTags
-          ? currentTags.concat(operationId)
-          : [operationId];
+        const currentOperations = draft.tags[tag];
+        draft.tags[tag] = currentOperations
+          ? currentOperations.concat(parsedOperation)
+          : [parsedOperation];
       })
     ),
     RTE.map(() => void 0)
-  );
-}
-
-function parseOperationParameters(
-  params?: Array<OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject>
-): ParserRTE<ParameterItemOrRef[]> {
-  if (params == null) {
-    return RTE.right([]);
-  }
-
-  return pipe(
-    params,
-    RTE.traverseSeqArray((p) => parseParameter("", p)),
-    RTE.map((res) => res as ParameterItemOrRef[])
-  );
-}
-
-function parseOperationBody(
-  requestBody:
-    | OpenAPIV3.ReferenceObject
-    | OpenAPIV3.RequestBodyObject
-    | undefined,
-  operationId: string
-): ParserRTE<O.Option<BodyItemOrRef>> {
-  if (requestBody == null) {
-    return RTE.right(O.none);
-  }
-
-  const name = `${toValidVariableName(operationId, "pascal")}RequestBody`;
-
-  return pipe(parseBody(name, requestBody), RTE.map(O.some));
-}
-
-function parseOperationResponses(
-  responses: OpenAPIV3.ResponsesObject | undefined,
-  operationId: string
-): ParserRTE<Record<string, ResponseItemOrRef>> {
-  if (responses == null) {
-    return RTE.right({
-      "2XX": parsedItem(
-        { _tag: "ParsedJsonResponse", type: gen.unknownType },
-        "SuccessfulResponse"
-      ),
-    });
-  }
-
-  return pipe(
-    responses,
-    R.traverseWithIndex(RTE.ApplicativeSeq)((code, response) =>
-      parseResponse(
-        `${toValidVariableName(operationId, "pascal")}Response${code}`,
-        response
-      )
-    )
   );
 }
