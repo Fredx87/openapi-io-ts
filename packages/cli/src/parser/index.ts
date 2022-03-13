@@ -2,10 +2,10 @@ import { pipe } from "fp-ts/function";
 import { newIORef } from "fp-ts/IORef";
 import * as RTE from "fp-ts/ReaderTaskEither";
 import { Environment, ProgramRTE } from "../environment";
-import { ParserContext } from "./context";
+import { ParserContext, parserState } from "./context";
 import { main } from "./main";
 import { parseDocument } from "./parseDocument";
-import { ParserOutput, parserOutput } from "./parserOutput";
+import { ParserOutput } from "./parserOutput";
 
 export function parse(): ProgramRTE<ParserOutput> {
   return pipe(
@@ -21,11 +21,14 @@ function createParserContext(): ProgramRTE<ParserContext> {
     RTE.bind("parsedDocument", ({ env }) =>
       RTE.fromTaskEither(parseDocument(env.inputFile))
     ),
-    RTE.bind("outputRef", () => RTE.rightIO(newIORef(parserOutput()))),
+    RTE.bind("parserStateRef", () => RTE.rightIO(newIORef(parserState()))),
     RTE.map(
-      ({ parsedDocument: { document, parseSchemaContext }, outputRef }) => ({
+      ({
+        parsedDocument: { document, parseSchemaContext },
+        parserStateRef,
+      }) => ({
         document,
-        outputRef,
+        parserStateRef,
         parseSchemaContext,
       })
     )

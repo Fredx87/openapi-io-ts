@@ -11,7 +11,7 @@ import {
 } from "json-schema-io-ts";
 import { OpenAPIV3_1 } from "openapi-types";
 import { parseBodyFromReference, ParsedBody } from "../body";
-import { modifyParserOutput, ParserRTE } from "../context";
+import { modifyParserState, ParserRTE } from "../context";
 import { ParsedParameter, parseParameterFromReference } from "../parameter";
 import {
   createParsedItem,
@@ -159,7 +159,7 @@ function parseOperationTags(
   return pipe(
     tags,
     RTE.traverseSeqArray((tag) =>
-      modifyParserOutput((draft) => {
+      modifyParserState((draft) => {
         const currentOperations = draft.tags[tag];
         draft.tags[tag] = currentOperations
           ? currentOperations.concat(parsedOperation)

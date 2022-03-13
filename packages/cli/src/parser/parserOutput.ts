@@ -1,17 +1,25 @@
-import { ParsedOperation } from "./operation";
-import { ParsedItem, ParsedItemType } from "./parsedItem";
-import { ParsedServer } from "./server";
+import { pipe } from "fp-ts/function";
+import * as RTE from "fp-ts/ReaderTaskEither";
+import { GeneratedModels } from "json-schema-io-ts";
+import { ParserContext, ParserRTE, ParserState } from "./context";
 
-export interface ParserOutput {
-  parsedItems: Record<string, ParsedItem<ParsedItemType>>;
-  tags: Record<string, ParsedItem<ParsedOperation>[]>;
-  servers: ParsedServer[];
+export interface ParserOutput extends ParserState {
+  parsedSchemas: GeneratedModels;
 }
 
-export function parserOutput(): ParserOutput {
-  return {
-    parsedItems: {},
-    tags: {},
-    servers: [],
-  };
+export function getParserOutput(): ParserRTE<ParserOutput> {
+  return pipe(
+    RTE.Do,
+    RTE.bind("parserContext", () => RTE.ask<ParserContext>()),
+    RTE.bind("parsedState", ({ parserContext }) =>
+      RTE.rightIO(parserContext.parserStateRef.read)
+    ),
+    RTE.bind("parsedSchemas", ({ parserContext }) =>
+      RTE.rightIO(parserContext.parseSchemaContext.generatedModelsRef.read)
+    ),
+    RTE.map(({ parsedState, parsedSchemas }) => ({
+      ...parsedState,
+      parsedSchemas,
+    }))
+  );
 }

@@ -4,10 +4,10 @@ import * as RTE from "fp-ts/ReaderTaskEither";
 import { JsonReference, jsonReferenceToString } from "json-schema-io-ts";
 import { parsedItem } from ".";
 import {
-  modifyParserOutput,
+  modifyParserState,
   ParserContext,
   ParserRTE,
-  readParserOutput,
+  readParserState,
 } from "../context";
 import { parsedItemModelGenerationInfo } from "../modelGeneration";
 import { resolveStringReferenceInParser } from "../references";
@@ -17,7 +17,7 @@ export function getParsedItem<T extends ParsedItemType>(
   reference: string
 ): ParserRTE<O.Option<ParsedItem<T>>> {
   return pipe(
-    readParserOutput(),
+    readParserState(),
     RTE.map(
       (output) => output.parsedItems[reference] as ParsedItem<T> | undefined
     ),
@@ -75,7 +75,7 @@ function addParsedItemToOutputIfNeeded<T extends ParsedItemType>(
     return RTE.right(undefined);
   }
 
-  return modifyParserOutput((draft) => {
+  return modifyParserState((draft) => {
     draft.parsedItems[jsonReferenceToString(jsonReference)] = parsedItem;
   });
 }
