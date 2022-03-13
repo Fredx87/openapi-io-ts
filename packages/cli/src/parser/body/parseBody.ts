@@ -69,6 +69,7 @@ function parseBodyObject(
     const jsonContentRef = concatJsonReference(jsonReference, [
       "content",
       JSON_MEDIA_TYPE,
+      "schema",
     ]);
     return pipe(
       parseItemSchema(jsonContentRef),
