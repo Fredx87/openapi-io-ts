@@ -8,6 +8,7 @@ import {
   pascalCase,
   resolveReference,
 } from "json-schema-io-ts";
+import { OpenAPIV3_1 } from "openapi-types";
 import { basename, extname } from "path";
 
 export function getModelGenerationInfoForComponent(
@@ -19,7 +20,9 @@ export function getModelGenerationInfoForComponent(
     return getDefaultModelGenerationInfo(jsonReference);
   }
 
-  const name = pascalCase(jsonPointer[2]);
+  const name = `${pascalCase(jsonPointer[2])}${getComponentSuffix(
+    jsonPointer[1] as keyof OpenAPIV3_1.ComponentsObject
+  )}`;
   const filePath = `${jsonPointer[0]}/${jsonPointer[1]}/${name}.ts`;
 
   if (jsonPointer.length === 3) {
@@ -101,4 +104,22 @@ export function getDocumentNameFromUri(uri: string): string {
   const ext = extname(uri);
   const fileName = basename(uri, ext);
   return camelCase(fileName);
+}
+
+function getComponentSuffix(
+  componentType: keyof OpenAPIV3_1.ComponentsObject
+): string {
+  switch (componentType) {
+    case "requestBodies": {
+      return "RequestBody";
+    }
+    case "parameters": {
+      return "Parameter";
+    }
+    case "responses": {
+      return "Response";
+    }
+    default:
+      return "";
+  }
 }
