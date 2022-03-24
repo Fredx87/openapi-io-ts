@@ -16,11 +16,10 @@ import {
   parseItemSchema,
 } from "../parsedItem";
 import { resolveObjectFromJsonReference } from "../references";
-import { ParsedResponse } from "./ParsedResponse";
 
 export function parseResponseFromReference(
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedResponse>> {
+): ParserRTE<ParsedItem<"response">> {
   return pipe(
     resolveObjectFromJsonReference<
       OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.ResponseObject
@@ -32,9 +31,9 @@ export function parseResponseFromReference(
 function parseResponse(
   response: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.ResponseObject,
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedResponse>> {
+): ParserRTE<ParsedItem<"response">> {
   if (JsonSchemaRef.is(response)) {
-    return getOrCreateParsedItemFromRef<ParsedResponse>(
+    return getOrCreateParsedItemFromRef<"response">(
       response.$ref,
       parseResponseFromReference
     );
@@ -46,7 +45,7 @@ function parseResponse(
 function parseResponseObject(
   response: OpenAPIV3_1.ResponseObject,
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedResponse>> {
+): ParserRTE<ParsedItem<"response">> {
   const { content } = response;
 
   const jsonSchema = content?.[JSON_MEDIA_TYPE]?.schema;
@@ -65,7 +64,7 @@ function parseResponseObject(
           _tag: "ParsedJsonResponse",
           schema,
         };
-        return createParsedItem(jsonReference, item);
+        return createParsedItem(jsonReference, "response", item);
       })
     );
   }
@@ -76,7 +75,7 @@ function parseResponseObject(
     const item: ParsedEmptyResponse = {
       _tag: "ParsedEmptyResponse",
     };
-    return createParsedItem(jsonReference, item);
+    return createParsedItem(jsonReference, "response", item);
   }
 
   const firstContentSchema = contents[0].schema;
@@ -94,7 +93,7 @@ function parseResponseObject(
     const item: ParsedFileResponse = {
       _tag: "ParsedFileResponse",
     };
-    return createParsedItem(jsonReference, item);
+    return createParsedItem(jsonReference, "response", item);
   }
 
   return pipe(
@@ -104,7 +103,7 @@ function parseResponseObject(
         _tag: "ParsedJsonResponse",
         schema,
       };
-      return createParsedItem(jsonReference, item);
+      return createParsedItem(jsonReference, "response", item);
     })
   );
 }

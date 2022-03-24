@@ -4,13 +4,12 @@ import * as RTE from "fp-ts/ReaderTaskEither";
 import produce, { Draft } from "immer";
 import { ParseSchemaContext } from "json-schema-io-ts";
 import { OpenAPIV3_1 } from "openapi-types";
-import { ParsedOperation } from "./operation";
-import { ParsedItem, ParsedItemType } from "./parsedItem";
+import { ParsedItem, ParsedItemKind } from "./parsedItem";
 import { ParsedServer } from "./server";
 
 export interface ParserState {
-  parsedItems: Record<string, ParsedItem<ParsedItemType>>;
-  tags: Record<string, ParsedItem<ParsedOperation>[]>;
+  parsedItems: Record<string, ParsedItem<ParsedItemKind>>;
+  tags: Record<string, ParsedItem<"operation">[]>;
   servers: ParsedServer[];
 }
 

@@ -28,7 +28,7 @@ import {
 
 export function parseParameterFromReference(
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedParameter>> {
+): ParserRTE<ParsedItem<"parameter">> {
   return pipe(
     resolveObjectFromJsonReference<
       OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.ParameterObject
@@ -40,9 +40,9 @@ export function parseParameterFromReference(
 function parseParameter(
   param: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.ParameterObject,
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedParameter>> {
+): ParserRTE<ParsedItem<"parameter">> {
   if (JsonSchemaRef.is(param)) {
-    return getOrCreateParsedItemFromRef<ParsedParameter>(
+    return getOrCreateParsedItemFromRef<"parameter">(
       param.$ref,
       parseParameterFromReference
     );
@@ -54,7 +54,7 @@ function parseParameter(
 function parseParameterObject(
   param: OpenAPIV3.ParameterObject,
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedParameter>> {
+): ParserRTE<ParsedItem<"parameter">> {
   if (param.schema != null) {
     const schemaRef = concatJsonReference(jsonReference, ["schema"]);
 
@@ -98,7 +98,7 @@ function parseParameterWithSchema(
   schemaRef: JsonReference,
   schemaObj: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject,
   tag: ParsedParameter["_tag"]
-): ParserRTE<ParsedItem<ParsedParameter>> {
+): ParserRTE<ParsedItem<"parameter">> {
   return pipe(
     RTE.Do,
     RTE.bind("schema", () => parseItemSchema(schemaRef)),
@@ -129,7 +129,7 @@ function buildParsedParameter(
   schema: ParsedItemSchema,
   defaultValue: unknown,
   tag: ParsedParameter["_tag"]
-): ParserRTE<ParsedItem<ParsedParameter>> {
+): ParserRTE<ParsedItem<"parameter">> {
   const { name } = param;
   const paramIn = param.in as OperationParameterIn;
   const required = param.required ?? false;
@@ -149,12 +149,12 @@ function buildParsedParameter(
       _tag: "ParsedFormParameter",
       explode: param.explode ?? defaultExplode,
     };
-    return createParsedItem(jsonReference, item);
+    return createParsedItem(jsonReference, "parameter", item);
   } else {
     const item: ParsedJsonParameter = {
       ...baseParameter,
       _tag: "ParsedJsonParameter",
     };
-    return createParsedItem(jsonReference, item);
+    return createParsedItem(jsonReference, "parameter", item);
   }
 }

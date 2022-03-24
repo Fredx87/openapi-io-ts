@@ -5,22 +5,28 @@ import { ParsedOperation } from "../operation";
 import { ParsedParameter } from "../parameter";
 import { ParsedResponse } from "../response";
 
-export type ParsedItemType =
-  | ParsedBody
-  | ParsedParameter
-  | ParsedResponse
-  | ParsedOperation;
+export interface ParsedItemKindTypeMap {
+  body: ParsedBody;
+  parameter: ParsedParameter;
+  response: ParsedResponse;
+  operation: ParsedOperation;
+}
 
-export interface ParsedItem<T extends ParsedItemType> {
-  item: T;
+export type ParsedItemKind = keyof ParsedItemKindTypeMap;
+
+export interface ParsedItem<K extends ParsedItemKind> {
+  kind: K;
+  item: ParsedItemKindTypeMap[K];
   modelGenerationInfo: O.Option<ModelGenerationInfo>;
 }
 
-export function parsedItem<T extends ParsedItemType>(
-  item: T,
+export function parsedItem<K extends ParsedItemKind>(
+  kind: K,
+  item: ParsedItemKindTypeMap[K],
   modelGenerationInfo: O.Option<ModelGenerationInfo>
-): ParsedItem<T> {
+): ParsedItem<K> {
   return {
+    kind,
     item,
     modelGenerationInfo,
   };

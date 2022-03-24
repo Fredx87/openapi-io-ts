@@ -24,7 +24,6 @@ import {
 import { resolveObjectFromJsonReference } from "../references";
 import {
   ParsedBinaryBody,
-  ParsedBody,
   ParsedFormBody,
   ParsedJsonBody,
   ParsedMultipartBody,
@@ -33,7 +32,7 @@ import {
 
 export function parseBodyFromReference(
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedBody>> {
+): ParserRTE<ParsedItem<"body">> {
   return pipe(
     resolveObjectFromJsonReference<
       OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.RequestBodyObject
@@ -45,9 +44,9 @@ export function parseBodyFromReference(
 function parseBody(
   body: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.RequestBodyObject,
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedBody>> {
+): ParserRTE<ParsedItem<"body">> {
   if (JsonSchemaRef.is(body)) {
-    return getOrCreateParsedItemFromRef<ParsedBody>(
+    return getOrCreateParsedItemFromRef<"body">(
       body.$ref,
       parseBodyFromReference
     );
@@ -59,7 +58,7 @@ function parseBody(
 function parseBodyObject(
   body: OpenAPIV3_1.RequestBodyObject,
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedBody>> {
+): ParserRTE<ParsedItem<"body">> {
   const { content } = body;
   const required = body.required ?? false;
 
@@ -79,7 +78,7 @@ function parseBodyObject(
           schema,
           required,
         };
-        return createParsedItem(jsonReference, parsedBody);
+        return createParsedItem(jsonReference, "body", parsedBody);
       })
     );
   }
@@ -91,7 +90,7 @@ function parseBodyObject(
       _tag: "ParsedTextBody",
       required,
     };
-    return createParsedItem(jsonReference, parsedBody);
+    return createParsedItem(jsonReference, "body", parsedBody);
   }
 
   const formEncodedContent = content?.[FORM_ENCODED_MEDIA_TYPE];
@@ -114,7 +113,7 @@ function parseBodyObject(
           schema,
           required,
         };
-        return createParsedItem(jsonReference, parsedBody);
+        return createParsedItem(jsonReference, "body", parsedBody);
       })
     );
   }
@@ -139,7 +138,7 @@ function parseBodyObject(
           schema,
           required,
         };
-        return createParsedItem(jsonReference, parsedBody);
+        return createParsedItem(jsonReference, "body", parsedBody);
       })
     );
   }
@@ -153,7 +152,7 @@ function parseBodyObject(
     required,
   };
 
-  return createParsedItem(jsonReference, parsedBody);
+  return createParsedItem(jsonReference, "body", parsedBody);
 }
 
 function getOrCreateSchemaFromOptional(

@@ -11,34 +11,38 @@ import {
 } from "../context";
 import { parsedItemModelGenerationInfo } from "../modelGeneration";
 import { resolveStringReferenceInParser } from "../references";
-import { ParsedItem, ParsedItemType } from "./ParsedItem";
+import {
+  ParsedItem,
+  ParsedItemKind,
+  ParsedItemKindTypeMap,
+} from "./ParsedItem";
 
-export function getParsedItem<T extends ParsedItemType>(
+export function getParsedItem<K extends ParsedItemKind>(
   reference: string
-): ParserRTE<O.Option<ParsedItem<T>>> {
+): ParserRTE<O.Option<ParsedItem<K>>> {
   return pipe(
     readParserState(),
     RTE.map(
-      (output) => output.parsedItems[reference] as ParsedItem<T> | undefined
+      (output) => output.parsedItems[reference] as ParsedItem<K> | undefined
     ),
     RTE.map(O.fromNullable)
   );
 }
 
-export function getOrCreateParsedItem<T extends ParsedItemType>(
+export function getOrCreateParsedItem<K extends ParsedItemKind>(
   jsonReference: JsonReference,
-  parseFunction: (jsonReference: JsonReference) => ParserRTE<ParsedItem<T>>
-): ParserRTE<ParsedItem<T>> {
+  parseFunction: (jsonReference: JsonReference) => ParserRTE<ParsedItem<K>>
+): ParserRTE<ParsedItem<K>> {
   return pipe(
-    getParsedItem<T>(jsonReferenceToString(jsonReference)),
+    getParsedItem<K>(jsonReferenceToString(jsonReference)),
     RTE.chain(O.fold(() => parseFunction(jsonReference), RTE.right))
   );
 }
 
-export function getOrCreateParsedItemFromRef<T extends ParsedItemType>(
+export function getOrCreateParsedItemFromRef<K extends ParsedItemKind>(
   $ref: string,
-  parseFunction: (jsonReference: JsonReference) => ParserRTE<ParsedItem<T>>
-): ParserRTE<ParsedItem<T>> {
+  parseFunction: (jsonReference: JsonReference) => ParserRTE<ParsedItem<K>>
+): ParserRTE<ParsedItem<K>> {
   return pipe(
     resolveStringReferenceInParser($ref),
     RTE.chain((jsonReference) =>
@@ -47,17 +51,18 @@ export function getOrCreateParsedItemFromRef<T extends ParsedItemType>(
   );
 }
 
-export function createParsedItem<T extends ParsedItemType>(
+export function createParsedItem<K extends ParsedItemKind>(
   jsonReference: JsonReference,
-  item: T
-): ParserRTE<ParsedItem<T>> {
+  kind: K,
+  item: ParsedItemKindTypeMap[K]
+): ParserRTE<ParsedItem<K>> {
   return pipe(
     RTE.asks((c: ParserContext) => c.parseSchemaContext),
     RTE.map((parseSchemaContext) =>
       parsedItemModelGenerationInfo(jsonReference, parseSchemaContext)
     ),
     RTE.chain((modelGenerationInfo) => {
-      const parsed = parsedItem(item, modelGenerationInfo);
+      const parsed = parsedItem(kind, item, modelGenerationInfo);
 
       return pipe(
         addParsedItemToOutputIfNeeded(jsonReference, parsed),
@@ -67,9 +72,9 @@ export function createParsedItem<T extends ParsedItemType>(
   );
 }
 
-function addParsedItemToOutputIfNeeded<T extends ParsedItemType>(
+function addParsedItemToOutputIfNeeded<K extends ParsedItemKind>(
   jsonReference: JsonReference,
-  parsedItem: ParsedItem<T>
+  parsedItem: ParsedItem<K>
 ): ParserRTE<void> {
   if (O.isNone(parsedItem.modelGenerationInfo)) {
     return RTE.right(undefined);

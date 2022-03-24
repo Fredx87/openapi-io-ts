@@ -10,22 +10,22 @@ import {
   JsonSchemaRef,
 } from "json-schema-io-ts";
 import { OpenAPIV3_1 } from "openapi-types";
-import { parseBodyFromReference, ParsedBody } from "../body";
+import { parseBodyFromReference } from "../body";
 import { modifyParserState, ParserRTE } from "../context";
-import { ParsedParameter, parseParameterFromReference } from "../parameter";
+import { parseParameterFromReference } from "../parameter";
 import {
   createParsedItem,
   getOrCreateParsedItemFromRef,
   ParsedItem,
 } from "../parsedItem";
 import { resolveObjectFromJsonReference } from "../references";
-import { ParsedResponse, parseResponseFromReference } from "../response";
+import { parseResponseFromReference } from "../response";
 import { ParsedOperation } from "./ParsedOperation";
 
 export function parseOperationFromReference(
   operationPath: string,
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedOperation>> {
+): ParserRTE<ParsedItem<"operation">> {
   return pipe(
     resolveObjectFromJsonReference<
       OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.OperationObject
@@ -40,11 +40,10 @@ function parseOperation(
   operationPath: string,
   operation: OpenAPIV3_1.ReferenceObject | OpenAPIV3_1.OperationObject,
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedOperation>> {
+): ParserRTE<ParsedItem<"operation">> {
   if (JsonSchemaRef.is(operation)) {
-    return getOrCreateParsedItemFromRef<ParsedOperation>(
-      operation.$ref,
-      (newRef) => parseOperationFromReference(operationPath, newRef)
+    return getOrCreateParsedItemFromRef<"operation">(operation.$ref, (newRef) =>
+      parseOperationFromReference(operationPath, newRef)
     );
   }
 
@@ -55,7 +54,7 @@ function parseOperationObject(
   operationPath: string,
   operation: OpenAPIV3_1.OperationObject,
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedOperation>> {
+): ParserRTE<ParsedItem<"operation">> {
   const method = jsonReference.jsonPointer[
     jsonReference.jsonPointer.length - 1
   ] as OperationMethod;
@@ -89,7 +88,7 @@ function parseOperationObject(
         body,
         responses,
       };
-      return createParsedItem(jsonReference, parsedOperation);
+      return createParsedItem(jsonReference, "operation", parsedOperation);
     }),
     RTE.chainFirst((parsedOperation) =>
       parseOperationTags(parsedOperation, tags)
@@ -102,7 +101,7 @@ function parseOperationParameters(
     | (OpenAPIV3_1.ParameterObject | OpenAPIV3_1.ReferenceObject)[]
     | undefined,
   jsonReference: JsonReference
-): ParserRTE<ParsedItem<ParsedParameter>[]> {
+): ParserRTE<ParsedItem<"parameter">[]> {
   if (parameters == null) {
     return RTE.right([]);
   }
@@ -124,7 +123,7 @@ function parseOperationBody(
     | OpenAPIV3_1.RequestBodyObject
     | undefined,
   jsonReference: JsonReference
-): ParserRTE<O.Option<ParsedItem<ParsedBody>>> {
+): ParserRTE<O.Option<ParsedItem<"body">>> {
   if (requestBody == null) {
     return RTE.right(O.none);
   }
@@ -135,7 +134,7 @@ function parseOperationBody(
 function parseOperationResponses(
   responses: OpenAPIV3_1.ResponsesObject | undefined,
   jsonReference: JsonReference
-): ParserRTE<Record<string, ParsedItem<ParsedResponse>>> {
+): ParserRTE<Record<string, ParsedItem<"response">>> {
   if (responses == null) {
     return RTE.right({});
   }
@@ -149,7 +148,7 @@ function parseOperationResponses(
 }
 
 function parseOperationTags(
-  parsedOperation: ParsedItem<ParsedOperation>,
+  parsedOperation: ParsedItem<"operation">,
   tags: string[] | undefined
 ): ParserRTE<void> {
   if (tags == null) {
