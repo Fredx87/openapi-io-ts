@@ -1,5 +1,11 @@
 # @openapi-io-ts/cli
 
+## 0.5.0
+
+### Minor Changes
+
+- [#20](https://github.com/Fredx87/openapi-io-ts/pull/20) [`bde97b8`](https://github.com/Fredx87/openapi-io-ts/commit/bde97b88456eb5dd6b1d5024c613e61919529242) Thanks [@dcaf-mocha](https://github.com/dcaf-mocha)! - fix: add imports for requestBodies and responses
+
 ## 0.4.1
 
 ### Patch Changes
