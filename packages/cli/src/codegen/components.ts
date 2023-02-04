@@ -110,6 +110,12 @@ function writeResponseFile(
   return pipe(
     generateOperationResponse(response),
     RTE.map((def) => `export const ${response.name} = ${def};`),
+    RTE.map(
+      (code) => `import * as t from "io-ts";
+      import * as schemas from "../schemas";
+      
+      ${code}`
+    ),
     RTE.chain((content) =>
       writeGeneratedFile(RESPONSES_PATH, `${response.name}.ts`, content)
     )
@@ -137,6 +143,7 @@ function writeRequestBodyFile(
     RTE.bind("body", () => RTE.right(generateOperationBody(parsedBody))),
     RTE.map(
       ({ schema, body }) => `import { OperationBody } from "${RUNTIME_PACKAGE}";
+      import * as t from "io-ts";
       import * as schemas from "../schemas";
       ${schema}
       
