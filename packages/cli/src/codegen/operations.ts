@@ -329,7 +329,9 @@ function generateRequestFunctionType(
 
   return `export type ${requestFunctionName(
     operationId
-  )} = RequestFunction<${args}, ${generatedItems.returnType}>`;
+  )} = RequestFunction<${args}, ${
+    generatedItems.responses.operationResponses
+  }>`;
 }
 
 function getReturnType(
