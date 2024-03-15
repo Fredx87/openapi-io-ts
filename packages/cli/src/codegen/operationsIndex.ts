@@ -42,7 +42,6 @@ function generateImports(operationIds: string[]): string {
   import {
     HttpRequestAdapter,
     requestFunctionBuilder,
-    RequestFunctionsMap,
   } from "${RUNTIME_PACKAGE}";`;
 
   const operationsImport = operationIds
@@ -89,7 +88,7 @@ function generateTagsOperations(tags: Record<string, string[]>): string {
 
 function generateTagOperations(tag: string, operationIds: string[]): string {
   return `
-   export const ${tagServiceBuilderName(tag)} = (
+   export const ${tagServiceBuilderName(tag.replace(/\s/g, ""))} = (
     requestFunctions: ${REQUEST_FUNCTIONS_MAP}
   ) => ({
     ${operationIds.map((id) => `${id}: requestFunctions.${id},`).join("\n")}
