@@ -4,7 +4,6 @@ import * as gen from "io-ts-codegen";
 import { OpenAPIV3 } from "openapi-types";
 import { createJsonPointer, JsonReference } from "./JSONReference";
 import { toValidVariableName } from "../utils";
-import { checkValidReference } from "./common";
 
 export function parseSchema(
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject
@@ -67,7 +66,6 @@ function parseJsonReference(
 ): E.Either<Error, gen.TypeReference> {
   return pipe(
     createJsonPointer(pointer),
-    E.chain((jsonPointer) => checkValidReference("schemas", jsonPointer)),
     E.map((jsonPointer) => {
       const name = `${jsonPointer.tokens[2]}.${toValidVariableName(
         jsonPointer.tokens[3],
